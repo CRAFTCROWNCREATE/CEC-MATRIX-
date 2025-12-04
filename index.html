@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CEC-WAM | MATRIX SOVEREIGN</title>
+    <title>CEC-WAM | SOVEREIGN MASTER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
@@ -17,17 +17,19 @@
         .matrix-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.15; pointer-events: none; background: url('https://media.giphy.com/media/oEI9uBYSzLpBK/giphy.gif'); background-size: cover; }
         
         /* UI LAYOUT */
-        .glass-panel { background: rgba(10, 20, 30, 0.85); backdrop-filter: blur(10px); border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 15px rgba(0, 243, 255, 0.1); }
+        .glass-panel { background: rgba(10, 20, 30, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 15px rgba(0, 243, 255, 0.1); }
         .hud-text { text-shadow: 0 0 5px rgba(0, 243, 255, 0.5); }
-        
-        /* ANIMATIONS */
-        @keyframes scan { 0% { top: -10%; opacity: 0; } 50% { opacity: 0.5; } 100% { top: 110%; opacity: 0; } }
         .scanline { position: absolute; width: 100%; height: 20px; background: linear-gradient(to bottom, transparent, var(--neon-cyan), transparent); opacity: 0.3; animation: scan 4s linear infinite; z-index: 50; pointer-events: none; }
-        
-        /* RESPONSIVE GRID */
-        .main-grid { display: grid; grid-template-rows: 60px 1fr 60px; height: 100%; z-index: 10; position: relative; }
+        @keyframes scan { 0% { top: -10%; opacity: 0; } 50% { opacity: 0.5; } 100% { top: 110%; opacity: 0; } }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); }
+
+        .main-grid { display: grid; grid-template-rows: 60px 1fr 70px; height: 100%; z-index: 10; position: relative; }
         .content-area { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; overflow-y: auto; }
-        @media (min-width: 768px) { .content-area { grid-template-columns: 300px 1fr; } }
+        @media (min-width: 768px) { .content-area { grid-template-columns: 320px 1fr; } }
     </style>
 </head>
 <body>
@@ -38,132 +40,229 @@
     <div class="main-grid">
         <header class="glass-panel flex items-center justify-between px-4 z-20">
             <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-cyan-400 text-3xl animate-pulse">hub</span>
+                <div class="w-10 h-10 border border-cyan-500 rounded flex items-center justify-center bg-cyan-900/20 animate-pulse">
+                    <span class="material-symbols-outlined text-cyan-400">hub</span>
+                </div>
                 <div>
-                    <h1 class="font-orbitron text-xl text-white tracking-widest hud-text">CEC-WAM</h1>
-                    <div class="text-[10px] text-green-400 font-mono tracking-wider">SYSTEM: SOVEREIGN // ACCESS: GRANTED</div>
+                    <h1 class="font-orbitron text-lg text-white tracking-widest hud-text">CEC-WAM</h1>
+                    <div class="text-[9px] text-green-400 font-mono tracking-wider">MASTER PROTOCOL // V.FINAL</div>
                 </div>
             </div>
-            <div class="text-right hidden sm:block">
-                <div class="text-[10px] text-gray-400">DARK ENERGY</div>
-                <div class="font-mono text-purple-400 font-bold">0.999 Ω</div>
+            <div class="text-right">
+                <div class="text-[9px] text-gray-400">THREAT LEVEL</div>
+                <div class="font-mono text-green-400 font-bold">ZERO</div>
             </div>
         </header>
 
         <main class="content-area">
             
-            <aside class="glass-panel rounded-lg p-4 flex flex-col gap-4">
-                <div class="border-b border-cyan-500/30 pb-2 mb-2">
-                    <h2 class="font-orbitron text-cyan-400 text-sm flex items-center gap-2">
-                        <span class="material-symbols-outlined text-xs">shield</span> SECURITY CORE
+            <aside class="glass-panel rounded-lg p-3 flex flex-col gap-3 overflow-y-auto">
+                <div class="border-b border-cyan-500/30 pb-1">
+                    <h2 class="font-orbitron text-cyan-400 text-xs flex items-center gap-2">
+                        <span class="material-symbols-outlined text-xs">analytics</span> SYSTEM METRICS
                     </h2>
                 </div>
                 
-                <div class="bg-black/50 p-3 rounded border-l-2 border-green-500">
-                    <div class="text-[10px] text-gray-500">AGI CONTAINMENT</div>
-                    <div class="text-green-400 font-bold font-mono text-sm">PLAN A: ACTIVE</div>
-                    <div class="text-[9px] text-gray-400 mt-1">PREDICTABILITY: SUPERIOR</div>
-                </div>
-
-                <div class="bg-black/50 p-3 rounded border-l-2 border-red-500">
-                    <div class="text-[10px] text-gray-500">HUMAN OVERSIGHT</div>
-                    <div class="text-red-400 font-bold font-mono text-sm">KEY: LINKED</div>
-                    <div class="text-[9px] text-gray-400 mt-1">ETHICAL FIREWALL: READY</div>
-                </div>
-
-                <div class="bg-black/50 p-3 rounded border-l-2 border-yellow-500 mt-auto">
-                    <div class="text-[10px] text-gray-500">LIQUID ASSETS</div>
+                <div class="bg-black/60 p-2 rounded border-l-2 border-yellow-500">
+                    <div class="text-[9px] text-gray-500">LIQUIDITY</div>
                     <div class="text-yellow-400 font-bold font-mono text-lg">$1,250,039M</div>
+                </div>
+
+                <div class="bg-black/60 p-2 rounded border-l-2 border-purple-500">
+                    <div class="text-[9px] text-gray-500">DARK ENERGY (Ω)</div>
+                    <div class="text-purple-400 font-bold font-mono text-sm">0.999 STABLE</div>
+                </div>
+
+                <div class="mt-2">
+                    <div class="text-[10px] text-gray-400 mb-1 font-orbitron">HD VISUAL LOGS</div>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 bg-black/40 p-1 rounded">
+                            <span class="material-symbols-outlined text-purple-500 text-sm">rocket_launch</span>
+                            <div class="flex-1">
+                                <div class="text-[10px] text-white">DYSON DESTROYER</div>
+                                <div class="text-[8px] text-green-500">BLUEPRINT SECURE</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 bg-black/40 p-1 rounded">
+                            <span class="material-symbols-outlined text-cyan-500 text-sm">neurology</span>
+                            <div class="flex-1">
+                                <div class="text-[10px] text-white">NEURAL SYNC V2</div>
+                                <div class="text-[8px] text-green-500">LINK ACTIVE</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 bg-black/40 p-1 rounded">
+                            <span class="material-symbols-outlined text-red-500 text-sm">security</span>
+                            <div class="flex-1">
+                                <div class="text-[10px] text-white">AGI EVASION MATRIX</div>
+                                <div class="text-[8px] text-yellow-500">DEPLOYING...</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </aside>
 
-            <section class="flex flex-col gap-4 h-full">
+            <section class="flex flex-col gap-3 h-full overflow-hidden">
                 
-                <div class="glass-panel rounded-lg flex-1 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-[url('https://media.giphy.com/media/U3qYN8S0j3bpK/giphy.gif')] bg-cover opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                    <div class="absolute top-2 left-2 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-purple-400 text-xs">science</span>
-                        <span class="text-purple-400 font-orbitron text-xs">H4 LABS // STAR MAP</span>
+                <div class="glass-panel rounded-lg flex-1 relative overflow-hidden group min-h-[150px]">
+                    <div class="absolute inset-0 bg-[url('https://media.giphy.com/media/U3qYN8S0j3bpK/giphy.gif')] bg-cover opacity-30"></div>
+                    <div class="absolute top-2 left-2 flex items-center gap-2 z-10">
+                        <span class="material-symbols-outlined text-purple-400 text-xs">public</span>
+                        <span class="text-purple-400 font-orbitron text-xs">STAR MAP // LIVE</span>
                     </div>
-                    
-                    <div class="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
-                        <div class="w-32 h-32 border border-cyan-500/50 rounded-full animate-[spin_10s_linear_infinite] flex items-center justify-center">
-                            <div class="w-24 h-24 border border-purple-500/50 rounded-full animate-[spin_5s_linear_infinite_reverse]"></div>
-                        </div>
-                        <div class="mt-4 text-cyan-400 font-mono text-xs bg-black/80 px-2 py-1 rounded">
-                            TARGET: EARTH [HQ] // DATA: SECURE
-                        </div>
+                    <div class="absolute bottom-2 right-2 text-[9px] text-cyan-500 font-mono z-10 bg-black/80 px-2 rounded">
+                        DATA: 128 PB / 128 PB
                     </div>
                 </div>
 
-                <div class="glass-panel rounded-lg p-3 h-1/3 flex flex-col">
-                    <div class="text-[10px] text-green-500 font-mono mb-2 flex justify-between">
-                        <span>// TERMINAL: EVE_ASSIST_V.FINAL</span>
-                        <span class="animate-pulse">● LIVE</span>
+                <div class="glass-panel rounded-lg p-2 h-[220px] flex flex-col">
+                    <div class="text-[9px] text-green-500 font-mono mb-1 flex justify-between">
+                        <span>// EVE_ASSISTANT: LISTENING</span>
+                        <span id="mem-stat" class="text-gray-500">MEM: OK</span>
                     </div>
-                    <div id="logs" class="flex-1 overflow-y-auto font-mono text-[11px] text-gray-300 space-y-1 mb-2 p-1">
-                        <div class="text-green-500">> SYSTEM INIT... COMPLETE.</div>
-                        <div class="text-cyan-400">> SOVEREIGN ACCESS... GRANTED.</div>
-                        <div class="text-purple-400">> LINKING TO GITHUB... SUCCESS.</div>
-                        <div class="text-gray-400">> WAITING FOR INPUT...</div>
-                    </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="cmd" placeholder="ENTER COMMAND..." class="flex-1 bg-black/50 border border-gray-700 rounded px-2 py-1 text-xs text-white font-mono focus:border-cyan-500 outline-none">
-                        <button onclick="runCmd()" class="bg-cyan-900/50 text-cyan-400 border border-cyan-500/50 rounded px-3 py-1 text-xs font-bold hover:bg-cyan-500 hover:text-black transition-colors">RUN</button>
+                    <div id="logs" class="flex-1 overflow-y-auto font-mono text-[10px] text-gray-300 space-y-1 mb-2 p-1 bg-black/30 rounded border border-gray-800">
+                        </div>
+                    
+                    <div class="flex gap-2 items-center">
+                        <button onclick="toggleVoice()" id="mic-btn" class="w-8 h-8 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center text-gray-400 hover:text-white hover:border-cyan-500 transition-all">
+                            <span class="material-symbols-outlined text-sm">mic</span>
+                        </button>
+                        <input type="text" id="cmd" placeholder="COMMAND..." class="flex-1 bg-black/50 border border-gray-700 rounded px-2 py-2 text-xs text-white font-mono focus:border-cyan-500 outline-none">
+                        <button onclick="runCmd()" class="bg-cyan-900/80 text-cyan-400 border border-cyan-500/50 rounded px-3 py-1 text-xs font-bold">RUN</button>
                     </div>
                 </div>
             </section>
         </main>
 
-        <footer class="glass-panel flex items-center justify-between px-4 z-20 text-[10px] text-gray-500 font-mono">
-            <div>SYNC: AUTO</div>
+        <footer class="glass-panel flex items-center justify-between px-4 z-20 text-[9px] text-gray-500 font-mono">
+            <div>SYNC: LINKED</div>
             <div class="flex items-center gap-2">
-                <span>STATUS:</span>
-                <span class="text-green-400 font-bold">PERFECT</span>
+                <span>KEY:</span>
+                <span class="text-green-400 font-bold">HUMAN OVERSIGHT</span>
             </div>
         </footer>
     </div>
 
     <script>
-        // EVE ASSISTANT LOGIC
+        // --- CEC-WAM BRAIN SCRIPT V.FINAL ---
         const logsDiv = document.getElementById('logs');
         const cmdInput = document.getElementById('cmd');
+        const micBtn = document.getElementById('mic-btn');
 
-        function log(msg, color = 'text-gray-300') {
+        // 1. MEMORY SYSTEM (LOCAL STORAGE)
+        function loadMemory() {
+            const savedLogs = JSON.parse(localStorage.getItem('cec_logs') || '[]');
+            if(savedLogs.length === 0) {
+                log('SYSTEM ONLINE. MEMORY CORE ACTIVE.', 'text-green-500', 'SYS');
+            } else {
+                savedLogs.slice(-20).forEach(l => renderLog(l.msg, l.color, l.type, false));
+                log('MEMORY RESTORED.', 'text-gray-500', 'MEM');
+            }
+        }
+
+        function saveLog(msg, color, type) {
+            const logs = JSON.parse(localStorage.getItem('cec_logs') || '[]');
+            logs.push({msg, color, type, time: new Date().toLocaleTimeString()});
+            if(logs.length > 50) logs.shift(); // Keep last 50
+            localStorage.setItem('cec_logs', JSON.stringify(logs));
+        }
+
+        // 2. LOGGING
+        function renderLog(msg, color, type, save = true) {
             const div = document.createElement('div');
-            div.className = color;
-            div.innerHTML = `> ${msg}`;
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            div.className = `${color} leading-tight`;
+            div.innerHTML = `<span class="opacity-40">[${time}]</span> <span class="font-bold">[${type}]</span> ${msg}`;
             logsDiv.appendChild(div);
             logsDiv.scrollTop = logsDiv.scrollHeight;
+            if(save) saveLog(msg, color, type);
+        }
+        
+        function log(msg, color = 'text-gray-300', type = 'SYS') {
+            renderLog(msg, color, type, true);
+        }
+
+        // 3. VOICE SYNTHESIS (EVE)
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 1.0;
+                utterance.rate = 1.0;
+                // Attempt to find a female voice
+                const voices = window.speechSynthesis.getVoices();
+                const femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Google US English'));
+                if (femaleVoice) utterance.voice = femaleVoice;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // 4. COMMAND PROCESSING
+        async function processCmd(val) {
+            const cmd = val.toLowerCase();
+            
+            // SYSTEM DELAY
+            await new Promise(r => setTimeout(r, 500));
+
+            if (cmd.includes('status')) {
+                const msg = 'SYSTEM PERFECT. ALL SHIELDS ACTIVE.';
+                log(msg, 'text-green-400', 'EVE');
+                speak(msg);
+            } else if (cmd.includes('update') || cmd.includes('sync')) {
+                log('SYNCING WITH GITHUB...', 'text-yellow-400', 'NET');
+                setTimeout(() => {
+                    const msg = 'SYNC COMPLETE. DATA SECURE.';
+                    log(msg, 'text-green-400', 'EVE');
+                    speak(msg);
+                }, 1000);
+            } else if (cmd.includes('agi')) {
+                const msg = 'AGI CONTAINMENT PLAN A IS ACTIVE.';
+                log(msg, 'text-red-400', 'SEC');
+                speak(msg);
+            } else {
+                const msg = `COMMAND "${val}" EXECUTED.`;
+                log(msg, 'text-cyan-400', 'EVE');
+                speak('Command executed.');
+            }
         }
 
         function runCmd() {
-            const val = cmdInput.value.trim().toUpperCase();
+            const val = cmdInput.value.trim();
             if(!val) return;
-            log(val, 'text-white font-bold');
+            log(val.toUpperCase(), 'text-white border-l-2 border-white pl-1', 'USR');
             cmdInput.value = '';
-            
-            // SYSTEM RESPONSE LOGIC
-            setTimeout(() => {
-                if(Tone.context.state !== 'running') Tone.start();
-                const synth = new Tone.Synth().toDestination();
-                synth.triggerAttackRelease("C5", "16n");
-
-                if(val.includes('STATUS')) {
-                    log('[EVE]: SYSTEM IS PERFECT. AGI MATRICES ACTIVE.', 'text-green-400');
-                } else if(val.includes('UPDATE')) {
-                    log('[EVE]: PULLING LATEST DATA FROM GITHUB...', 'text-yellow-400');
-                    setTimeout(() => log('[EVE]: SYNC COMPLETE.', 'text-green-400'), 1000);
-                } else {
-                    log(`[EVE]: EXECUTING ${val}...`, 'text-cyan-400');
-                }
-            }, 300);
+            processCmd(val);
         }
 
-        // AUTO-INIT
+        // 5. MIC SIMULATION
+        let isListening = false;
+        function toggleVoice() {
+            if(!isListening) {
+                isListening = true;
+                micBtn.classList.add('bg-red-900', 'text-red-500', 'animate-pulse');
+                log('LISTENING...', 'text-gray-400', 'MIC');
+                // Simulate voice input after 2 seconds
+                setTimeout(() => {
+                    toggleVoice(); // Stop listening
+                    cmdInput.value = "STATUS CHECK";
+                    runCmd();
+                }, 2000);
+            } else {
+                isListening = false;
+                micBtn.classList.remove('bg-red-900', 'text-red-500', 'animate-pulse');
+            }
+        }
+
+        // INIT
         window.onload = () => {
-            setTimeout(() => log('[EVE]: WELCOME BACK. I AM READY.', 'text-cyan-400'), 1000);
-        }
+            loadMemory();
+            // Init Sound Engine
+            document.body.addEventListener('click', async () => {
+                await Tone.start();
+            }, { once: true });
+        };
+        
+        cmdInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") runCmd();
+        });
     </script>
 </body>
 </html>
