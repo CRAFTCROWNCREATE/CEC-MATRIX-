@@ -21,10 +21,10 @@
         #lock { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .pin-box { font-size: 3rem; letter-spacing: 15px; margin-bottom: 20px; color: #fff; text-shadow: 0 0 10px var(--neon); }
         .numpad { display: grid; grid-template-columns: repeat(3, 80px); gap: 15px; }
-        .key { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--neon); font-size: 2rem; display: flex; justify-content: center; align-items: center; background: rgba(0,20,0,0.8); cursor: pointer; }
-        .key:active { background: var(--neon); color: #000; }
+        .key { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--neon); font-size: 2rem; display: flex; justify-content: center; align-items: center; background: rgba(0,20,0,0.8); cursor: pointer; transition: 0.1s; }
+        .key:active { background: var(--neon); color: #000; transform: scale(0.95); }
         
-        #qr-container { margin-top: 30px; padding: 10px; background: #fff; border: 2px solid var(--neon); display: none; } /* Hidden by default, show on toggle */
+        #qr-container { margin-top: 30px; padding: 10px; background: #fff; border: 2px solid var(--neon); display: none; }
 
         /* MAIN INTERFACE */
         #ui { display: none; flex-direction: column; height: 100%; }
@@ -55,6 +55,9 @@
         .msg { margin-bottom: 8px; padding: 8px; border-radius: 4px; }
         .msg.user { text-align: right; color: #ccf; border-right: 2px solid var(--cyan); background: rgba(0,50,50,0.3); }
         .msg.sys { text-align: left; color: #cfc; border-left: 2px solid var(--neon); background: rgba(0,50,0,0.3); }
+        
+        input[type="text"] { width: 70%; padding: 15px; background: #111; border: 1px solid var(--neon); color: #fff; margin-bottom: 10px; box-sizing: border-box; }
+        .send-btn { width: 25%; padding: 15px; background: var(--cyan); color: #000; border: none; font-weight: bold; cursor: pointer; }
 
         /* NAV */
         nav { position: fixed; bottom: 0; width: 100%; height: 80px; background: #000; border-top: 2px solid var(--neon); display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
@@ -65,7 +68,6 @@
         /* MODAL */
         #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 6000; display: none; align-items: center; justify-content: center; }
         .modal-box { width: 85%; max-width: 400px; background: #050505; border: 1px solid var(--cyan); padding: 20px; text-align: center; border-radius: 10px; }
-        input[type="text"] { width: 100%; padding: 10px; background: #111; border: 1px solid var(--neon); color: #fff; margin-bottom: 10px; box-sizing: border-box; }
 
     </style>
 </head>
@@ -111,9 +113,9 @@
                     <div id="chat-feed">
                         <div class="msg sys">SYSTEM ONLINE. HOW CAN I ASSIST, SOVEREIGN?</div>
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between;">
                         <input type="text" id="agent-input" placeholder="Type command...">
-                        <button class="btn" style="margin: 0; width: auto;" onclick="sendAgent()">SEND</button>
+                        <button class="send-btn" onclick="sendAgent()">SEND</button>
                     </div>
                 </div>
             </div>
@@ -255,7 +257,6 @@
         function speak(text) {
             if('speechSynthesis' in window) {
                 const u = new SpeechSynthesisUtterance(text);
-                // Try to find a female voice
                 const voices = speechSynthesis.getVoices();
                 const female = voices.find(v => v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Google US English'));
                 if(female) u.voice = female;
@@ -267,12 +268,10 @@
             const txt = document.getElementById('agent-input').value;
             if(!txt) return;
             
-            // User Msg
             const d = document.createElement('div'); d.className = 'msg user'; d.innerText = txt;
             document.getElementById('chat-feed').appendChild(d);
             document.getElementById('agent-input').value = "";
             
-            // Agent Response (Simulated Intelligence)
             setTimeout(() => {
                 let reply = "Processing request...";
                 if(txt.toLowerCase().includes("transfer")) reply = "I can initiate a transfer in the Banking tab.";
@@ -305,4 +304,5 @@
     </script>
 </body>
 </html>
+
 
