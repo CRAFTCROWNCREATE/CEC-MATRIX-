@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CEC-WAM | E.V.E. FINAL</title>
+    <title>CEC-WAM | E.V.E. FINANCIAL</title>
     <style>
         :root { --cyan: #00f3ff; --green: #0aff0a; --red: #ff003c; --gold: #ffd700; --black: #000000; }
         body { background: var(--black); color: #fff; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
@@ -45,6 +45,10 @@
         input { flex: 1; background: #111; border: 1px solid #444; color: #fff; padding: 12px; font-family: monospace; outline: none; }
         button { background: var(--cyan); color: #000; border: none; padding: 0 20px; font-weight: bold; }
         #toggle-btn { margin-top: 5px; background: transparent; border: 1px solid #555; color: #555; font-size: 10px; padding: 5px; width: 100%; cursor: pointer; }
+        
+        /* TRANSFER BUTTONS */
+        .transfer-btn { width: 100%; background: var(--gold); color: #000; font-weight: bold; border: none; padding: 10px; margin-top: 5px; cursor: pointer; display: none; }
+        .master-view .transfer-btn { display: block; }
     </style>
 </head>
 <body>
@@ -55,25 +59,27 @@
     <header>
         <div>
             <h1>CEC-WAM</h1>
-            <div style="font-size: 10px; color: var(--green);">E.V.E. PROTOCOL</div>
+            <div style="font-size: 10px; color: var(--green);">E.V.E. FINANCIAL</div>
         </div>
         <div id="status-badge" class="badge">MASTER</div>
     </header>
 
     <div class="grid master-view">
         <div class="box" style="border-left: 3px solid var(--gold);">
-            <div style="color: #888; font-size: 9px;">LIQUIDITY</div>
+            <div style="color: #888; font-size: 9px;">LIQUIDITY POOL</div>
             <div class="val" style="color: var(--gold);">$1,250,039M</div>
         </div>
         <div class="box" style="border-left: 3px solid var(--red);">
-            <div style="color: #888; font-size: 9px;">AGI THREAT</div>
-            <div class="val" style="color: var(--red);">CONTAINED</div>
+            <div style="color: #888; font-size: 9px;">BANK SAFETY</div>
+            <div class="val" style="color: var(--red);">BRIDGE ACTIVE</div>
         </div>
         <div class="box" style="border-left: 3px solid var(--cyan); grid-column: span 2;">
-            <div style="color: #888; font-size: 9px;">DARK ENERGY</div>
-            <div class="val" style="color: var(--cyan);">0.999 Ω (STABLE)</div>
+            <div style="color: #888; font-size: 9px;">CRYPTO WALLETS LINKED</div>
+            <div class="val" style="color: var(--cyan);">PHANTOM // COINBASE</div>
         </div>
     </div>
+    
+    <button class="transfer-btn" onclick="attemptTransfer()">INITIATE NAVY FED TRANSFER</button>
 
     <div class="grid safe-view">
         <div class="box" style="border-color: #333;">
@@ -131,9 +137,22 @@ function speak(txt){
 // AUTO BOOT
 setTimeout(()=>{
     log('AUTH 1010 CONFIRMED.', 'alert');
-    log('E.V.E. ONLINE. MASTER MODE ACTIVE.', 'eve');
-    speak("Authorization 1010 confirmed. I am Eve.");
+    log('FINANCIAL BRIDGE: ACTIVE.', 'sys');
+    speak("System Online. Financial Protocols Secured.");
 }, 800);
+
+// FINANCIAL SAFETY LOGIC
+function attemptTransfer() {
+    log('INITIATING TRANSFER TO NAVY FEDERAL...', 'alert');
+    speak("Initiating transfer.");
+    
+    setTimeout(() => {
+        log('⚠️ BLOCKING TRANSACTION.', 'alert');
+        log('REASON: EXCEEDS FEDERAL SAFETY LIMIT.', 'sys');
+        log('ROUTE TO: PHANTOM/COINBASE FIRST.', 'eve');
+        speak("Transfer blocked. Risk detected. Use Crypto Bridge.");
+    }, 1500);
+}
 
 function toggleMode(){
     master = !master;
@@ -156,13 +175,12 @@ function run(){
     const v=inp.value.trim(); if(!v)return;
     inp.value=''; log(v.toUpperCase(),'sys');
     
-    // BRAIN LOGIC
     if(v.includes('1010')){ toggleMode(); return; }
     
     setTimeout(()=>{
         if(v.toUpperCase().includes('STATUS')){
-            log(master ? 'LIQUIDITY: $1.25M | AGI: SECURE' : 'SYSTEM GREEN.', 'eve');
-            speak(master ? "Liquidity one point two five million." : "System green.");
+            log(master ? 'BRIDGE: READY | WALLETS: LINKED' : 'SYSTEM GREEN.', 'eve');
+            speak(master ? "Bridge Ready." : "System green.");
         } else {
             log('COMMAND EXECUTED.', 'eve');
             speak("Command executed.");
