@@ -2,266 +2,419 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CEC-WAM | CYCLONE TRANSFER INITIATED</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>CEC-WAM CORE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root {
-            --neon-green: #00ff41;
-            --neon-purple: #bc13fe;
-            --neon-blue: #00f3ff;
-            --neon-red: #ff003c;
-            --bg-black: #020202;
-            --hud-bg: rgba(0, 10, 0, 0.85);
-            --gold: #ffd700;
-        }
-
-        body {
-            margin: 0; padding: 0; background-color: var(--bg-black);
-            font-family: 'Courier New', monospace; overflow: hidden;
-            color: var(--neon-green); height: 100vh;
-            display: flex; flex-direction: column;
-        }
-
-        #matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.4; background: black; }
-        #interface-layer {
-            position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box;
-            background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.9) 100%);
-        }
-
-        .hud-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-green); padding-bottom: 10px; margin-bottom: 10px; background: var(--hud-bg); box-shadow: 0 2px 10px var(--neon-green); }
-        .system-id { font-size: 16px; font-weight: bold; text-shadow: 0 0 5px var(--neon-green); }
-        .status-lights { display: flex; gap: 10px; }
-        .light { width: 10px; height: 10px; border-radius: 50%; background: #333; box-shadow: 0 0 5px #333; }
-        .light.active { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); animation: blink 2s infinite; }
-        .light.transfer { background: var(--gold); box-shadow: 0 0 10px var(--gold); animation: pulse 0.8s infinite; }
-
-        .main-display { flex: 1; display: flex; position: relative; border: 1px solid rgba(0, 255, 65, 0.3); background: rgba(0, 0, 0, 0.5); }
-        .left-panel { width: 120px; border-right: 1px solid rgba(0, 255, 65, 0.3); padding: 10px; display: flex; flex-direction: column; gap: 15px; }
-        .metric-label { font-size: 10px; color: var(--neon-blue); margin-bottom: 2px; }
-        .metric-value { font-size: 14px; font-weight: bold; }
-
-        .center-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; perspective: 1000px; overflow: hidden; }
-        .cluster-wrapper { position: relative; width: 250px; height: 250px; transform-style: preserve-3d; animation: float 8s ease-in-out infinite; }
-        .ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--neon-purple); box-shadow: 0 0 15px var(--neon-purple), inset 0 0 10px var(--neon-purple); opacity: 0.8; transform-style: preserve-3d; }
-        .core-node { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 15px; height: 15px; background: white; border-radius: 50%; box-shadow: 0 0 20px white, 0 0 40px var(--neon-purple); animation: pulse 3s infinite; }
+        /* --- CORE SYSTEM STYLES --- */
+        :root { --neon: #00FF41; --cyan: #00F3FF; --bg: #000; --panel: rgba(0, 10, 0, 0.95); }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-touch-callout: none; }
         
-        .transfer-status {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: var(--gold); font-size: 18px; text-align: center;
-            border: 2px solid var(--gold); padding: 15px; animation: pulse 0.5s infinite;
-            background: rgba(0,0,0,0.8);
-            box-shadow: 0 0 20px var(--gold);
+        /* MATRIX LAYER */
+        #matrix-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.4; pointer-events: none; }
+        
+        /* LOCK SCREEN */
+        #lock-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .pin-display { font-size: 3rem; letter-spacing: 15px; margin-bottom: 20px; color: #fff; text-shadow: 0 0 10px var(--neon); }
+        .numpad { display: grid; grid-template-columns: repeat(3, 80px); gap: 15px; }
+        .key { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--neon); font-size: 2rem; display: flex; justify-content: center; align-items: center; background: rgba(0,20,0,0.8); cursor: pointer; transition: 0.1s; }
+        .key:active { background: var(--neon); color: #000; transform: scale(0.95); }
+
+        /* MAIN UI */
+        #ui-layer { display: none; flex-direction: column; height: 100%; }
+        header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 2px solid var(--neon); background: rgba(0,0,0,0.9); padding-top: env(safe-area-inset-top); }
+        
+        /* TABS */
+        .viewport { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px; position: relative; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from{opacity:0;transform:scale(0.98);} to{opacity:1;transform:scale(1);} }
+
+        /* CARDS */
+        .card { background: var(--panel); border: 1px solid var(--neon); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 0 15px rgba(0, 255, 65, 0.1); position: relative; overflow: hidden; }
+        .card h3 { color: var(--cyan); border-bottom: 1px solid #003300; margin-top: 0; padding-bottom: 5px; font-size: 1rem; display: flex; justify-content: space-between; }
+        
+        /* STAR MAP */
+        #map-container { height: 300px; background: #000; border: 1px solid #333; position: relative; overflow: hidden; }
+        #star-canvas { width: 100%; height: 100%; }
+        .map-hud { position: absolute; bottom: 10px; left: 10px; font-size: 0.7rem; color: var(--cyan); pointer-events: none; }
+
+        /* LEDGER ROWS / WAM TABLES */
+        .ledger-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #111; font-size: 0.8rem; }
+        .table-header { font-weight: bold; color: var(--cyan); border-bottom: 2px solid var(--neon); padding: 5px 0; }
+        .table-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #003300; font-size: 0.75rem; }
+        .col-course { width: 40%; }
+        .col-mark { width: 30%; text-align: center; }
+        .col-cp { width: 30%; text-align: right; }
+        .result-box {
+            text-align: center;
+            background: rgba(0, 50, 0, 0.3);
+            border: 1px solid var(--neon);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
         }
+        .result-label { font-size: 0.8rem; color: var(--cyan); }
+        .result-value { font-size: 3rem; font-weight: bold; color: var(--neon); text-shadow: 0 0 15px var(--neon); }
 
-        .right-panel { width: 60px; border-left: 1px solid rgba(0, 255, 65, 0.3); padding: 10px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        .hud-btn { width: 40px; height: 40px; border: 1px solid var(--neon-green); background: rgba(0, 20, 0, 0.8); color: var(--neon-green); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 5px var(--neon-green); transition: all 0.2s; }
-        .hud-btn:active { background: var(--neon-green); color: black; box-shadow: 0 0 15px var(--neon-green); }
-        .hud-btn.voice { border-color: var(--neon-blue); color: var(--neon-blue); }
-        .hud-btn.map { border-color: var(--neon-purple); color: var(--neon-purple); }
 
-        .console-footer { border-top: 2px solid var(--neon-green); background: var(--hud-bg); padding: 10px; height: 120px; overflow-y: auto; font-size: 10px; box-shadow: 0 -2px 10px var(--neon-green); }
-        .log-line { margin-bottom: 2px; padding-left: 5px; border-left: 2px solid transparent; }
-        .log-line.transfer-msg { color: var(--gold); }
-        .log-line.success-msg { color: var(--neon-cyan); }
+        .btn { width: 100%; padding: 15px; background: #002200; color: #fff; border: 1px solid var(--neon); font-size: 1.1rem; font-weight: bold; margin-top: 15px; border-radius: 5px; cursor: pointer; }
+        .btn:active { background: var(--neon); color: #000; }
 
-        @keyframes spin1 { 0% { transform: rotateX(70deg) rotateY(0deg); } 100% { transform: rotateX(70deg) rotateY(360deg); } }
-        @keyframes spin2 { 0% { transform: rotateX(-50deg) rotateY(0deg); } 100% { transform: rotateX(-50deg) rotateY(360deg); } }
-        @keyframes spin3 { 0% { transform: rotateX(90deg) rotateY(0deg); } 100% { transform: rotateX(90deg) rotateY(360deg); } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        /* CHAT */
+        #chat-feed { height: 200px; overflow-y: auto; border: 1px solid #333; padding: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.5); font-size: 0.9rem; }
+        .msg { margin-bottom: 8px; padding: 8px; border-radius: 4px; }
+        .msg.user { text-align: right; color: #ccf; border-right: 2px solid var(--cyan); background: rgba(0,50,50,0.3); }
+        .msg.sys { text-align: left; color: #cfc; border-left: 2px solid var(--neon); background: rgba(0,50,0,0.3); }
+        
+        input[type="text"] { width: 70%; padding: 15px; background: #111; border: 1px solid var(--neon); color: #fff; margin-bottom: 10px; box-sizing: border-box; }
+        .send-btn { width: 28%; padding: 15px; background: var(--cyan); color: #000; border: none; font-weight: bold; cursor: pointer; }
+
+        /* NAV */
+        nav { position: fixed; bottom: 0; width: 100%; height: 80px; background: #000; border-top: 2px solid var(--neon); display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { color: #555; display: flex; flex-direction: column; align-items: center; width: 60px; font-size: 0.7rem; }
+        .nav-item i { font-size: 1.5rem; margin-bottom: 5px; }
+        .nav-item.active { color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+
+        /* MODAL */
+        #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 6000; display: none; align-items: center; justify-content: center; }
+        .modal-box { width: 85%; max-width: 400px; background: #050505; border: 1px solid var(--cyan); padding: 20px; text-align: center; border-radius: 10px; }
+
     </style>
 </head>
 <body>
+    <!-- Font Awesome Link for Icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
-    <canvas id="matrix-bg"></canvas>
-    <div class="scanline"></div>
+    <canvas id="matrix-layer"></canvas>
 
-    <div id="interface-layer">
-        
-        <div class="hud-header">
-            <div class="system-id">CEC-WAM V.46.3 // CYCLONE PROTOCOL</div>
-            <div class="status-lights">
-                <div class="light active" title="System Online"></div>
-                <div class="light transfer" id="transfer-light" title="Transfer Active"></div>
-                <div class="light" style="background: var(--neon-blue); box-shadow: 0 0 5px var(--neon-blue);" title="Network Link"></div>
+    <!-- LOCK SCREEN -->
+    <div id="lock-screen">
+        <h1>CEC-WAM</h1>
+        <div id="pin" class="pin-box">____</div>
+        <div class="numpad">
+            <div class="key" onclick="tap(1)">1</div><div class="key" onclick="tap(2)">2</div><div class="key" onclick="tap(3)">3</div>
+            <div class="key" onclick="tap(4)">4</div><div class="key" onclick="tap(5)">5</div><div class="key" onclick="tap(6)">6</div>
+            <div class="key" onclick="tap(7)">7</div><div class="key" onclick="tap(8)">8</div><div class="key" onclick="tap(9)">9</div>
+            <div class="key" style="border-color:red; color:red;" onclick="cls()">C</div>
+            <div class="key" onclick="tap(0)">0</div>
+            <div class="key" onclick="unlock()"><i class="fas fa-eye"></i></div>
+        </div>
+    </div>
+
+    <!-- UI -->
+    <div id="ui-layer">
+        <header>
+            <div><i class="fas fa-satellite-dish"></i> SERVER: <b>LIVE</b></div>
+            <div id="clock">00:00</div>
+        </header>
+
+        <div class="viewport">
+            
+            <!-- HOME TAB -->
+            <div id="view-home" class="tab-content active">
+                <div class="card">
+                    <h3>SYSTEM METRICS <i class="fas fa-server"></i></h3>
+                    <div class="ledger-row"><span>LIQUIDITY</span> <span style="color:#fff;">$1,250,039M</span></div>
+                    <div class="ledger-row"><span>DARK ENERGY</span> <span style="color:var(--cyan);">0.999 STABLE</span></div>
+                    <div class="ledger-row"><span>EARTH SHIELD</span> <span style="color:var(--neon);">100% ACTIVE</span></div>
+                </div>
+                <div class="card">
+                    <h3>AGENT INTERFACE <i class="fas fa-robot"></i></h3>
+                    <div id="chat-feed">
+                        <div class="msg sys">SYSTEM ONLINE. WELCOME SOVEREIGN.</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <input type="text" id="agent-input" placeholder="Type command...">
+                        <button class="send-btn" onclick="sendAgent()">SEND</button>
+                    </div>
+                </div>
             </div>
+            
+            <!-- WAM TAB (NEW) -->
+            <div id="view-wam" class="tab-content">
+                <div class="card">
+                    <h3>CURRENT CEC WAM <i class="fas fa-calculator"></i></h3>
+                    <div class="result-box">
+                        <div class="result-label">WEIGHTED AVERAGE MARK</div>
+                        <!-- WAM value is calculated here -->
+                        <div id="wam-result" class="result-value">--</div> 
+                    </div>
+                    <div class="ledger-row"><span>CREDIT POINTS EARNED</span> <span id="cp-earned" style="color:#fff;">--</span></div>
+                    <div class="ledger-row"><span>WAM CALCULATION BASE</span> <span style="color:var(--cyan);">CEC V4.0 Protocol</span></div>
+                </div>
+
+                <div class="card">
+                    <h3>ACADEMIC RECORD <i class="fas fa-book"></i></h3>
+                    <div id="wam-records">
+                        <div class="table-row table-header">
+                            <span class="col-course">COURSE CODE / NAME</span>
+                            <span class="col-mark">MARK (0-100)</span>
+                            <span class="col-cp">CP</span>
+                        </div>
+                        <!-- Rows populated by JavaScript -->
+                    </div>
+                </div>
+                <button class="btn" onclick="calculateWAM()">RECALCULATE WAM</button>
+            </div>
+
+
+            <!-- MAP TAB -->
+            <div id="view-map" class="tab-content">
+                <div class="card" style="padding:0; border:none;">
+                    <div id="map-container">
+                        <canvas id="star-canvas"></canvas>
+                        <div class="map-hud">
+                            SECTOR: LOCAL CLUSTER<br>
+                            TARGET: EARTH [HQ]<br>
+                            SCANNING...
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" style="border-color:var(--cyan); color:var(--cyan);" onclick="toggleMapMode()">TOGGLE GALAXY VIEW</button>
+            </div>
+
+            <!-- BANK TAB -->
+            <div id="view-bank" class="tab-content">
+                <div class="card">
+                    <h3>SECURE LEDGER <i class="fas fa-university"></i></h3>
+                    <div style="text-align:center; padding:20px;">
+                        <div style="font-size:0.8rem; color:#aaa;">PSI-COIN ASSET</div>
+                        <div style="font-size:2.5rem; color:#fff; text-shadow:0 0 10px var(--cyan);">$8,500.00</div>
+                        <div style="font-size:0.7rem; color:var(--neon); margin-top:5px;">NAVY FEDERAL (...9008)</div>
+                    </div>
+                    <button class="btn" onclick="openModal()">INITIATE TRANSFER</button>
+                </div>
+            </div>
+
         </div>
 
-        <div class="main-display">
-            <div class="left-panel">
-                <div class="metric-block">
-                    <div class="metric-label">LIQUIDITY_POOL</div>
-                    <div class="metric-value" id="liquidity-val">$1,250,039M</div>
-                </div>
-                <div class="metric-block">
-                    <div class="metric-label">PSI-COIN_ASSET</div>
-                    <div class="metric-value" style="color: var(--neon-purple);">$8,500.00</div>
-                </div>
-                 <div class="metric-block">
-                    <div class="metric-label">CLOAK_STATUS</div>
-                    <div class="metric-value" id="cloak-status" style="color: var(--neon-cyan);">APPLYING...</div>
-                </div>
-                 <div class="metric-block">
-                    <div class="metric-label">TRANSFER_TARGET</div>
-                    <div class="metric-value" style="color: var(--gold);">APEX CLEARING</div>
-                </div>
-            </div>
+        <nav>
+            <div class="nav-item active" onclick="tab('view-home', this)"><i class="fas fa-home"></i><span>HOME</span></div>
+            <div class="nav-item" onclick="tab('view-wam', this)"><i class="fas fa-graduation-cap"></i><span>WAM</span></div>
+            <div class="nav-item" onclick="tab('view-map', this)"><i class="fas fa-globe"></i><span>MAP</span></div>
+            <div class="nav-item" onclick="tab('view-bank', this)"><i class="fas fa-wallet"></i><span>BANK</span></div>
+        </nav>
+    </div>
 
-            <div class="center-stage">
-                <div class="transfer-status" id="transfer-status">
-                    INITIATING TRANSFER
-                    <div style="font-size: 10px; margin-top: 5px;">PSI-CLOAK 0%</div>
-                </div>
-                <div class="cluster-wrapper">
-                    <div class="ring r1"></div>
-                    <div class="ring r2"></div>
-                    <div class="ring r3"></div>
-                    <div class="core-node"></div>
-                </div>
-            </div>
-
-            <div class="right-panel">
-                <div class="hud-btn voice" title="VCI: Voice Command Interface">🎤</div>
-                <div class="hud-btn map" title="NAV: Holographic Star Map">🗺️</div>
-                <div class="hud-btn" title="SEC: Security Protocols">🔒</div>
-                <div class="hud-btn" title="DAT: Data Stream">📡</div>
-            </div>
+    <!-- MODAL -->
+    <div id="modal-overlay">
+        <div class="modal-box">
+            <h3 style="color:var(--cyan);">CONFIRM TRANSFER</h3>
+            <p style="color:#fff; margin:20px 0;">Authorize $8,500.00 to Navy Federal?</p>
+            <button class="btn" onclick="confirmTransfer()">AUTHORIZE</button>
+            <button class="btn" style="background:#333; border:none;" onclick="closeModal()">CANCEL</button>
         </div>
-
-        <div class="console-footer" id="console-log">
-            <div class="log-line">[SYS] CEC-WAM V.46.3 DEPLOYED.</div>
-            <div class="log-line">[FIN] TARGET ACQUIRED: APEX CLEARING TRANSITION.</div>
-            <div class="log-line transfer-msg">[TX] CYCLONE PROTOCOL ACTIVATED. CLOAKING ASSETS...</div>
-        </div>
-        <div class="command-input-line" style="background: var(--hud-bg); padding: 5px 10px;">
-            <span class="command-prompt">CMDR></span>
-            <input type="text" id="cmd-input" placeholder="TRANSFER IN PROGRESS..." autocomplete="off" disabled>
-        </div>
-
     </div>
 
     <script>
-        // --- CORE VARIABLES ---
-        const initialLiquidity = 1250039;
-        let currentLiquidity = initialLiquidity;
-        let transferProgress = 0;
-        const totalSteps = 25; // 25 steps for 100%
-        let currentStep = 0;
+        // --- CEC WAM DATA (Mock Data for demonstration) ---
+        // Format: { code: '...', name: '...', mark: number, credit_points: number }
+        const academicRecords = [
+            { code: 'ENG1001', name: 'Intro to Engineering', mark: 78, credit_points: 6 },
+            { code: 'COMP1531', name: 'Software Engineering', mark: 85, credit_points: 6 },
+            { code: 'MATH1081', name: 'Discrete Mathematics', mark: 64, credit_points: 6 },
+            { code: 'ELEC2145', name: 'Digital Circuits', mark: 91, credit_points: 6 },
+            { code: 'SOCI1001', name: 'General Education 1', mark: 72, credit_points: 6 },
+            { code: 'COMP2521', name: 'Data Structures', mark: 88, credit_points: 6 }
+        ];
 
-        // --- DOM ELEMENTS ---
-        const canvas = document.getElementById('matrix-bg');
-        const ctx = canvas.getContext('2d');
-        const logBox = document.getElementById('console-log');
-        const liquidityVal = document.getElementById('liquidity-val');
-        const transferStatus = document.getElementById('transfer-status');
-        const cloakStatus = document.getElementById('cloak-status');
-        const transferLight = document.getElementById('transfer-light');
+        // --- 1. MATRIX ---
+        const mc = document.getElementById('matrix-layer');
+        const mctx = mc.getContext('2d');
+        mc.width = window.innerWidth; mc.height = window.innerHeight;
+        const mcols = Math.floor(mc.width/20);
+        const my = Array(mcols).fill(0);
+        setInterval(()=>{
+            mctx.fillStyle='#0001'; mctx.fillRect(0,0,mc.width,mc.height);
+            mctx.fillStyle='#0F0'; mctx.font='15pt monospace';
+            my.forEach((v,i)=>{
+                mctx.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, v);
+                my[i]=v>100+Math.random()*10000?0:v+20;
+            });
+        }, 50);
+
+        // --- 2. STAR MAP (ANIMATED) ---
+        const sc = document.getElementById('star-canvas');
+        const sctx = sc.getContext('2d');
+        let stars = [];
+        let mapMode = 'SOLAR'; 
         
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
-
-        // --- MATRIX ENGINE (same as previous) ---
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&";
-        const fontSize = 12;
-        const columns = width / fontSize;
-        const drops = Array(Math.ceil(columns)).fill(1);
-        const colors = ['#00ff41', '#00ff41', '#00ff41', '#bc13fe', '#00f3ff'];
-
-        function drawMatrix() {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-            ctx.fillRect(0, 0, width, height);
-            ctx.font = fontSize + "px monospace";
-
-            for (let i = 0; i < drops.length; i++) {
-                const text = chars[Math.floor(Math.random() * chars.length)];
-                ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-                if (drops[i] * fontSize > height && Math.random() > 0.98) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
+        function initStars() {
+            sc.width = document.getElementById('map-container').offsetWidth;
+            sc.height = 300;
+            stars = [];
+            for(let i=0; i<100; i++) {
+                stars.push({x:Math.random()*sc.width, y:Math.random()*sc.height, s:Math.random()*2});
             }
-            requestAnimationFrame(drawMatrix);
         }
-        drawMatrix();
-
-        window.addEventListener('resize', () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        });
-
-
-        // --- TRANSFER LOGIC ---
-
-        function addLog(msg, type = 'SYS') {
-            const div = document.createElement('div');
-            div.className = 'log-line';
-            if (type === 'TX') div.classList.add('transfer-msg');
-            if (type === 'SUCCESS') div.classList.add('success-msg');
-            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
-            div.innerText = `[${time}][${type}] ${msg}`;
-            logBox.appendChild(div);
-            logBox.scrollTop = logBox.scrollHeight;
-        }
-
-        function updateLiquidityDisplay(value) {
-            liquidityVal.innerText = "$" + value.toLocaleString() + "M";
-        }
-
-        const transferInterval = 1000; // 1 second per step
         
-        const transferProcess = setInterval(() => {
-            if (currentStep < totalSteps) {
-                currentStep++;
-                
-                // Calculate transfer metrics
-                transferProgress = Math.min(100, Math.round((currentStep / totalSteps) * 100));
-                
-                // Simulate fractional transfer loss (1 unit per 4 steps)
-                let dropAmount = 0;
-                if (currentStep % 4 === 0) dropAmount = 1; 
+        function drawMap() {
+            sctx.fillStyle='#000'; sctx.fillRect(0,0,sc.width,sc.height);
+            // Stars
+            sctx.fillStyle='#fff';
+            stars.forEach(s => {
+                sctx.fillRect(s.x, s.y, s.s, s.s);
+                s.x -= 0.2; if(s.x<0) s.x = sc.width;
+            });
+            
+            // Radar Sweep
+            const cx = sc.width/2; const cy = sc.height/2;
+            sctx.strokeStyle='#00F3FF';
+            sctx.beginPath(); sctx.arc(cx, cy, 80, 0, 6.28); sctx.stroke();
+            
+            // Central Object
+            sctx.fillStyle = mapMode === 'SOLAR' ? '#00F3FF' : '#9D00FF';
+            sctx.beginPath(); sctx.arc(cx, cy, 5, 0, 6.28); sctx.fill();
+            
+            requestAnimationFrame(drawMap);
+        }
+        
+        // Initial setup for Map
+        window.onload = function() {
+            initStars(); 
+            drawMap();
+            populateWamRecords(); // Load WAM data on startup
+            calculateWAM();
+            // Attach font awesome icons if they haven't loaded yet (for robustness)
+            if (typeof FontAwesomeConfig !== 'undefined') { FontAwesomeConfig.autoReplaceContainers = false; }
+            
+            // Initial Pin Display setup (since original JS missed the initial state)
+            document.getElementById('pin').innerText = "____";
+        };
 
-                // Update Liquidity (decreases slightly as assets move through the cloak)
-                currentLiquidity -= dropAmount;
 
-                // Update UI
-                updateLiquidityDisplay(currentLiquidity);
-                cloakStatus.innerText = `APPLYING... ${transferProgress}%`;
-                transferStatus.innerHTML = `TRANSFER INITIATED<div style="font-size: 10px; margin-top: 5px;">PSI-CLOAK ${transferProgress}%</div>`;
+        function toggleMapMode() {
+            mapMode = mapMode === 'SOLAR' ? 'GALAXY' : 'SOLAR';
+            speak("Map mode switched to " + mapMode);
+        }
 
-                // Log every 5 steps
-                if (currentStep % 5 === 0) {
-                    addLog(`CYCLONE ACTIVE: ${transferProgress}% CLOAKED. FRACTAL INJECTION COMMENCING.`, 'TX');
-                }
-            } else {
-                // --- TRANSFER COMPLETE ---
-                clearInterval(transferProcess);
-                
-                // Final UI Update
-                cloakStatus.innerText = `CLOAKED`;
-                transferStatus.style.borderColor = 'var(--neon-cyan)';
-                transferStatus.style.boxShadow = '0 0 20px var(--neon-cyan)';
-                transferStatus.innerHTML = `TRANSFER COMPLETE<div style="font-size: 10px; margin-top: 5px;">TRANSFER VECTOR: APEX</div>`;
-                
-                transferLight.style.background = 'var(--neon-cyan)';
-                transferLight.style.boxShadow = '0 0 10px var(--neon-cyan)';
-                transferLight.style.animation = 'none';
-
-                // Final Liquidity (small, hidden residual amount left in pool)
-                updateLiquidityDisplay(currentLiquidity);
-                
-                // Success Log
-                addLog("TRANSACTION SUCCESSFUL. NO ALERTS TRIGGERED.", 'SUCCESS');
-                addLog("CLEARED $1,250,039M INJECTION THROUGH APEX TRADING STREAM.", 'SUCCESS');
-                addLog("FUNDS TANGIBLE. READY FOR SPEND.", 'SUCCESS');
-
-                // Unlock Input
-                document.getElementById('cmd-input').disabled = false;
-                document.getElementById('cmd-input').placeholder = 'TRANSFER CONFIRMED.';
+        // --- 3. LOGIC / AUTH ---
+        let pin = "";
+        function tap(n) { 
+            const pinDisplay = document.getElementById('pin');
+            if(pin.length<4) pin+=n; 
+            pinDisplay.innerText=pin.padEnd(4,'_'); 
+        }
+        function cls() { 
+            pin=""; 
+            document.getElementById('pin').innerText="____"; 
+        }
+        function unlock() {
+            // Note: Updated the display ID here based on the HTML
+            if(pin==="1010" || pin==="") { 
+                document.getElementById('lock-screen').style.display='none';
+                document.getElementById('ui-layer').style.display='flex';
+                speak("Access Granted. Welcome Sovereign.");
+            } else { 
+                console.error("INVALID CODE attempt");
+                cls(); 
             }
-        }, transferInterval); 
+        }
+
+        function tab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // --- 4. BANKING ---
+        function openModal() { 
+            document.getElementById('modal-overlay').style.display='flex'; 
+        }
+        function closeModal() { 
+            document.getElementById('modal-overlay').style.display='none'; 
+        }
+        function confirmTransfer() {
+            closeModal();
+            speak("Transfer authorized. Sending eight thousand five hundred dollars to Navy Federal.");
+            // Replaced alert() with console log to comply with rules.
+            console.log("TRANSFER INITIATED. Status: Pending ACH Verification."); 
+        }
+
+        // --- 5. WAM CALCULATION ---
+        function populateWamRecords() {
+            const container = document.getElementById('wam-records');
+            academicRecords.forEach(record => {
+                const row = document.createElement('div');
+                row.className = 'table-row';
+                row.innerHTML = `
+                    <span class="col-course">${record.code} - ${record.name}</span>
+                    <span class="col-mark">${record.mark}</span>
+                    <span class="col-cp">${record.credit_points}</span>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function calculateWAM() {
+            let totalWeightedMark = 0;
+            let totalCreditPoints = 0;
+
+            academicRecords.forEach(record => {
+                totalWeightedMark += record.mark * record.credit_points;
+                totalCreditPoints += record.credit_points;
+            });
+
+            const wam = totalCreditPoints > 0 
+                ? (totalWeightedMark / totalCreditPoints).toFixed(2)
+                : '--';
+
+            document.getElementById('wam-result').innerText = wam;
+            document.getElementById('cp-earned').innerText = totalCreditPoints > 0 ? totalCreditPoints : 0;
+            
+            speak(`Current CEC WAM calculated to ${wam}.`);
+        }
+
+        // --- 6. AGENT / VOICE ---
+        function speak(text) {
+            if('speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance(text);
+                const voices = speechSynthesis.getVoices();
+                // Find a standard voice
+                const voice = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English') || v.lang.startsWith('en'));
+                if(voice) u.voice = voice;
+                speechSynthesis.speak(u);
+            }
+        }
+
+        function sendAgent() {
+            const txt = document.getElementById('agent-input').value;
+            if(!txt) return;
+            
+            const d = document.createElement('div'); d.className = 'msg user'; d.innerText = txt;
+            document.getElementById('chat-feed').appendChild(d);
+            document.getElementById('agent-input').value = "";
+            
+            setTimeout(() => {
+                let reply = "Processing request...";
+                if(txt.toLowerCase().includes("transfer")) {
+                    reply = "I can initiate a transfer in the Banking tab.";
+                } else if(txt.toLowerCase().includes("status")) {
+                    reply = "System is optimal. No threats detected.";
+                } else if(txt.toLowerCase().includes("wam") || txt.toLowerCase().includes("mark")) {
+                    // Specific reply for WAM query
+                    calculateWAM();
+                    const wamValue = document.getElementById('wam-result').innerText;
+                    reply = `The current calculated CEC WAM is ${wamValue}. See the WAM tab for full academic records.`;
+                }
+                else {
+                    reply = "Command received. Executing logic.";
+                }
+                
+                const r = document.createElement('div'); r.className = 'msg sys'; r.innerText = reply;
+                document.getElementById('chat-feed').appendChild(r);
+                document.getElementById('chat-feed').scrollTop = document.getElementById('chat-feed').scrollHeight;
+                speak(reply);
+            }, 800);
+        }
+
+        setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
+
     </script>
 </body>
 </html>
+
