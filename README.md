@@ -1,5 +1,3 @@
-# CEC-MATRIX-
-CEC-WAM
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,8 +21,8 @@ CEC-WAM
         #lock { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .pin-box { font-size: 3rem; letter-spacing: 15px; margin-bottom: 20px; color: #fff; text-shadow: 0 0 10px var(--neon); }
         .numpad { display: grid; grid-template-columns: repeat(3, 80px); gap: 15px; }
-        .key { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--neon); font-size: 2rem; display: flex; justify-content: center; align-items: center; background: rgba(0,20,0,0.8); cursor: pointer; }
-        .key:active { background: var(--neon); color: #000; }
+        .key { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--neon); font-size: 2rem; display: flex; justify-content: center; align-items: center; background: rgba(0,20,0,0.8); cursor: pointer; transition: 0.1s; }
+        .key:active { background: var(--neon); color: #000; transform: scale(0.95); }
         
         #qr-container { margin-top: 30px; padding: 10px; background: #fff; border: 2px solid var(--neon); display: none; }
 
@@ -89,7 +87,7 @@ CEC-WAM
             <div class="key" onclick="tap(0)">0</div>
             <div class="key" onclick="unlock()"><i class="fas fa-eye"></i></div>
         </div>
-        <button onclick="toggleQR()" style="margin-top: 20px; background: transparent; border: 1px solid #555; color: #555; padding: 5px;">SHOW LINK QR</button>
+        <button onclick="toggleQR()" style="margin-top: 20px; background: transparent; border: 1px solid #555; color: #555; padding: 5px;">GENERATE QR ACCESS</button>
         <div id="qr-container"></div>
     </div>
 
@@ -108,12 +106,17 @@ CEC-WAM
                     <h3>SYSTEM METRICS <i class="fas fa-server"></i></h3>
                     <div class="ledger-row"><span>LIQUIDITY</span> <span style="color:#fff;">$1,250,039M</span></div>
                     <div class="ledger-row"><span>DARK ENERGY</span> <span style="color:var(--cyan);">0.999 STABLE</span></div>
-                    <div class="ledger-row"><span>THREAT LEVEL</span> <span style="color:var(--neon);">ZERO</span></div>
+                    <div class="ledger-row"><span>EARTH SHIELD</span> <span style="color:var(--neon);">ACTIVE (100%)</span></div>
+                </div>
+                <div class="card">
+                    <h3>EXTERNAL LINKS</h3>
+                    <button class="btn" style="margin-top:5px; border-color:#fff;" onclick="window.open('https://drive.google.com')"><i class="fab fa-google-drive"></i> ACCESS DRIVE</button>
+                    <button class="btn" style="margin-top:5px; border-color:#fff;" onclick="window.open('https://docs.google.com/spreadsheets')"><i class="fas fa-table"></i> ACCESS SHEETS</button>
                 </div>
                 <div class="card">
                     <h3>AGENT INTERFACE <i class="fas fa-robot"></i></h3>
                     <div id="chat-feed">
-                        <div class="msg sys">SYSTEM ONLINE. HOW CAN I ASSIST, SOVEREIGN?</div>
+                        <div class="msg sys">SYSTEM ONLINE. WELCOME SOVEREIGN.</div>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
                         <input type="text" id="agent-input" placeholder="Type command...">
@@ -224,7 +227,7 @@ CEC-WAM
 
         function toggleMapMode() {
             mapMode = mapMode === 'SOLAR' ? 'GALAXY' : 'SOLAR';
-            speak("Map mode switched to " + mapMode);
+            speak("Displaying " + mapMode + " Sector.");
         }
 
         // --- 3. LOGIC ---
@@ -251,7 +254,7 @@ CEC-WAM
         function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
         function confirmTransfer() {
             closeModal();
-            speak("Transfer authorized. Sending eight thousand five hundred dollars to Navy Federal.");
+            speak("Transfer authorized. Sending funds to Navy Federal.");
             alert("TRANSFER INITIATED.\n\nStatus: Pending ACH Verification.");
         }
 
