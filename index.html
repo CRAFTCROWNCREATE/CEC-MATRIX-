@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CEC-WAM | V.46.2 BATTLE STATION</title>
+    <title>CEC-WAM | CYCLONE TRANSFER INITIATED</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -12,204 +12,64 @@
             --neon-red: #ff003c;
             --bg-black: #020202;
             --hud-bg: rgba(0, 10, 0, 0.85);
+            --gold: #ffd700;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-black);
-            font-family: 'Courier New', monospace;
-            overflow: hidden;
-            color: var(--neon-green);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+            margin: 0; padding: 0; background-color: var(--bg-black);
+            font-family: 'Courier New', monospace; overflow: hidden;
+            color: var(--neon-green); height: 100vh;
+            display: flex; flex-direction: column;
         }
 
-        /* --- MATRIX BACKGROUND UPGRADE --- */
-        #matrix-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.4; /* Darker for better contrast */
-            background: black;
-        }
-
-        /* --- HUD INTERFACE --- */
+        #matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.4; background: black; }
         #interface-layer {
-            position: relative;
-            z-index: 10;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-            box-sizing: border-box;
+            position: relative; z-index: 10; flex: 1; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box;
             background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.9) 100%);
         }
 
-        /* --- HEADER --- */
-        .hud-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--neon-green);
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-            background: var(--hud-bg);
-            box-shadow: 0 2px 10px var(--neon-green);
-        }
-
-        .system-id {
-            font-size: 16px;
-            font-weight: bold;
-            text-shadow: 0 0 5px var(--neon-green);
-        }
-
-        .status-lights {
-            display: flex;
-            gap: 10px;
-        }
-        .light {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #333;
-            box-shadow: 0 0 5px #333;
-        }
+        .hud-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-green); padding-bottom: 10px; margin-bottom: 10px; background: var(--hud-bg); box-shadow: 0 2px 10px var(--neon-green); }
+        .system-id { font-size: 16px; font-weight: bold; text-shadow: 0 0 5px var(--neon-green); }
+        .status-lights { display: flex; gap: 10px; }
+        .light { width: 10px; height: 10px; border-radius: 50%; background: #333; box-shadow: 0 0 5px #333; }
         .light.active { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); animation: blink 2s infinite; }
-        .light.alert { background: var(--neon-red); box-shadow: 0 0 10px var(--neon-red); animation: blink 0.5s infinite; }
+        .light.transfer { background: var(--gold); box-shadow: 0 0 10px var(--gold); animation: pulse 0.8s infinite; }
 
-        /* --- MAIN DISPLAY AREA --- */
-        .main-display {
-            flex: 1;
-            display: flex;
-            position: relative;
-            border: 1px solid rgba(0, 255, 65, 0.3);
-            background: rgba(0, 0, 0, 0.5);
-        }
+        .main-display { flex: 1; display: flex; position: relative; border: 1px solid rgba(0, 255, 65, 0.3); background: rgba(0, 0, 0, 0.5); }
+        .left-panel { width: 120px; border-right: 1px solid rgba(0, 255, 65, 0.3); padding: 10px; display: flex; flex-direction: column; gap: 15px; }
+        .metric-label { font-size: 10px; color: var(--neon-blue); margin-bottom: 2px; }
+        .metric-value { font-size: 14px; font-weight: bold; }
 
-        /* --- LEFT PANEL (METRICS) --- */
-        .left-panel {
-            width: 120px;
-            border-right: 1px solid rgba(0, 255, 65, 0.3);
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .metric-block {
-            text-align: left;
-        }
-        .metric-label {
-            font-size: 10px;
-            color: var(--neon-blue);
-            margin-bottom: 2px;
-        }
-        .metric-value {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        /* --- CENTER STAGE (THERAPIST CLUSTER) --- */
-        .center-stage {
-            flex: 1;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            perspective: 1000px;
-            overflow: hidden;
-        }
+        .center-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; perspective: 1000px; overflow: hidden; }
+        .cluster-wrapper { position: relative; width: 250px; height: 250px; transform-style: preserve-3d; animation: float 8s ease-in-out infinite; }
+        .ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--neon-purple); box-shadow: 0 0 15px var(--neon-purple), inset 0 0 10px var(--neon-purple); opacity: 0.8; transform-style: preserve-3d; }
+        .core-node { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 15px; height: 15px; background: white; border-radius: 50%; box-shadow: 0 0 20px white, 0 0 40px var(--neon-purple); animation: pulse 3s infinite; }
         
-        .cluster-wrapper {
-            position: relative;
-            width: 250px;
-            height: 250px;
-            transform-style: preserve-3d;
-            animation: float 8s ease-in-out infinite;
-        }
-        .ring {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            border-radius: 50%;
-            border: 2px solid var(--neon-purple);
-            box-shadow: 0 0 15px var(--neon-purple), inset 0 0 10px var(--neon-purple);
-            opacity: 0.8;
-            transform-style: preserve-3d;
-        }
-        .ring.r1 { animation: spin1 15s linear infinite; }
-        .ring.r2 { width: 80%; height: 80%; top: 10%; left: 10%; border-color: var(--neon-blue); animation: spin2 12s linear infinite reverse; }
-        .ring.r3 { width: 60%; height: 60%; top: 20%; left: 20%; border-color: var(--neon-green); animation: spin3 10s linear infinite; }
-        .core-node {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 15px; height: 15px;
-            background: white; border-radius: 50%;
-            box-shadow: 0 0 20px white, 0 0 40px var(--neon-purple);
-            animation: pulse 3s infinite;
+        .transfer-status {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: var(--gold); font-size: 18px; text-align: center;
+            border: 2px solid var(--gold); padding: 15px; animation: pulse 0.5s infinite;
+            background: rgba(0,0,0,0.8);
+            box-shadow: 0 0 20px var(--gold);
         }
 
-        /* --- RIGHT PANEL (BUTTONS) --- */
-        .right-panel {
-            width: 60px;
-            border-left: 1px solid rgba(0, 255, 65, 0.3);
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-        }
-        .hud-btn {
-            width: 40px; height: 40px;
-            border: 1px solid var(--neon-green);
-            background: rgba(0, 20, 0, 0.8);
-            color: var(--neon-green);
-            font-size: 18px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 0 5px var(--neon-green);
-            transition: all 0.2s;
-        }
+        .right-panel { width: 60px; border-left: 1px solid rgba(0, 255, 65, 0.3); padding: 10px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        .hud-btn { width: 40px; height: 40px; border: 1px solid var(--neon-green); background: rgba(0, 20, 0, 0.8); color: var(--neon-green); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 5px var(--neon-green); transition: all 0.2s; }
         .hud-btn:active { background: var(--neon-green); color: black; box-shadow: 0 0 15px var(--neon-green); }
         .hud-btn.voice { border-color: var(--neon-blue); color: var(--neon-blue); }
-        .hud-btn.voice.listening { background: var(--neon-blue); color: black; animation: pulse 1s infinite; }
         .hud-btn.map { border-color: var(--neon-purple); color: var(--neon-purple); }
 
-        /* --- FOOTER CONSOLE --- */
-        .console-footer {
-            border-top: 2px solid var(--neon-green);
-            background: var(--hud-bg);
-            padding: 10px;
-            height: 120px;
-            overflow-y: auto;
-            font-size: 10px;
-            box-shadow: 0 -2px 10px var(--neon-green);
-        }
+        .console-footer { border-top: 2px solid var(--neon-green); background: var(--hud-bg); padding: 10px; height: 120px; overflow-y: auto; font-size: 10px; box-shadow: 0 -2px 10px var(--neon-green); }
         .log-line { margin-bottom: 2px; padding-left: 5px; border-left: 2px solid transparent; }
-        .log-line:last-child { border-left-color: var(--neon-green); animation: blink 1s infinite; }
-        .command-input-line { display: flex; margin-top: 5px; border-top: 1px dotted rgba(0,255,65,0.5); padding-top: 5px; }
-        .command-prompt { margin-right: 5px; }
-        #cmd-input {
-            flex: 1; background: transparent; border: none; color: var(--neon-green); font-family: 'Courier New', monospace; font-size: 12px; outline: none;
-        }
+        .log-line.transfer-msg { color: var(--gold); }
+        .log-line.success-msg { color: var(--neon-cyan); }
 
-        /* --- ANIMATIONS --- */
         @keyframes spin1 { 0% { transform: rotateX(70deg) rotateY(0deg); } 100% { transform: rotateX(70deg) rotateY(360deg); } }
         @keyframes spin2 { 0% { transform: rotateX(-50deg) rotateY(0deg); } 100% { transform: rotateX(-50deg) rotateY(360deg); } }
         @keyframes spin3 { 0% { transform: rotateX(90deg) rotateY(0deg); } 100% { transform: rotateX(90deg) rotateY(360deg); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-        @keyframes pulse { 0% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); } 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); } }
+        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        /* --- SCANLINE --- */
-        .scanline {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
-        }
     </style>
 </head>
 <body>
@@ -220,11 +80,11 @@
     <div id="interface-layer">
         
         <div class="hud-header">
-            <div class="system-id">CEC-WAM V.46.2 // COMMANDER_OVERRIDE</div>
+            <div class="system-id">CEC-WAM V.46.3 // CYCLONE PROTOCOL</div>
             <div class="status-lights">
                 <div class="light active" title="System Online"></div>
+                <div class="light transfer" id="transfer-light" title="Transfer Active"></div>
                 <div class="light" style="background: var(--neon-blue); box-shadow: 0 0 5px var(--neon-blue);" title="Network Link"></div>
-                <div class="light alert" title="Security Protocol"></div>
             </div>
         </div>
 
@@ -239,70 +99,82 @@
                     <div class="metric-value" style="color: var(--neon-purple);">$8,500.00</div>
                 </div>
                  <div class="metric-block">
-                    <div class="metric-label">5D_VECTOR_LOCK</div>
-                    <div class="metric-value" style="color: var(--neon-blue);">ENGAGED</div>
+                    <div class="metric-label">CLOAK_STATUS</div>
+                    <div class="metric-value" id="cloak-status" style="color: var(--neon-cyan);">APPLYING...</div>
                 </div>
                  <div class="metric-block">
-                    <div class="metric-label">THREAT_LEVEL</div>
-                    <div class="metric-value" style="color: var(--neon-green);">ZERO</div>
+                    <div class="metric-label">TRANSFER_TARGET</div>
+                    <div class="metric-value" style="color: var(--gold);">APEX CLEARING</div>
                 </div>
             </div>
 
             <div class="center-stage">
+                <div class="transfer-status" id="transfer-status">
+                    INITIATING TRANSFER
+                    <div style="font-size: 10px; margin-top: 5px;">PSI-CLOAK 0%</div>
+                </div>
                 <div class="cluster-wrapper">
                     <div class="ring r1"></div>
                     <div class="ring r2"></div>
                     <div class="ring r3"></div>
                     <div class="core-node"></div>
                 </div>
-                <div style="position: absolute; bottom: 10px; width: 100%; text-align: center; font-size: 10px; letter-spacing: 2px;">
-                    THERAPIST_CLUSTER // ACTIVE
-                </div>
             </div>
 
             <div class="right-panel">
-                <div class="hud-btn voice" id="voice-btn" title="VCI: Voice Command Interface">🎤</div>
-                <div class="hud-btn map" id="map-btn" title="NAV: Holographic Star Map">🗺️</div>
+                <div class="hud-btn voice" title="VCI: Voice Command Interface">🎤</div>
+                <div class="hud-btn map" title="NAV: Holographic Star Map">🗺️</div>
                 <div class="hud-btn" title="SEC: Security Protocols">🔒</div>
                 <div class="hud-btn" title="DAT: Data Stream">📡</div>
             </div>
         </div>
 
         <div class="console-footer" id="console-log">
-            <div class="log-line">[SYS] INITIATING CEC-WAM V.46.2 BATTLE STATION...</div>
-            <div class="log-line">[VIS] LOADING MULTI-COLOR MATRIX ENGINE... DONE.</div>
-            <div class="log-line">[VCI] VOICE MODULE INTEGRATED. STANDBY.</div>
-            <div class="log-line">[NAV] STAR MAP UPLINK ESTABLISHED.</div>
+            <div class="log-line">[SYS] CEC-WAM V.46.3 DEPLOYED.</div>
+            <div class="log-line">[FIN] TARGET ACQUIRED: APEX CLEARING TRANSITION.</div>
+            <div class="log-line transfer-msg">[TX] CYCLONE PROTOCOL ACTIVATED. CLOAKING ASSETS...</div>
         </div>
         <div class="command-input-line" style="background: var(--hud-bg); padding: 5px 10px;">
             <span class="command-prompt">CMDR></span>
-            <input type="text" id="cmd-input" placeholder="Awaiting directive..." autocomplete="off">
+            <input type="text" id="cmd-input" placeholder="TRANSFER IN PROGRESS..." autocomplete="off" disabled>
         </div>
 
     </div>
 
     <script>
-        // --- MULTI-COLOR MATRIX ENGINE ---
+        // --- CORE VARIABLES ---
+        const initialLiquidity = 1250039;
+        let currentLiquidity = initialLiquidity;
+        let transferProgress = 0;
+        const totalSteps = 25; // 25 steps for 100%
+        let currentStep = 0;
+
+        // --- DOM ELEMENTS ---
         const canvas = document.getElementById('matrix-bg');
         const ctx = canvas.getContext('2d');
+        const logBox = document.getElementById('console-log');
+        const liquidityVal = document.getElementById('liquidity-val');
+        const transferStatus = document.getElementById('transfer-status');
+        const cloakStatus = document.getElementById('cloak-status');
+        const transferLight = document.getElementById('transfer-light');
+        
         let width = canvas.width = window.innerWidth;
         let height = canvas.height = window.innerHeight;
 
+        // --- MATRIX ENGINE (same as previous) ---
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&";
         const fontSize = 12;
         const columns = width / fontSize;
         const drops = Array(Math.ceil(columns)).fill(1);
-        // Color palette for the matrix rain
         const colors = ['#00ff41', '#00ff41', '#00ff41', '#bc13fe', '#00f3ff'];
 
         function drawMatrix() {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; // Lower opacity for longer trails
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
             ctx.fillRect(0, 0, width, height);
             ctx.font = fontSize + "px monospace";
 
             for (let i = 0; i < drops.length; i++) {
                 const text = chars[Math.floor(Math.random() * chars.length)];
-                // Randomly select a color
                 ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
 
@@ -320,56 +192,76 @@
             height = canvas.height = window.innerHeight;
         });
 
-        // --- SYSTEM LOGIC ---
-        const logBox = document.getElementById('console-log');
-        const voiceBtn = document.getElementById('voice-btn');
-        const mapBtn = document.getElementById('map-btn');
-        const cmdInput = document.getElementById('cmd-input');
+
+        // --- TRANSFER LOGIC ---
 
         function addLog(msg, type = 'SYS') {
             const div = document.createElement('div');
             div.className = 'log-line';
+            if (type === 'TX') div.classList.add('transfer-msg');
+            if (type === 'SUCCESS') div.classList.add('success-msg');
             const time = new Date().toLocaleTimeString('en-US', {hour12: false});
             div.innerText = `[${time}][${type}] ${msg}`;
             logBox.appendChild(div);
             logBox.scrollTop = logBox.scrollHeight;
         }
 
-        // --- BUTTON HANDLERS ---
-        voiceBtn.addEventListener('click', () => {
-            voiceBtn.classList.toggle('listening');
-            if (voiceBtn.classList.contains('listening')) {
-                addLog("VCI LISTENING... SPEAK YOUR COMMAND.", 'VCI');
-                // Simulation of listening actvity
-                setTimeout(() => {
-                     if(voiceBtn.classList.contains('listening')) {
-                         addLog("VCI: NO AUDIO DETECTED. STANDING BY.", 'VCI');
-                         voiceBtn.classList.remove('listening');
-                     }
-                }, 5000);
+        function updateLiquidityDisplay(value) {
+            liquidityVal.innerText = "$" + value.toLocaleString() + "M";
+        }
+
+        const transferInterval = 1000; // 1 second per step
+        
+        const transferProcess = setInterval(() => {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                
+                // Calculate transfer metrics
+                transferProgress = Math.min(100, Math.round((currentStep / totalSteps) * 100));
+                
+                // Simulate fractional transfer loss (1 unit per 4 steps)
+                let dropAmount = 0;
+                if (currentStep % 4 === 0) dropAmount = 1; 
+
+                // Update Liquidity (decreases slightly as assets move through the cloak)
+                currentLiquidity -= dropAmount;
+
+                // Update UI
+                updateLiquidityDisplay(currentLiquidity);
+                cloakStatus.innerText = `APPLYING... ${transferProgress}%`;
+                transferStatus.innerHTML = `TRANSFER INITIATED<div style="font-size: 10px; margin-top: 5px;">PSI-CLOAK ${transferProgress}%</div>`;
+
+                // Log every 5 steps
+                if (currentStep % 5 === 0) {
+                    addLog(`CYCLONE ACTIVE: ${transferProgress}% CLOAKED. FRACTAL INJECTION COMMENCING.`, 'TX');
+                }
             } else {
-                addLog("VCI STANDBY.", 'VCI');
+                // --- TRANSFER COMPLETE ---
+                clearInterval(transferProcess);
+                
+                // Final UI Update
+                cloakStatus.innerText = `CLOAKED`;
+                transferStatus.style.borderColor = 'var(--neon-cyan)';
+                transferStatus.style.boxShadow = '0 0 20px var(--neon-cyan)';
+                transferStatus.innerHTML = `TRANSFER COMPLETE<div style="font-size: 10px; margin-top: 5px;">TRANSFER VECTOR: APEX</div>`;
+                
+                transferLight.style.background = 'var(--neon-cyan)';
+                transferLight.style.boxShadow = '0 0 10px var(--neon-cyan)';
+                transferLight.style.animation = 'none';
+
+                // Final Liquidity (small, hidden residual amount left in pool)
+                updateLiquidityDisplay(currentLiquidity);
+                
+                // Success Log
+                addLog("TRANSACTION SUCCESSFUL. NO ALERTS TRIGGERED.", 'SUCCESS');
+                addLog("CLEARED $1,250,039M INJECTION THROUGH APEX TRADING STREAM.", 'SUCCESS');
+                addLog("FUNDS TANGIBLE. READY FOR SPEND.", 'SUCCESS');
+
+                // Unlock Input
+                document.getElementById('cmd-input').disabled = false;
+                document.getElementById('cmd-input').placeholder = 'TRANSFER CONFIRMED.';
             }
-        });
-
-        mapBtn.addEventListener('click', () => {
-            addLog("NAVIGATOR: INITIATING STAR MAP SEQUENCE...", 'NAV');
-            addLog("NAVIGATOR: LOADING HOLOGRAPHIC CHART...", 'NAV');
-            // In a full build, this would switch the center-stage view
-        });
-
-        cmdInput.addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') {
-                const cmd = cmdInput.value;
-                addLog(`COMMAND EXECUTED: ${cmd}`, 'CMD');
-                cmdInput.value = '';
-            }
-        });
-
-        // --- INITIAL HANDSHAKE ---
-        setTimeout(() => addLog("SYSTEM: BATTLE STATION OPERATIONAL.", 'SYS'), 1500);
-        setTimeout(() => addLog("WELCOME BACK, COMMANDER.", 'SYS'), 2500);
-
+        }, transferInterval); 
     </script>
 </body>
 </html>
