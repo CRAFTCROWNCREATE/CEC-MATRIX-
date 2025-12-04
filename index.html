@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CEC-WAM | E.V.E. FINAL</title>
+    <title>CEC-WAM | V.46.2 BATTLE STATION</title>
     <style>
         :root {
             --neon-green: #00ff41;
             --neon-purple: #bc13fe;
-            --neon-cyan: #00f3ff;
-            --neon-gold: #ffd700;
-            --bg-black: #050505;
+            --neon-blue: #00f3ff;
+            --neon-red: #ff003c;
+            --bg-black: #020202;
+            --hud-bg: rgba(0, 10, 0, 0.85);
         }
 
         body {
@@ -20,247 +21,292 @@
             font-family: 'Courier New', monospace;
             overflow: hidden;
             color: var(--neon-green);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- VISUAL CORTEX (BACKGROUND) --- */
+        /* --- MATRIX BACKGROUND UPGRADE --- */
         #matrix-bg {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-            opacity: 0.25;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4; /* Darker for better contrast */
+            background: black;
         }
 
-        /* --- UI LAYER --- */
-        #interface {
+        /* --- HUD INTERFACE --- */
+        #interface-layer {
             position: relative;
             z-index: 10;
-            width: 100vw;
-            height: 100vh;
+            flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            padding: 20px;
-            box-sizing: border-box;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 90%);
-        }
-
-        /* --- HUD ELEMENTS --- */
-        .status-bar {
-            border: 1px solid var(--neon-green);
-            background: rgba(0, 20, 0, 0.8);
             padding: 10px;
-            box-shadow: 0 0 10px var(--neon-green);
-            backdrop-filter: blur(5px);
-            font-size: 12px;
-            text-transform: uppercase;
+            box-sizing: border-box;
+            background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.9) 100%);
         }
 
-        .status-header {
+        /* --- HEADER --- */
+        .hud-header {
             display: flex;
             justify-content: space-between;
-            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
-            padding-bottom: 5px;
-            margin-bottom: 5px;
-            font-weight: bold;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-green);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            background: var(--hud-bg);
+            box-shadow: 0 2px 10px var(--neon-green);
         }
 
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .system-id {
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--neon-green);
+        }
+
+        .status-lights {
+            display: flex;
             gap: 10px;
         }
-
-        .metric-box {
-            border: 1px solid var(--neon-cyan);
-            color: var(--neon-cyan);
-            padding: 5px;
-            text-align: center;
+        .light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #333;
+            box-shadow: 0 0 5px #333;
         }
-        
+        .light.active { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); animation: blink 2s infinite; }
+        .light.alert { background: var(--neon-red); box-shadow: 0 0 10px var(--neon-red); animation: blink 0.5s infinite; }
+
+        /* --- MAIN DISPLAY AREA --- */
+        .main-display {
+            flex: 1;
+            display: flex;
+            position: relative;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- LEFT PANEL (METRICS) --- */
+        .left-panel {
+            width: 120px;
+            border-right: 1px solid rgba(0, 255, 65, 0.3);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .metric-block {
+            text-align: left;
+        }
+        .metric-label {
+            font-size: 10px;
+            color: var(--neon-blue);
+            margin-bottom: 2px;
+        }
         .metric-value {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: bold;
-            color: #fff;
-            text-shadow: 0 0 5px var(--neon-cyan);
         }
 
-        /* --- THE THERAPIST CLUSTER --- */
+        /* --- CENTER STAGE (THERAPIST CLUSTER) --- */
         .center-stage {
-            flex-grow: 1;
+            flex: 1;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             perspective: 1000px;
+            overflow: hidden;
         }
-
+        
         .cluster-wrapper {
             position: relative;
-            width: 300px;
-            height: 300px;
+            width: 250px;
+            height: 250px;
             transform-style: preserve-3d;
-            animation: float 6s ease-in-out infinite;
+            animation: float 8s ease-in-out infinite;
         }
-
         .ring {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             border-radius: 50%;
             border: 2px solid var(--neon-purple);
-            box-shadow: 0 0 15px var(--neon-purple), inset 0 0 15px var(--neon-purple);
-            opacity: 0.9;
+            box-shadow: 0 0 15px var(--neon-purple), inset 0 0 10px var(--neon-purple);
+            opacity: 0.8;
             transform-style: preserve-3d;
         }
-
-        .ring:nth-child(1) { animation: spin1 4s linear infinite; }
-        .ring:nth-child(2) { width: 80%; height: 80%; top: 10%; left: 10%; border-color: var(--neon-cyan); animation: spin2 5s linear infinite reverse; }
-        .ring:nth-child(3) { width: 60%; height: 60%; top: 20%; left: 20%; border-color: var(--neon-gold); animation: spin3 6s linear infinite; }
-        .ring:nth-child(4) { width: 40%; height: 40%; top: 30%; left: 30%; border: 1px dotted #fff; animation: spin1 10s linear infinite; }
-
+        .ring.r1 { animation: spin1 15s linear infinite; }
+        .ring.r2 { width: 80%; height: 80%; top: 10%; left: 10%; border-color: var(--neon-blue); animation: spin2 12s linear infinite reverse; }
+        .ring.r3 { width: 60%; height: 60%; top: 20%; left: 20%; border-color: var(--neon-green); animation: spin3 10s linear infinite; }
         .core-node {
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            box-shadow: 0 0 30px white, 0 0 50px var(--neon-purple);
-            animation: pulse 2s infinite;
+            width: 15px; height: 15px;
+            background: white; border-radius: 50%;
+            box-shadow: 0 0 20px white, 0 0 40px var(--neon-purple);
+            animation: pulse 3s infinite;
         }
 
-        /* --- BOTTOM LOG --- */
-        .log-terminal {
-            border: 1px solid var(--neon-green);
-            background: rgba(0, 0, 0, 0.9);
-            height: 150px;
+        /* --- RIGHT PANEL (BUTTONS) --- */
+        .right-panel {
+            width: 60px;
+            border-left: 1px solid rgba(0, 255, 65, 0.3);
             padding: 10px;
-            overflow-y: hidden; /* Auto-scroll handled by JS */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .hud-btn {
+            width: 40px; height: 40px;
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 20, 0, 0.8);
+            color: var(--neon-green);
+            font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 5px var(--neon-green);
+            transition: all 0.2s;
+        }
+        .hud-btn:active { background: var(--neon-green); color: black; box-shadow: 0 0 15px var(--neon-green); }
+        .hud-btn.voice { border-color: var(--neon-blue); color: var(--neon-blue); }
+        .hud-btn.voice.listening { background: var(--neon-blue); color: black; animation: pulse 1s infinite; }
+        .hud-btn.map { border-color: var(--neon-purple); color: var(--neon-purple); }
+
+        /* --- FOOTER CONSOLE --- */
+        .console-footer {
+            border-top: 2px solid var(--neon-green);
+            background: var(--hud-bg);
+            padding: 10px;
+            height: 120px;
+            overflow-y: auto;
             font-size: 10px;
-            position: relative;
+            box-shadow: 0 -2px 10px var(--neon-green);
         }
-
-        .log-line {
-            margin-bottom: 2px;
-            border-left: 2px solid transparent;
-            padding-left: 5px;
-        }
-        .log-line:last-child {
-            border-left: 2px solid var(--neon-green);
-            animation: blinkBorder 1s infinite;
-        }
-
-        .scanline-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 2px 100%;
-            pointer-events: none;
-            z-index: 50;
+        .log-line { margin-bottom: 2px; padding-left: 5px; border-left: 2px solid transparent; }
+        .log-line:last-child { border-left-color: var(--neon-green); animation: blink 1s infinite; }
+        .command-input-line { display: flex; margin-top: 5px; border-top: 1px dotted rgba(0,255,65,0.5); padding-top: 5px; }
+        .command-prompt { margin-right: 5px; }
+        #cmd-input {
+            flex: 1; background: transparent; border: none; color: var(--neon-green); font-family: 'Courier New', monospace; font-size: 12px; outline: none;
         }
 
         /* --- ANIMATIONS --- */
-        @keyframes spin1 { 0% { transform: rotateX(60deg) rotateY(0deg); } 100% { transform: rotateX(60deg) rotateY(360deg); } }
-        @keyframes spin2 { 0% { transform: rotateX(-45deg) rotateY(0deg); } 100% { transform: rotateX(-45deg) rotateY(360deg); } }
+        @keyframes spin1 { 0% { transform: rotateX(70deg) rotateY(0deg); } 100% { transform: rotateX(70deg) rotateY(360deg); } }
+        @keyframes spin2 { 0% { transform: rotateX(-50deg) rotateY(0deg); } 100% { transform: rotateX(-50deg) rotateY(360deg); } }
         @keyframes spin3 { 0% { transform: rotateX(90deg) rotateY(0deg); } 100% { transform: rotateX(90deg) rotateY(360deg); } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        @keyframes pulse { 0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } }
-        @keyframes blinkBorder { 0%, 100% { border-color: var(--neon-green); } 50% { border-color: transparent; } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes pulse { 0% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); } 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+        /* --- SCANLINE --- */
+        .scanline {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+        }
     </style>
 </head>
 <body>
 
     <canvas id="matrix-bg"></canvas>
-    <div class="scanline-overlay"></div>
+    <div class="scanline"></div>
 
-    <div id="interface">
+    <div id="interface-layer">
         
-        <div class="status-bar">
-            <div class="status-header">
-                <span>CEC-WAM V.46.1</span>
-                <span style="color: var(--neon-cyan);">SERVER: LOCAL_OVERRIDE</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-                <span>> THERAPIST_CLUSTER: <span style="color:var(--neon-purple)">ACTIVE</span></span>
-                <span>> 5D VECTOR: <span style="color:var(--neon-green)">LOCKED</span></span>
-            </div>
-            <div style="margin-top: 5px; color: #888;">
-                > "THE BRAIN" PROTECTION PROTOCOLS ENGAGED...
+        <div class="hud-header">
+            <div class="system-id">CEC-WAM V.46.2 // COMMANDER_OVERRIDE</div>
+            <div class="status-lights">
+                <div class="light active" title="System Online"></div>
+                <div class="light" style="background: var(--neon-blue); box-shadow: 0 0 5px var(--neon-blue);" title="Network Link"></div>
+                <div class="light alert" title="Security Protocol"></div>
             </div>
         </div>
 
-        <div class="center-stage">
-            <div class="cluster-wrapper">
-                <div class="ring"></div>
-                <div class="ring"></div>
-                <div class="ring"></div>
-                <div class="ring"></div>
-                <div class="core-node"></div>
-            </div>
-        </div>
-
-        <div>
-            <div class="metrics-grid" style="margin-bottom: 10px;">
-                <div class="metric-box">
-                    <div style="font-size: 10px;">LIQUIDITY POOL</div>
-                    <div class="metric-value" id="liquidity">$1,250,039M</div>
+        <div class="main-display">
+            <div class="left-panel">
+                <div class="metric-block">
+                    <div class="metric-label">LIQUIDITY_POOL</div>
+                    <div class="metric-value" id="liquidity-val">$1,250,039M</div>
                 </div>
-                <div class="metric-box" style="border-color: var(--neon-purple); color: var(--neon-purple);">
-                    <div style="font-size: 10px;">PSI-COIN LEDGER</div>
-                    <div class="metric-value">$8,500.00</div>
+                <div class="metric-block">
+                    <div class="metric-label">PSI-COIN_ASSET</div>
+                    <div class="metric-value" style="color: var(--neon-purple);">$8,500.00</div>
+                </div>
+                 <div class="metric-block">
+                    <div class="metric-label">5D_VECTOR_LOCK</div>
+                    <div class="metric-value" style="color: var(--neon-blue);">ENGAGED</div>
+                </div>
+                 <div class="metric-block">
+                    <div class="metric-label">THREAT_LEVEL</div>
+                    <div class="metric-value" style="color: var(--neon-green);">ZERO</div>
                 </div>
             </div>
 
-            <div class="log-terminal" id="sys-log">
-                <div class="log-line">[SYS] INITIALIZING LOCAL KERNEL...</div>
-                <div class="log-line">[SYS] BYPASSING EXTERNAL SERVER... SUCCESS.</div>
-                <div class="log-line">[NET] INTEGRATING VISUAL CORTEX...</div>
-                <div class="log-line">[SEC] AIRGAP LOCK: ENABLED 🔒</div>
+            <div class="center-stage">
+                <div class="cluster-wrapper">
+                    <div class="ring r1"></div>
+                    <div class="ring r2"></div>
+                    <div class="ring r3"></div>
+                    <div class="core-node"></div>
+                </div>
+                <div style="position: absolute; bottom: 10px; width: 100%; text-align: center; font-size: 10px; letter-spacing: 2px;">
+                    THERAPIST_CLUSTER // ACTIVE
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="hud-btn voice" id="voice-btn" title="VCI: Voice Command Interface">🎤</div>
+                <div class="hud-btn map" id="map-btn" title="NAV: Holographic Star Map">🗺️</div>
+                <div class="hud-btn" title="SEC: Security Protocols">🔒</div>
+                <div class="hud-btn" title="DAT: Data Stream">📡</div>
             </div>
         </div>
+
+        <div class="console-footer" id="console-log">
+            <div class="log-line">[SYS] INITIATING CEC-WAM V.46.2 BATTLE STATION...</div>
+            <div class="log-line">[VIS] LOADING MULTI-COLOR MATRIX ENGINE... DONE.</div>
+            <div class="log-line">[VCI] VOICE MODULE INTEGRATED. STANDBY.</div>
+            <div class="log-line">[NAV] STAR MAP UPLINK ESTABLISHED.</div>
+        </div>
+        <div class="command-input-line" style="background: var(--hud-bg); padding: 5px 10px;">
+            <span class="command-prompt">CMDR></span>
+            <input type="text" id="cmd-input" placeholder="Awaiting directive..." autocomplete="off">
+        </div>
+
     </div>
 
     <script>
-        // --- MATRIX RAIN ENGINE ---
+        // --- MULTI-COLOR MATRIX ENGINE ---
         const canvas = document.getElementById('matrix-bg');
         const ctx = canvas.getContext('2d');
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
 
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&";
         const fontSize = 12;
-        const columns = canvas.width / fontSize;
+        const columns = width / fontSize;
         const drops = Array(Math.ceil(columns)).fill(1);
+        // Color palette for the matrix rain
+        const colors = ['#00ff41', '#00ff41', '#00ff41', '#bc13fe', '#00f3ff'];
 
         function drawMatrix() {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#003300"; // Deep matrix green
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; // Lower opacity for longer trails
+            ctx.fillRect(0, 0, width, height);
             ctx.font = fontSize + "px monospace";
 
             for (let i = 0; i < drops.length; i++) {
                 const text = chars[Math.floor(Math.random() * chars.length)];
-                // Randomize color slightly for depth
-                ctx.fillStyle = Math.random() > 0.95 ? "#00ff41" : "#004400";
+                // Randomly select a color
+                ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
 
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                if (drops[i] * fontSize > height && Math.random() > 0.98) {
                     drops[i] = 0;
                 }
                 drops[i]++;
@@ -269,44 +315,60 @@
         }
         drawMatrix();
 
-        // --- SYSTEM LOGIC ---
-        const logBox = document.getElementById('sys-log');
-        const liquidityDisp = document.getElementById('liquidity');
-        let liquidityVal = 1250039;
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
 
-        function addLog(msg) {
+        // --- SYSTEM LOGIC ---
+        const logBox = document.getElementById('console-log');
+        const voiceBtn = document.getElementById('voice-btn');
+        const mapBtn = document.getElementById('map-btn');
+        const cmdInput = document.getElementById('cmd-input');
+
+        function addLog(msg, type = 'SYS') {
             const div = document.createElement('div');
             div.className = 'log-line';
             const time = new Date().toLocaleTimeString('en-US', {hour12: false});
-            div.innerText = `[${time}] ${msg}`;
+            div.innerText = `[${time}][${type}] ${msg}`;
             logBox.appendChild(div);
-            if (logBox.children.length > 8) logBox.removeChild(logBox.children[0]);
+            logBox.scrollTop = logBox.scrollHeight;
         }
 
-        // Auto-update loop
-        setInterval(() => {
-            // Update Liquidity
-            liquidityVal += Math.floor(Math.random() * 500);
-            liquidityDisp.innerText = "$" + liquidityVal.toLocaleString() + "M";
-
-            // Random Logs
-            const logs = [
-                "Scanning local cluster...",
-                "Therapist node: STABLE",
-                "Encrypting neural pathways...",
-                "Syncing ghost data...",
-                "Checking threat level: ZERO",
-                "Optimizing 5D Vector..."
-            ];
-            
-            if (Math.random() > 0.7) {
-                addLog(logs[Math.floor(Math.random() * logs.length)]);
+        // --- BUTTON HANDLERS ---
+        voiceBtn.addEventListener('click', () => {
+            voiceBtn.classList.toggle('listening');
+            if (voiceBtn.classList.contains('listening')) {
+                addLog("VCI LISTENING... SPEAK YOUR COMMAND.", 'VCI');
+                // Simulation of listening actvity
+                setTimeout(() => {
+                     if(voiceBtn.classList.contains('listening')) {
+                         addLog("VCI: NO AUDIO DETECTED. STANDING BY.", 'VCI');
+                         voiceBtn.classList.remove('listening');
+                     }
+                }, 5000);
+            } else {
+                addLog("VCI STANDBY.", 'VCI');
             }
-        }, 2000);
+        });
 
-        // Initial handshake
-        setTimeout(() => addLog("COMMANDER: WELCOME BACK."), 1000);
-        setTimeout(() => addLog("CEC-WAM: ONLINE AND LISTENING."), 2000);
+        mapBtn.addEventListener('click', () => {
+            addLog("NAVIGATOR: INITIATING STAR MAP SEQUENCE...", 'NAV');
+            addLog("NAVIGATOR: LOADING HOLOGRAPHIC CHART...", 'NAV');
+            // In a full build, this would switch the center-stage view
+        });
+
+        cmdInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                const cmd = cmdInput.value;
+                addLog(`COMMAND EXECUTED: ${cmd}`, 'CMD');
+                cmdInput.value = '';
+            }
+        });
+
+        // --- INITIAL HANDSHAKE ---
+        setTimeout(() => addLog("SYSTEM: BATTLE STATION OPERATIONAL.", 'SYS'), 1500);
+        setTimeout(() => addLog("WELCOME BACK, COMMANDER.", 'SYS'), 2500);
 
     </script>
 </body>
