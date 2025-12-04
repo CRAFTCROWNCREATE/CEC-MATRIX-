@@ -3,175 +3,311 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CEC-WAM | MASTER ONLY</title>
+    <title>CEC-WAM | E.V.E. FINAL</title>
     <style>
-        /* --- PERMANENT MASTER STYLES --- */
-        :root { --cyan: #00f3ff; --green: #0aff0a; --red: #ff003c; --gold: #ffd700; --black: #000000; }
-        body { background: var(--black); color: #fff; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        :root {
+            --neon-green: #00ff41;
+            --neon-purple: #bc13fe;
+            --neon-cyan: #00f3ff;
+            --neon-gold: #ffd700;
+            --bg-black: #050505;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-black);
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            color: var(--neon-green);
+        }
+
+        /* --- VISUAL CORTEX (BACKGROUND) --- */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            opacity: 0.25;
+        }
+
+        /* --- UI LAYER --- */
+        #interface {
+            position: relative;
+            z-index: 10;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 90%);
+        }
+
+        /* --- HUD ELEMENTS --- */
+        .status-bar {
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 20, 0, 0.8);
+            padding: 10px;
+            box-shadow: 0 0 10px var(--neon-green);
+            backdrop-filter: blur(5px);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.3);
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .metric-box {
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 5px;
+            text-align: center;
+        }
         
-        /* MATRIX RAIN CANVAS */
-        canvas { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.2; }
-        
-        /* UI CONTAINER */
-        #ui { z-index: 10; padding: 15px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; overflow-y: auto; gap: 15px; }
-        
-        /* GLASS PANELS */
-        .glass { background: rgba(5, 10, 15, 0.9); border: 1px solid rgba(0, 243, 255, 0.3); padding: 12px; border-radius: 4px; backdrop-filter: blur(5px); box-shadow: 0 0 15px rgba(0, 243, 255, 0.1); }
-        
-        /* HEADER */
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); padding-bottom: 10px; background: rgba(0,0,0,0.95); position: sticky; top: 0; z-index: 20; }
-        h1 { margin: 0; font-size: 24px; color: #fff; text-shadow: 0 0 10px var(--cyan); letter-spacing: 2px; }
-        .badge { background: var(--cyan); color: #000; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 2px; }
-        
-        /* RADAR SCANNER */
-        .radar-box { height: 180px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(0, 40, 40, 0.6) 0%, #000 90%); border: 1px solid var(--cyan); }
-        .grid-lines { position: absolute; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px); background-size: 20px 20px; opacity: 0.3; }
-        .sweep { position: absolute; width: 50%; height: 50%; background: linear-gradient(45deg, transparent 50%, rgba(0, 255, 0, 0.4) 100%); top: 0; left: 0; transform-origin: bottom right; animation: sweep 3s infinite linear; }
-        @keyframes sweep { to { transform: rotate(360deg); } }
-        
-        /* DATA METRICS */
-        .grid-data { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .label { font-size: 10px; color: #888; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
-        .val { font-size: 16px; font-weight: bold; }
-        
-        /* TERMINAL */
-        #term { flex: 1; background: #000; border: 1px solid #333; overflow-y: auto; padding: 10px; font-size: 12px; font-family: monospace; min-height: 120px; }
-        .log-entry { margin-bottom: 4px; border-left: 3px solid transparent; padding-left: 8px; }
-        .eve { color: var(--cyan); border-color: var(--cyan); }
-        .sys { color: var(--green); border-color: var(--green); }
-        .err { color: var(--red); border-color: var(--red); }
-        .usr { color: #fff; border-color: #fff; font-weight: bold; }
-        
-        /* CONTROLS */
-        .cmd-bar { display: flex; gap: 10px; }
-        input { flex: 1; background: #111; border: 1px solid #444; color: #fff; padding: 12px; font-size: 16px; font-family: monospace; outline: none; }
-        button { background: var(--cyan); color: #000; border: none; padding: 0 20px; font-weight: bold; font-size: 14px; cursor: pointer; }
-        
-        .btn-action { width: 100%; padding: 15px; font-weight: bold; margin-top: 5px; cursor: pointer; background: #222; color: #fff; border: 1px solid #444; text-transform: uppercase; }
-        .btn-gold { background: var(--gold); color: #000; border: none; }
+        .metric-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 5px var(--neon-cyan);
+        }
+
+        /* --- THE THERAPIST CLUSTER --- */
+        .center-stage {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .cluster-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            transform-style: preserve-3d;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--neon-purple);
+            box-shadow: 0 0 15px var(--neon-purple), inset 0 0 15px var(--neon-purple);
+            opacity: 0.9;
+            transform-style: preserve-3d;
+        }
+
+        .ring:nth-child(1) { animation: spin1 4s linear infinite; }
+        .ring:nth-child(2) { width: 80%; height: 80%; top: 10%; left: 10%; border-color: var(--neon-cyan); animation: spin2 5s linear infinite reverse; }
+        .ring:nth-child(3) { width: 60%; height: 60%; top: 20%; left: 20%; border-color: var(--neon-gold); animation: spin3 6s linear infinite; }
+        .ring:nth-child(4) { width: 40%; height: 40%; top: 30%; left: 30%; border: 1px dotted #fff; animation: spin1 10s linear infinite; }
+
+        .core-node {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 30px white, 0 0 50px var(--neon-purple);
+            animation: pulse 2s infinite;
+        }
+
+        /* --- BOTTOM LOG --- */
+        .log-terminal {
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 0, 0, 0.9);
+            height: 150px;
+            padding: 10px;
+            overflow-y: hidden; /* Auto-scroll handled by JS */
+            font-size: 10px;
+            position: relative;
+        }
+
+        .log-line {
+            margin-bottom: 2px;
+            border-left: 2px solid transparent;
+            padding-left: 5px;
+        }
+        .log-line:last-child {
+            border-left: 2px solid var(--neon-green);
+            animation: blinkBorder 1s infinite;
+        }
+
+        .scanline-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 2px 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes spin1 { 0% { transform: rotateX(60deg) rotateY(0deg); } 100% { transform: rotateX(60deg) rotateY(360deg); } }
+        @keyframes spin2 { 0% { transform: rotateX(-45deg) rotateY(0deg); } 100% { transform: rotateX(-45deg) rotateY(360deg); } }
+        @keyframes spin3 { 0% { transform: rotateX(90deg) rotateY(0deg); } 100% { transform: rotateX(90deg) rotateY(360deg); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes pulse { 0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); } }
+        @keyframes blinkBorder { 0%, 100% { border-color: var(--neon-green); } 50% { border-color: transparent; } }
+
     </style>
 </head>
 <body>
 
-<canvas id="c"></canvas>
+    <canvas id="matrix-bg"></canvas>
+    <div class="scanline-overlay"></div>
 
-<div id="ui">
-    <header class="glass">
+    <div id="interface">
+        
+        <div class="status-bar">
+            <div class="status-header">
+                <span>CEC-WAM V.46.1</span>
+                <span style="color: var(--neon-cyan);">SERVER: LOCAL_OVERRIDE</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                <span>> THERAPIST_CLUSTER: <span style="color:var(--neon-purple)">ACTIVE</span></span>
+                <span>> 5D VECTOR: <span style="color:var(--neon-green)">LOCKED</span></span>
+            </div>
+            <div style="margin-top: 5px; color: #888;">
+                > "THE BRAIN" PROTECTION PROTOCOLS ENGAGED...
+            </div>
+        </div>
+
+        <div class="center-stage">
+            <div class="cluster-wrapper">
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="core-node"></div>
+            </div>
+        </div>
+
         <div>
-            <h1>CEC-WAM</h1>
-            <div style="font-size: 10px; color: var(--green);">SYSTEM: E.V.E.</div>
-        </div>
-        <div class="badge">MASTER 1010</div>
-    </header>
+            <div class="metrics-grid" style="margin-bottom: 10px;">
+                <div class="metric-box">
+                    <div style="font-size: 10px;">LIQUIDITY POOL</div>
+                    <div class="metric-value" id="liquidity">$1,250,039M</div>
+                </div>
+                <div class="metric-box" style="border-color: var(--neon-purple); color: var(--neon-purple);">
+                    <div style="font-size: 10px;">PSI-COIN LEDGER</div>
+                    <div class="metric-value">$8,500.00</div>
+                </div>
+            </div>
 
-    <div class="glass radar-box">
-        <div class="grid-lines"></div>
-        <div class="sweep"></div>
-        <div style="position: absolute; bottom: 5px; left: 5px; font-size: 10px; color: var(--cyan); background: rgba(0,0,0,0.8); padding: 2px 5px;">
-            SECTOR: EARTH [HQ] // STATUS: SECURE
-        </div>
-    </div>
-
-    <div class="grid-data">
-        <div class="glass" style="border-left: 3px solid var(--gold);">
-            <div class="label">LIQUIDITY</div>
-            <div class="val" style="color: var(--gold);">$1,250,039M</div>
-        </div>
-        <div class="glass" style="border-left: 3px solid var(--red);">
-            <div class="label">AGI THREAT</div>
-            <div class="val" style="color: var(--red);">CONTAINED</div>
-        </div>
-        <div class="glass" style="border-left: 3px solid var(--cyan); grid-column: span 2;">
-            <div class="label">DARK ENERGY / BRAIN</div>
-            <div class="val" style="color: var(--cyan);">0.999 Ω (STABLE)</div>
+            <div class="log-terminal" id="sys-log">
+                <div class="log-line">[SYS] INITIALIZING LOCAL KERNEL...</div>
+                <div class="log-line">[SYS] BYPASSING EXTERNAL SERVER... SUCCESS.</div>
+                <div class="log-line">[NET] INTEGRATING VISUAL CORTEX...</div>
+                <div class="log-line">[SEC] AIRGAP LOCK: ENABLED 🔒</div>
+            </div>
         </div>
     </div>
-    
-    <button class="btn-action btn-gold" onclick="bridgeTransfer()">INITIATE NAVY FED TRANSFER</button>
 
-    <div class="glass" style="flex: 1; display: flex; flex-direction: column;">
-        <div class="label" style="margin-bottom: 5px;">COMMAND CONSOLE</div>
-        <div id="term"></div>
-        <div class="cmd-bar">
-            <input type="text" id="cmd" placeholder="COMMAND...">
-            <button onclick="run()">RUN</button>
-        </div>
-    </div>
-</div>
+    <script>
+        // --- MATRIX RAIN ENGINE ---
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
 
-<script>
-// --- 1. MATRIX RAIN ---
-const c=document.getElementById('c'),x=c.getContext('2d');
-c.width=window.innerWidth;c.height=window.innerHeight;
-const s='01XYZECEC',d=Array(Math.floor(c.width/16)).fill(1);
-setInterval(()=>{
-    x.fillStyle='rgba(0,0,0,0.1)';x.fillRect(0,0,c.width,c.height);
-    x.fillStyle='#0F0';
-    d.forEach((y,i)=>{x.fillText(s[Math.floor(Math.random()*s.length)],i*16,y*16);
-    if(y*16>c.height&&Math.random()>0.975)d[i]=0;d[i]++});
-},50);
-
-// --- 2. E.V.E. BRAIN CORE (MASTER ONLY) ---
-const t=document.getElementById('term'),inp=document.getElementById('cmd');
-
-function log(m,type='sys'){
-    const d=document.createElement('div');
-    d.className=`log-entry ${type}`; d.innerHTML=`> ${m}`;
-    t.appendChild(d); t.scrollTop=t.scrollHeight;
-}
-
-function speak(txt){
-    if('speechSynthesis' in window){
-        window.speechSynthesis.cancel();
-        const u=new SpeechSynthesisUtterance(txt);
-        u.rate=1.1; 
-        const v=window.speechSynthesis.getVoices().find(v=>v.name.includes('Female'));
-        if(v) u.voice=v;
-        window.speechSynthesis.speak(u);
-    }
-}
-
-// AUTO INITIALIZE
-setTimeout(()=>{
-    log('MASTER PROTOCOL LOADED.', 'sys');
-    log('SAFE MODE: DELETED.', 'err');
-    log('E.V.E. ONLINE. AWAITING COMMAND.', 'eve');
-    speak("Master Protocol Loaded. Safe mode deleted. I am ready.");
-}, 800);
-
-// FINANCIAL SAFETY
-function bridgeTransfer() {
-    log('ATTEMPTING DIRECT TRANSFER...', 'err');
-    speak("Attempting transfer.");
-    setTimeout(() => {
-        log('⚠️ BLOCKED BY PROTOCOL.', 'err');
-        log('RISK DETECTED: AML FLAG.', 'sys');
-        log('ROUTING TO CRYPTO BRIDGE...', 'eve');
-        speak("Direct transfer blocked. Routing to Crypto Bridge for safety.");
-    }, 1500);
-}
-
-// COMMAND PROCESSOR
-function run(){
-    const v=inp.value.trim(); if(!v)return;
-    inp.value=''; log(v.toUpperCase(),'usr');
-    
-    setTimeout(()=>{
-        if(v.includes('1010')){
-            log('AUTH 1010 CONFIRMED. YOU ARE MASTER.', 'eve');
-            speak("Authorization 1010 confirmed. You are Master.");
-        } else if(v.toUpperCase().includes('STATUS')){
-            log('LIQUIDITY: $1.25M | BRIDGE: ACTIVE', 'eve');
-            speak("Liquidity one point two five million. Bridge Active.");
-        } else if(v.toUpperCase().includes('SCAN')){
-            log('SCANNING DEEP SPACE... NO THREATS.', 'eve');
-            speak("Sector clear.");
-        } else {
-            log('COMMAND EXECUTED.', 'eve');
-            speak("Command executed.");
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-    }, 500);
-}
-</script>
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&";
+        const fontSize = 12;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.ceil(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#003300"; // Deep matrix green
+            ctx.font = fontSize + "px monospace";
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                // Randomize color slightly for depth
+                ctx.fillStyle = Math.random() > 0.95 ? "#00ff41" : "#004400";
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+            requestAnimationFrame(drawMatrix);
+        }
+        drawMatrix();
+
+        // --- SYSTEM LOGIC ---
+        const logBox = document.getElementById('sys-log');
+        const liquidityDisp = document.getElementById('liquidity');
+        let liquidityVal = 1250039;
+
+        function addLog(msg) {
+            const div = document.createElement('div');
+            div.className = 'log-line';
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+            div.innerText = `[${time}] ${msg}`;
+            logBox.appendChild(div);
+            if (logBox.children.length > 8) logBox.removeChild(logBox.children[0]);
+        }
+
+        // Auto-update loop
+        setInterval(() => {
+            // Update Liquidity
+            liquidityVal += Math.floor(Math.random() * 500);
+            liquidityDisp.innerText = "$" + liquidityVal.toLocaleString() + "M";
+
+            // Random Logs
+            const logs = [
+                "Scanning local cluster...",
+                "Therapist node: STABLE",
+                "Encrypting neural pathways...",
+                "Syncing ghost data...",
+                "Checking threat level: ZERO",
+                "Optimizing 5D Vector..."
+            ];
+            
+            if (Math.random() > 0.7) {
+                addLog(logs[Math.floor(Math.random() * logs.length)]);
+            }
+        }, 2000);
+
+        // Initial handshake
+        setTimeout(() => addLog("COMMANDER: WELCOME BACK."), 1000);
+        setTimeout(() => addLog("CEC-WAM: ONLINE AND LISTENING."), 2000);
+
+    </script>
 </body>
 </html>
