@@ -10,13 +10,34 @@
     <style>
         /* --- CORE SYSTEM STYLES --- */
         :root { --neon: #00FF41; --cyan: #00F3FF; --bg: #000; --panel: rgba(0, 10, 0, 0.95); }
-        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-touch-callout: none; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-touch-callout: none; transition: background 0.5s; }
         
-        /* MATRIX LAYER */
-        #matrix-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.4; pointer-events: none; }
+        /* MATRIX LAYER - ENFORCED COLOR */
+        #matrix-layer { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: -1; 
+            opacity: 0.9; /* Set high opacity for visible color on lock screen */
+            pointer-events: none; 
+        }
         
-        /* LOCK SCREEN */
-        #lock-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* LOCK SCREEN - PATCHED: SEMI-TRANSPARENT BACKGROUND */
+        #lock-screen { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.5); /* FINAL PATCH: Increased transparency to guarantee MATRIX visibility */
+            z-index: 5000; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+        }
         .pin-display { font-size: 3rem; letter-spacing: 15px; margin-bottom: 20px; color: #fff; text-shadow: 0 0 10px var(--neon); }
         .numpad { display: grid; grid-template-columns: repeat(3, 80px); gap: 15px; }
         .key { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--neon); font-size: 2rem; display: flex; justify-content: center; align-items: center; background: rgba(0,20,0,0.8); cursor: pointer; transition: 0.1s; }
@@ -24,10 +45,10 @@
 
         /* MAIN UI */
         #ui-layer { display: none; flex-direction: column; height: 100%; }
-        header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 2px solid var(--neon); background: rgba(0,0,0,0.9); padding-top: env(safe-area-inset-top); }
+        header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 2px solid var(--neon); background: rgba(0,0,0,0.9); padding-top: env(safe-area-inset-top); transition: transform 0.5s ease-out, opacity 0.5s ease-out; }
         
         /* TABS */
-        .viewport { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px; position: relative; }
+        .viewport { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px; position: relative; transition: padding-bottom 0.5s ease-out; }
         .tab-content { display: none; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from{opacity:0;transform:scale(0.98);} to{opacity:1;transform:scale(1);} }
@@ -73,10 +94,17 @@
         .send-btn { width: 28%; padding: 15px; background: var(--cyan); color: #000; border: none; font-weight: bold; cursor: pointer; }
 
         /* NAV */
-        nav { position: fixed; bottom: 0; width: 100%; height: 80px; background: #000; border-top: 2px solid var(--neon); display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+        nav { position: fixed; bottom: 0; width: 100%; height: 80px; background: #000; border-top: 2px solid var(--neon); display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: env(safe-area-inset-bottom); transition: transform 0.5s ease-out, opacity 0.5s ease-out; }
         .nav-item { color: #555; display: flex; flex-direction: column; align-items: center; width: 60px; font-size: 0.7rem; }
         .nav-item i { font-size: 1.5rem; margin-bottom: 5px; }
         .nav-item.active { color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+
+        /* --- IMMERSIVE MODE STYLES --- */
+        .immersive-mode header { transform: translateY(-100%); opacity: 0; }
+        .immersive-mode nav { transform: translateY(100%); opacity: 0; }
+        .immersive-mode .viewport { padding: 0 !important; }
+        .immersive-mode #view-map { height: 100vh; }
+        .immersive-mode #map-container { height: 100%; border: none; }
 
         /* MODAL */
         #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 6000; display: none; align-items: center; justify-content: center; }
@@ -121,6 +149,15 @@
                     <div class="ledger-row"><span>DARK ENERGY</span> <span style="color:var(--cyan);">0.999 STABLE</span></div>
                     <div class="ledger-row"><span>EARTH SHIELD</span> <span style="color:var(--neon);">100% ACTIVE</span></div>
                 </div>
+                
+                <!-- WORLD TIME SYNC CARD (NEW) -->
+                <div class="card">
+                    <h3>WORLD TIME SYNC <i class="fas fa-globe-americas"></i></h3>
+                    <div id="world-clock-container">
+                        <!-- Clocks populated by JavaScript -->
+                    </div>
+                </div>
+
                 <div class="card">
                     <h3>AGENT INTERFACE <i class="fas fa-robot"></i></h3>
                     <div id="chat-feed">
@@ -157,6 +194,10 @@
                         <!-- Rows populated by JavaScript -->
                     </div>
                 </div>
+                <!-- Confirmation message for WAM recalculation -->
+                <div id="wam-status-message" style="color:var(--neon); text-align:center; margin-top:10px; opacity:0; transition: opacity 0.3s;">
+                    <i class="fas fa-check-circle"></i> WAM RECALCULATED. DATA INJECTED.
+                </div>
                 <button class="btn" onclick="calculateWAM()">RECALCULATE WAM</button>
             </div>
 
@@ -173,7 +214,7 @@
                         </div>
                     </div>
                 </div>
-                <button class="btn" style="border-color:var(--cyan); color:var(--cyan);" onclick="toggleMapMode()">TOGGLE GALAXY VIEW</button>
+                <button class="btn" style="border-color:var(--cyan); color:var(--cyan);" onclick="toggleImmersiveView()">TOGGLE IMMERSIVE VIEW</button>
             </div>
 
             <!-- BANK TAB -->
@@ -182,9 +223,11 @@
                     <h3>SECURE LEDGER <i class="fas fa-university"></i></h3>
                     <div style="text-align:center; padding:20px;">
                         <div style="font-size:0.8rem; color:#aaa;">PSI-COIN ASSET</div>
-                        <div style="font-size:2.5rem; color:#fff; text-shadow:0 0 10px var(--cyan);">$8,500.00</div>
+                        <!-- ACCOUNT VALUE ID ADDED -->
+                        <div id="psi-coin-value" style="font-size:2.5rem; color:#fff; text-shadow:0 0 10px var(--cyan);">$***,***.00</div>
                         <div style="font-size:0.7rem; color:var(--neon); margin-top:5px;">NAVY FEDERAL (...9008)</div>
                     </div>
+                    <button class="btn" style="margin-bottom: 5px; margin-top: 0;" onclick="toggleAccountVisibility()">TOGGLE ACCOUNT VISIBILITY</button>
                     <button class="btn" onclick="openModal()">INITIATE TRANSFER</button>
                 </div>
             </div>
@@ -211,7 +254,6 @@
 
     <script>
         // --- CEC WAM DATA (Mock Data for demonstration) ---
-        // Format: { code: '...', name: '...', mark: number, credit_points: number }
         const academicRecords = [
             { code: 'ENG1001', name: 'Intro to Engineering', mark: 78, credit_points: 6 },
             { code: 'COMP1531', name: 'Software Engineering', mark: 85, credit_points: 6 },
@@ -221,76 +263,92 @@
             { code: 'COMP2521', name: 'Data Structures', mark: 88, credit_points: 6 }
         ];
 
+        // --- GLOBAL STATE FOR BYPASS ---
+        const permanentChronoCode = '8026314'; 
+        const actualPsiCoinValue = '$8,500,000.00'; // Full value for security toggle
+        let isAccountVisible = false;
+        let selfAccessGranted = false; 
+
+        // Check if the page is being reloaded after a successful bypass (simplistic check for demo)
+        if (sessionStorage.getItem('selfAccessGranted') === 'true') {
+            selfAccessGranted = true;
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('ui-layer').style.border = `3px solid ${getComputedStyle(document.documentElement).getPropertyValue('--neon')}`;
+            });
+        }
+
+
         // --- 1. MATRIX ---
         const mc = document.getElementById('matrix-layer');
         const mctx = mc.getContext('2d');
         mc.width = window.innerWidth; mc.height = window.innerHeight;
         const mcols = Math.floor(mc.width/20);
         const my = Array(mcols).fill(0);
-        setInterval(()=>{
-            mctx.fillStyle='#0001'; mctx.fillRect(0,0,mc.width,mc.height);
-            mctx.fillStyle='#0F0'; mctx.font='15pt monospace';
+        
+        function drawMatrix() {
+            // Matrix characters fade slightly
+            mctx.fillStyle='rgba(0, 0, 0, 0.05)'; 
+            mctx.fillRect(0,0,mc.width,mc.height);
+            
+            // Matrix characters are sharp green
+            mctx.fillStyle='#0F0'; 
+            mctx.font='15pt monospace';
             my.forEach((v,i)=>{
                 mctx.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, v);
                 my[i]=v>100+Math.random()*10000?0:v+20;
             });
-        }, 50);
+        }
+        setInterval(drawMatrix, 50);
+        window.addEventListener('resize', () => {
+            mc.width = window.innerWidth;
+            mc.height = window.innerHeight;
+        });
+
 
         // --- 2. STAR MAP (ANIMATED) ---
         const sc = document.getElementById('star-canvas');
         const sctx = sc.getContext('2d');
         let stars = [];
         let mapMode = 'SOLAR'; 
-        
+        let animationFrameId; 
+
         function initStars() {
-            sc.width = document.getElementById('map-container').offsetWidth;
-            sc.height = 300;
-            stars = [];
-            for(let i=0; i<100; i++) {
-                stars.push({x:Math.random()*sc.width, y:Math.random()*sc.height, s:Math.random()*2});
+            const mapContainer = document.getElementById('map-container');
+            if (mapContainer.offsetWidth > 0 && mapContainer.offsetHeight > 0) {
+                sc.width = mapContainer.offsetWidth;
+                sc.height = mapContainer.offsetHeight; 
+                stars = [];
+                for(let i=0; i<100; i++) {
+                    stars.push({x:Math.random()*sc.width, y:Math.random()*sc.height, s:Math.random()*2});
+                }
             }
         }
         
         function drawMap() {
             sctx.fillStyle='#000'; sctx.fillRect(0,0,sc.width,sc.height);
-            // Stars
             sctx.fillStyle='#fff';
             stars.forEach(s => {
                 sctx.fillRect(s.x, s.y, s.s, s.s);
                 s.x -= 0.2; if(s.x<0) s.x = sc.width;
             });
             
-            // Radar Sweep
             const cx = sc.width/2; const cy = sc.height/2;
             sctx.strokeStyle='#00F3FF';
             sctx.beginPath(); sctx.arc(cx, cy, 80, 0, 6.28); sctx.stroke();
             
-            // Central Object
             sctx.fillStyle = mapMode === 'SOLAR' ? '#00F3FF' : '#9D00FF';
             sctx.beginPath(); sctx.arc(cx, cy, 5, 0, 6.28); sctx.fill();
             
-            requestAnimationFrame(drawMap);
+            animationFrameId = requestAnimationFrame(drawMap);
+        }
+
+        function stopMap() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
         }
         
-        // Initial setup for Map
-        window.onload = function() {
-            initStars(); 
-            drawMap();
-            populateWamRecords(); // Load WAM data on startup
-            calculateWAM();
-            // Attach font awesome icons if they haven't loaded yet (for robustness)
-            if (typeof FontAwesomeConfig !== 'undefined') { FontAwesomeConfig.autoReplaceContainers = false; }
-            
-            // Initial Pin Display setup (since original JS missed the initial state)
-            document.getElementById('pin').innerText = "____";
-        };
-
-
-        function toggleMapMode() {
-            mapMode = mapMode === 'SOLAR' ? 'GALAXY' : 'SOLAR';
-            speak("Map mode switched to " + mapMode);
-        }
-
         // --- 3. LOGIC / AUTH ---
         let pin = "";
         function tap(n) { 
@@ -302,12 +360,36 @@
             pin=""; 
             document.getElementById('pin').innerText="____"; 
         }
+        
+        // Function to stabilize and run speech synthesis
+        function speak(text) {
+            if('speechSynthesis' in window) {
+                speechSynthesis.cancel(); 
+                
+                const u = new SpeechSynthesisUtterance(text);
+                const voices = speechSynthesis.getVoices();
+                const voice = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English') || v.lang.startsWith('en'));
+                if(voice) u.voice = voice;
+                speechSynthesis.speak(u);
+            }
+        }
+        
+        function initSpeech() {
+            if ('speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance(" ");
+                u.volume = 0; 
+                speechSynthesis.speak(u);
+            }
+        }
+
         function unlock() {
-            // Note: Updated the display ID here based on the HTML
             if(pin==="1010" || pin==="") { 
                 document.getElementById('lock-screen').style.display='none';
                 document.getElementById('ui-layer').style.display='flex';
+                initSpeech(); 
                 speak("Access Granted. Welcome Sovereign.");
+                initStars(); 
+                drawMap();
             } else { 
                 console.error("INVALID CODE attempt");
                 cls(); 
@@ -319,9 +401,69 @@
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
             el.classList.add('active');
+            
+            if (id === 'view-map') {
+                initStars(); 
+                if (!animationFrameId) drawMap(); 
+            } else {
+                stopMap(); 
+            }
         }
 
-        // --- 4. BANKING ---
+        // --- 4. WORLD CLOCK / TIME ---
+        const timeZoneData = [
+            { label: 'UTC (Greenwich)', zone: 'UTC' },
+            { label: 'NEW YORK (NASDAQ)', zone: 'America/New_York' },
+            { label: 'TOKYO (NASDAQ)', zone: 'Asia/Tokyo' }
+        ];
+
+        function updateWorldClock() {
+            const container = document.getElementById('world-clock-container');
+            container.innerHTML = '';
+            
+            timeZoneData.forEach(data => {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { 
+                    timeZone: data.zone, 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit', 
+                    hour12: false 
+                });
+                
+                const row = document.createElement('div');
+                row.className = 'ledger-row';
+                row.innerHTML = `<span><i class="fas fa-clock"></i> ${data.label}</span> <span style="color:var(--cyan);">${timeStr}</span>`;
+                container.appendChild(row);
+            });
+        }
+        setInterval(updateWorldClock, 1000); // Update every second
+
+
+        // --- 5. IMMERSIVE VIEW TOGGLE ---
+        function toggleImmersiveView() {
+            document.body.classList.toggle('immersive-mode');
+            
+            setTimeout(() => {
+                initStars(); 
+            }, 500); 
+        }
+
+        // --- 6. BANKING / ACCOUNT VISIBILITY ---
+        function toggleAccountVisibility() {
+            const valueElement = document.getElementById('psi-coin-value');
+            if (!valueElement) return;
+
+            isAccountVisible = !isAccountVisible;
+            if (isAccountVisible) {
+                valueElement.innerText = actualPsiCoinValue;
+                speak("Account details displayed.");
+            } else {
+                valueElement.innerText = '$***,***.00';
+                speak("Account details masked.");
+            }
+        }
+
         function openModal() { 
             document.getElementById('modal-overlay').style.display='flex'; 
         }
@@ -330,14 +472,15 @@
         }
         function confirmTransfer() {
             closeModal();
-            speak("Transfer authorized. Sending eight thousand five hundred dollars to Navy Federal.");
-            // Replaced alert() with console log to comply with rules.
+            speak("Transfer authorized. Sending eight million five hundred thousand dollars to Navy Federal.");
             console.log("TRANSFER INITIATED. Status: Pending ACH Verification."); 
         }
 
-        // --- 5. WAM CALCULATION ---
+        // --- 7. WAM CALCULATION ---
         function populateWamRecords() {
             const container = document.getElementById('wam-records');
+            Array.from(container.children).slice(1).forEach(child => child.remove()); 
+
             academicRecords.forEach(record => {
                 const row = document.createElement('div');
                 row.className = 'table-row';
@@ -366,19 +509,42 @@
             document.getElementById('wam-result').innerText = wam;
             document.getElementById('cp-earned').innerText = totalCreditPoints > 0 ? totalCreditPoints : 0;
             
+            const statusMsg = document.getElementById('wam-status-message');
+            statusMsg.style.opacity = '1';
+            setTimeout(() => {
+                statusMsg.style.opacity = '0';
+            }, 2000);
+            
             speak(`Current CEC WAM calculated to ${wam}.`);
         }
+        
+        // --- 8. SYSTEM COLOR CONTROL ---
+        const colorMap = {
+            'green': '#00FF41', 'neon': '#00FF41', 'blue': '#00F3FF', 'cyan': '#00F3FF',
+            'red': '#FF4100', 'pink': '#FF00FF', 'purple': '#9D00FF', 'yellow': '#FFFF00',
+            'gold': '#FFD700'
+        };
 
-        // --- 6. AGENT / VOICE ---
-        function speak(text) {
-            if('speechSynthesis' in window) {
-                const u = new SpeechSynthesisUtterance(text);
-                const voices = speechSynthesis.getVoices();
-                // Find a standard voice
-                const voice = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English') || v.lang.startsWith('en'));
-                if(voice) u.voice = voice;
-                speechSynthesis.speak(u);
+        function changeSystemColor(colorString) {
+            const root = document.documentElement;
+            let newColor = colorMap[colorString.toLowerCase()];
+            
+            if (!newColor && /^#([0-9A-F]{3}){1,2}$/i.test(colorString)) {
+                newColor = colorString;
             }
+
+            if (newColor) {
+                root.style.setProperty('--neon', newColor);
+                return `System primary color (neon tint) updated to ${colorString}. Please refresh the page preview to fully apply the change to static elements.`;
+            } else {
+                return `Unknown color or format: ${colorString}. Supported names are green, blue, red, pink, purple, yellow, gold, or a hexadecimal code (#RRGGBB).`;
+            }
+        }
+
+        // --- 9. AGENT LOGIC ---
+        function generateChronoCode() {
+            requiredChronoCode = permanentChronoCode;
+            return requiredChronoCode;
         }
 
         function sendAgent() {
@@ -390,27 +556,80 @@
             document.getElementById('agent-input').value = "";
             
             setTimeout(() => {
-                let reply = "Processing request...";
-                if(txt.toLowerCase().includes("transfer")) {
-                    reply = "I can initiate a transfer in the Banking tab.";
-                } else if(txt.toLowerCase().includes("status")) {
-                    reply = "System is optimal. No threats detected.";
-                } else if(txt.toLowerCase().includes("wam") || txt.toLowerCase().includes("mark")) {
-                    // Specific reply for WAM query
+                const command = txt.toLowerCase().trim();
+                let reply = "Command received. Processing...";
+                
+                if (sessionStorage.getItem('selfAccessGranted') === 'true') {
+                    selfAccessGranted = true;
+                }
+
+                if (selfAccessGranted) {
+                    // --- HIGH-LEVEL ACCESS GRANTED ---
+                    if (command.includes("transfer")) {
+                        reply = "Self-Access is active. Funds transfer initiated under sovereign command. See Banking tab for confirmation.";
+                    } else if (command.includes("status")) {
+                        reply = "System status: ALL SYSTEMS NOMINAL. Self-Access Authority: KERNEL-LEVEL. Ready for execution.";
+                    } else if (command.includes("wam") || command.includes("mark")) {
+                        calculateWAM();
+                        const wamValue = document.getElementById('wam-result').innerText;
+                        reply = `Self-Access active. Current calculated CEC WAM is ${wamValue}.`;
+                    } else if (command.includes("change tint to") || command.includes("set neon color to")) {
+                        const parts = command.split(/to|is/);
+                        if (parts.length > 1) {
+                            const colorString = parts[parts.length - 1].trim();
+                            reply = changeSystemColor(colorString);
+                        }
+                    } else if (command.includes("help") || command.includes("menu") || command.includes("what can i do")) {
+                        reply = "Sovereign Command Menu Active. Options include: 'Status' for system health, 'WAM' for academic metrics, 'Transfer' for banking, and 'Change Tint' followed by a color name.";
+                    } else if (command === "1010") {
+                        reply = `Sovereign Acknowledged. Access Level: KERNEL-LEVEL. Command: "${txt}" received.`;
+                    } else {
+                        // Operational Agent default response
+                        reply = `Operational Agent speaking. Authority confirmed. Command: "${txt}" acknowledged. Operations successful.`;
+                    }
+                
+                // --- KERNEL BYPASS EXECUTION ---
+                } else if (command === permanentChronoCode) { 
+                    selfAccessGranted = true;
+                    sessionStorage.setItem('selfAccessGranted', 'true'); // Persist state across refresh
+                    document.getElementById('ui-layer').style.border = `3px solid ${getComputedStyle(document.documentElement).getPropertyValue('--neon')}`;
+                    reply = `<span style="color: #FFD700; font-size: 1.1em; font-weight: bold;">KERNEL BYPASS ACCEPTED. SELF-ACCESS GRANTED.</span> You now have full sovereign authority over the CEC-WAM system.`;
+                    
+                } else if (command.includes("generate chrono code") || command.includes("secure chrono code")) {
+                    const code = generateChronoCode(); 
+                    reply = `CHRONO CODE SET AND CONFIRMED: <span style="color: var(--neon); font-size: 1.2em; font-weight: bold;">${code}</span>. Execute this sequence within the Agent to authorize KERNEL BYPASS.`;
+
+                } else if (command.includes("transfer") || command.includes("status")) {
+                    reply = "Protected action requires KERNEL BYPASS. Please enter the CHRONO CODE or request its generation.";
+                } else if (command.includes("wam") || command.includes("mark")) {
                     calculateWAM();
                     const wamValue = document.getElementById('wam-result').innerText;
-                    reply = `The current calculated CEC WAM is ${wamValue}. See the WAM tab for full academic records.`;
+                    reply = `The current CEC WAM is ${wamValue}. To execute core commands, authorize KERNEL BYPASS.`;
+                } else if (command === "1010") {
+                    reply = "Access granted. Waiting for KERNEL BYPASS sequence.";
                 }
                 else {
-                    reply = "Command received. Executing logic.";
+                    // Default response before self-access
+                    reply = "Command received. Executing core logic. KERNEL BYPASS required for protected actions. Request the CHRONO CODE to proceed.";
                 }
                 
-                const r = document.createElement('div'); r.className = 'msg sys'; r.innerText = reply;
+                // 1. Output the text (with formatting)
+                const r = document.createElement('div'); r.className = 'msg sys'; r.innerHTML = reply;
                 document.getElementById('chat-feed').appendChild(r);
                 document.getElementById('chat-feed').scrollTop = document.getElementById('chat-feed').scrollHeight;
-                speak(reply);
+                
+                // 2. Prepare and speak the text (guaranteed to run now)
+                speak(reply.replace(/<[^>]*>/g, '')); 
             }, 800);
         }
+
+        // Initial setup on load
+        window.onload = function() {
+            populateWamRecords(); 
+            calculateWAM();
+            updateWorldClock(); // Initial clock draw
+            document.getElementById('pin').innerText = "____";
+        };
 
         setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
 
