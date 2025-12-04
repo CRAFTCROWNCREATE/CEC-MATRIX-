@@ -3,52 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CEC-WAM | E.V.E. FINANCIAL</title>
+    <title>CEC-WAM | OMEGA</title>
     <style>
+        /* --- SOVEREIGN OMEGA STYLES --- */
         :root { --cyan: #00f3ff; --green: #0aff0a; --red: #ff003c; --gold: #ffd700; --black: #000000; }
         body { background: var(--black); color: #fff; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         
-        /* MATRIX BG */
-        canvas { position: fixed; top: 0; left: 0; opacity: 0.15; z-index: 0; }
+        /* MATRIX RAIN CANVAS */
+        canvas { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.2; }
         
-        /* UI */
-        #ui { z-index: 10; padding: 15px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; transition: 0.3s; }
+        /* MAIN UI CONTAINER */
+        #ui { z-index: 10; padding: 15px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; overflow-y: auto; gap: 15px; }
+        
+        /* GLASS PANELS */
+        .glass { background: rgba(5, 15, 20, 0.9); border: 1px solid rgba(0, 243, 255, 0.3); padding: 12px; border-radius: 6px; backdrop-filter: blur(5px); box-shadow: 0 0 20px rgba(0, 243, 255, 0.05); }
         
         /* HEADER */
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); padding-bottom: 10px; margin-bottom: 15px; }
-        h1 { margin: 0; font-size: 24px; color: #fff; text-shadow: 0 0 10px var(--cyan); }
-        .badge { background: var(--cyan); color: #000; padding: 2px 6px; font-size: 10px; font-weight: bold; border-radius: 2px; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); padding-bottom: 10px; background: rgba(0,0,0,0.9); position: sticky; top: 0; z-index: 20; }
+        h1 { margin: 0; font-size: 26px; color: #fff; text-shadow: 0 0 10px var(--cyan); letter-spacing: 2px; }
+        .badge { background: var(--cyan); color: #000; padding: 4px 8px; font-size: 10px; font-weight: bold; border-radius: 4px; }
         
-        /* MASTER & SAFE MODES */
-        .master-view { display: block; }
-        .safe-view { display: none; }
+        /* STAR MAP RADAR ("HOOD OFF") */
+        .radar-box { height: 200px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(0, 30, 30, 0.6) 0%, #000 90%); border: 1px solid var(--cyan); }
+        .grid-lines { position: absolute; width: 100%; height: 100%; background: linear-gradient(0deg, transparent 24%, rgba(0, 255, 255, .1) 25%, rgba(0, 255, 255, .1) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, .1) 75%, rgba(0, 255, 255, .1) 76%, transparent 77%), linear-gradient(90deg, transparent 24%, rgba(0, 255, 255, .1) 25%, rgba(0, 255, 255, .1) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, .1) 75%, rgba(0, 255, 255, .1) 76%, transparent 77%); background-size: 50px 50px; }
+        .scanner { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid rgba(0, 243, 255, 0.1); animation: ping 3s infinite; }
+        .sweep { position: absolute; width: 50%; height: 50%; background: linear-gradient(45deg, transparent 50%, rgba(0, 255, 0, 0.3) 100%); top: 0; left: 0; transform-origin: bottom right; animation: sweep 4s infinite linear; }
+        @keyframes sweep { to { transform: rotate(360deg); } }
+        @keyframes ping { 0% { transform: scale(0.1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
         
-        body.safe .master-view { display: none; }
-        body.safe .safe-view { display: block; }
-        body.safe header { border-color: #333; }
-        body.safe .badge { background: #333; color: #fff; content: "SAFE"; }
-
-        /* GRID */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .box { border: 1px solid #333; background: rgba(0,20,0,0.9); padding: 10px; border-radius: 4px; }
-        .val { font-size: 14px; font-weight: bold; }
+        /* DATA METRICS */
+        .grid-data { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .label { font-size: 10px; color: #888; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
+        .val { font-size: 16px; font-weight: bold; }
+        
+        /* VISIBILITY MODES */
+        .master-layer { display: block; }
+        .safe-layer { display: none; }
+        body.safe-mode .master-layer { display: none; }
+        body.safe-mode .safe-layer { display: block; }
+        body.safe-mode header { border-color: #333; }
         
         /* TERMINAL */
-        #term { flex: 1; border: 1px solid #333; background: rgba(0,0,0,0.95); overflow-y: auto; padding: 10px; font-size: 11px; margin-bottom: 10px; }
-        .log { margin-bottom: 3px; border-left: 2px solid transparent; padding-left: 5px; }
+        #term { height: 160px; background: #050505; border: 1px solid #333; overflow-y: auto; padding: 10px; font-size: 12px; font-family: monospace; }
+        .log-entry { margin-bottom: 4px; border-left: 3px solid transparent; padding-left: 8px; }
         .eve { color: var(--cyan); border-color: var(--cyan); }
         .sys { color: var(--green); border-color: var(--green); }
-        .alert { color: var(--red); border-color: var(--red); }
+        .err { color: var(--red); border-color: var(--red); }
         
         /* CONTROLS */
-        .controls { display: flex; gap: 10px; }
-        input { flex: 1; background: #111; border: 1px solid #444; color: #fff; padding: 12px; font-family: monospace; outline: none; }
-        button { background: var(--cyan); color: #000; border: none; padding: 0 20px; font-weight: bold; }
-        #toggle-btn { margin-top: 5px; background: transparent; border: 1px solid #555; color: #555; font-size: 10px; padding: 5px; width: 100%; cursor: pointer; }
+        .cmd-bar { display: flex; gap: 10px; margin-bottom: 10px; }
+        input { flex: 1; background: #111; border: 1px solid #444; color: #fff; padding: 12px; font-size: 16px; font-family: monospace; outline: none; }
+        button { background: var(--cyan); color: #000; border: none; padding: 0 20px; font-weight: bold; font-size: 14px; cursor: pointer; }
         
-        /* TRANSFER BUTTONS */
-        .transfer-btn { width: 100%; background: var(--gold); color: #000; font-weight: bold; border: none; padding: 10px; margin-top: 5px; cursor: pointer; display: none; }
-        .master-view .transfer-btn { display: block; }
+        .btn-action { width: 100%; padding: 15px; font-weight: bold; margin-top: 5px; cursor: pointer; background: #222; color: #fff; border: 1px solid #444; text-transform: uppercase; }
+        .btn-gold { background: var(--gold); color: #000; border: none; }
+        .btn-toggle { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); font-size: 10px; }
     </style>
 </head>
 <body>
@@ -56,70 +65,82 @@
 <canvas id="c"></canvas>
 
 <div id="ui">
-    <header>
+    <header class="glass">
         <div>
             <h1>CEC-WAM</h1>
-            <div style="font-size: 10px; color: var(--green);">E.V.E. FINANCIAL</div>
+            <div style="font-size: 10px; color: var(--green);">E.V.E. OMEGA // v50.0</div>
         </div>
-        <div id="status-badge" class="badge">MASTER</div>
+        <div id="badge" class="badge">MASTER</div>
     </header>
 
-    <div class="grid master-view">
-        <div class="box" style="border-left: 3px solid var(--gold);">
-            <div style="color: #888; font-size: 9px;">LIQUIDITY POOL</div>
-            <div class="val" style="color: var(--gold);">$1,250,039M</div>
-        </div>
-        <div class="box" style="border-left: 3px solid var(--red);">
-            <div style="color: #888; font-size: 9px;">BANK SAFETY</div>
-            <div class="val" style="color: var(--red);">BRIDGE ACTIVE</div>
-        </div>
-        <div class="box" style="border-left: 3px solid var(--cyan); grid-column: span 2;">
-            <div style="color: #888; font-size: 9px;">CRYPTO WALLETS LINKED</div>
-            <div class="val" style="color: var(--cyan);">PHANTOM // COINBASE</div>
+    <div class="glass radar-box">
+        <div class="grid-lines"></div>
+        <div class="scanner"></div>
+        <div class="sweep"></div>
+        <div style="position: absolute; bottom: 5px; left: 5px; font-size: 10px; color: var(--cyan); background: rgba(0,0,0,0.8); padding: 2px 5px;">
+            SECTOR: EARTH [HQ] // STATUS: SECURE
         </div>
     </div>
-    
-    <button class="transfer-btn" onclick="attemptTransfer()">INITIATE NAVY FED TRANSFER</button>
 
-    <div class="grid safe-view">
-        <div class="box" style="border-color: #333;">
-            <div style="color: #888; font-size: 9px;">STATUS</div>
+    <div class="master-layer grid-data">
+        <div class="glass" style="border-left: 3px solid var(--gold);">
+            <div class="label">LIQUIDITY</div>
+            <div class="val" style="color: var(--gold);">$1,250,039M</div>
+        </div>
+        <div class="glass" style="border-left: 3px solid var(--red);">
+            <div class="label">AGI THREAT</div>
+            <div class="val" style="color: var(--red);">CONTAINED</div>
+        </div>
+        <div class="glass" style="border-left: 3px solid var(--cyan); grid-column: span 2;">
+            <div class="label">DARK ENERGY / BRAIN</div>
+            <div class="val" style="color: var(--cyan);">0.999 Ω (STABLE)</div>
+        </div>
+        
+        <button class="btn-action btn-gold" onclick="bridgeTransfer()">INITIATE NAVY FED TRANSFER</button>
+    </div>
+
+    <div class="safe-layer grid-data">
+        <div class="glass" style="border-color: #333;">
+            <div class="label">STATUS</div>
             <div class="val" style="color: var(--green);">ONLINE</div>
         </div>
-        <div class="box" style="border-color: #333;">
-            <div style="color: #888; font-size: 9px;">SERVER</div>
+        <div class="glass" style="border-color: #333;">
+            <div class="label">SERVER</div>
             <div class="val" style="color: #fff;">CONNECTED</div>
         </div>
     </div>
 
-    <div id="term"></div>
-
-    <div class="controls">
-        <input type="text" id="cmd" placeholder="COMMAND...">
-        <button onclick="run()">RUN</button>
+    <div class="glass">
+        <div class="label" style="margin-bottom: 5px;">COMMAND CONSOLE</div>
+        <div id="term"></div>
+        <div class="cmd-bar">
+            <input type="text" id="cmd" placeholder="COMMAND...">
+            <button onclick="run()">RUN</button>
+        </div>
     </div>
-    <button id="toggle-btn" onclick="toggleMode()">SWITCH MODE</button>
+
+    <button class="btn-action btn-toggle" id="toggle-btn" onclick="toggleMode()">SWITCH TO SAFE MODE</button>
 </div>
 
 <script>
-// 1. MATRIX
+// --- 1. MATRIX RAIN ---
 const c=document.getElementById('c'),x=c.getContext('2d');
 c.width=window.innerWidth;c.height=window.innerHeight;
-const s='01XYZECEC',d=Array(Math.floor(c.width/15)).fill(1);
+const s='01XYZECEC',d=Array(Math.floor(c.width/16)).fill(1);
 setInterval(()=>{
     x.fillStyle='rgba(0,0,0,0.1)';x.fillRect(0,0,c.width,c.height);
     x.fillStyle='#0F0';
-    d.forEach((y,i)=>{x.fillText(s[Math.floor(Math.random()*s.length)],i*15,y*15);
-    if(y*15>c.height&&Math.random()>0.975)d[i]=0;d[i]++});
+    d.forEach((y,i)=>{x.fillText(s[Math.floor(Math.random()*s.length)],i*16,y*16);
+    if(y*16>c.height&&Math.random()>0.975)d[i]=0;d[i]++});
 },50);
 
-// 2. E.V.E. SYSTEM
-const t=document.getElementById('term'),inp=document.getElementById('cmd'),bdg=document.getElementById('status-badge'),btn=document.getElementById('toggle-btn');
+// --- 2. E.V.E. BRAIN CORE ---
+const t=document.getElementById('term'),inp=document.getElementById('cmd'),bdg=document.getElementById('badge'),btn=document.getElementById('toggle-btn');
 let master=true;
 
 function log(m,type='sys'){
     const d=document.createElement('div');
-    d.className=`log ${type}`; d.innerHTML=`> ${m}`;
+    d.className=`log-entry ${type}`; d.innerHTML=`> ${m}`;
     t.appendChild(d); t.scrollTop=t.scrollHeight;
 }
 
@@ -134,53 +155,59 @@ function speak(txt){
     }
 }
 
-// AUTO BOOT
+// AUTO INITIALIZE
 setTimeout(()=>{
-    log('AUTH 1010 CONFIRMED.', 'alert');
-    log('FINANCIAL BRIDGE: ACTIVE.', 'sys');
-    speak("System Online. Financial Protocols Secured.");
+    log('AUTH 1010 RECOGNIZED.', 'sys');
+    log('E.V.E. PROTOCOL ONLINE.', 'eve');
+    log('STAR MAP SCANNING SECTOR.', 'sys');
+    speak("System Online. I am Eve.");
 }, 800);
 
-// FINANCIAL SAFETY LOGIC
-function attemptTransfer() {
-    log('INITIATING TRANSFER TO NAVY FEDERAL...', 'alert');
-    speak("Initiating transfer.");
-    
+// FINANCIAL SAFETY
+function bridgeTransfer() {
+    log('ATTEMPTING DIRECT TRANSFER...', 'err');
+    speak("Attempting transfer.");
     setTimeout(() => {
-        log('⚠️ BLOCKING TRANSACTION.', 'alert');
-        log('REASON: EXCEEDS FEDERAL SAFETY LIMIT.', 'sys');
-        log('ROUTE TO: PHANTOM/COINBASE FIRST.', 'eve');
-        speak("Transfer blocked. Risk detected. Use Crypto Bridge.");
+        log('⚠️ BLOCKED BY PROTOCOL.', 'err');
+        log('RISK DETECTED: AML FLAG.', 'sys');
+        log('ROUTING TO CRYPTO BRIDGE...', 'eve');
+        speak("Direct transfer blocked. Routing to Crypto Bridge for safety.");
     }, 1500);
 }
 
+// TOGGLE MODES
 function toggleMode(){
     master = !master;
     if(master){
-        document.body.classList.remove('safe');
+        document.body.classList.remove('safe-mode');
         bdg.innerText="MASTER"; bdg.style.background="var(--cyan)"; bdg.style.color="#000";
         btn.innerText="SWITCH TO SAFE MODE";
-        log('MASTER ACCESS GRANTED.', 'alert');
+        log('MASTER ACCESS GRANTED.', 'eve');
         speak("Master mode active.");
     } else {
-        document.body.classList.add('safe');
+        document.body.classList.add('safe-mode');
         bdg.innerText="SAFE"; bdg.style.background="#333"; bdg.style.color="#fff";
         btn.innerText="SWITCH TO MASTER (1010)";
-        log('SAFE MODE ACTIVE. DATA HIDDEN.', 'sys');
+        log('SAFE MODE ACTIVE. DATA MASKED.', 'sys');
         speak("Safe mode active.");
     }
 }
 
+// COMMAND PROCESSOR
 function run(){
     const v=inp.value.trim(); if(!v)return;
     inp.value=''; log(v.toUpperCase(),'sys');
     
+    // 1010 OVERRIDE
     if(v.includes('1010')){ toggleMode(); return; }
     
     setTimeout(()=>{
         if(v.toUpperCase().includes('STATUS')){
-            log(master ? 'BRIDGE: READY | WALLETS: LINKED' : 'SYSTEM GREEN.', 'eve');
-            speak(master ? "Bridge Ready." : "System green.");
+            log(master ? 'LIQUIDITY: $1.25M | BRIDGE: ACTIVE' : 'SYSTEM GREEN.', 'eve');
+            speak(master ? "Liquidity one point two five million." : "System green.");
+        } else if(v.toUpperCase().includes('SCAN')){
+            log('SCANNING DEEP SPACE... NO THREATS.', 'eve');
+            speak("Sector clear.");
         } else {
             log('COMMAND EXECUTED.', 'eve');
             speak("Command executed.");
