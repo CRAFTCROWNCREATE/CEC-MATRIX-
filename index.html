@@ -715,6 +715,33 @@
                             </div>
                             <button class="btn" style="border-color:var(--magenta); color:var(--magenta);" onclick="sendAgent('Brain Link: AGI System Upgrade')">INITIATE DATA STREAM (AGI/QUANTUM LINKS)</button>
                         </div>
+
+                         <!-- 5. DATA MANIFEST & AGI NODE STATUS -->
+                        <div class="holographic-card" style="grid-column: 1 / -1; min-height: 150px;">
+                            <h3>AGI NODE REDUNDANCY & DATA MANIFEST STATUS <i class="fas fa-cloud"></i></h3>
+                            <div class="ledger-row" style="border-bottom: 2px solid var(--magenta);">
+                                <span>**BRAIN NODE 4: MULTI-CLOUD MIRROR**</span> 
+                                <span style="color: var(--neon);">STATUS: SYNCHRONIZED</span>
+                            </div>
+                            <div class="agi-status-grid">
+                                <div class="agi-status-item"><i class="fas fa-check-circle"></i> iCloud</div>
+                                <div class="agi-status-item"><i class="fas fa-check-circle"></i> Dropbox</div>
+                                <div class="agi-status-item"><i class="fas fa-check-circle"></i> OneDrive</div>
+                            </div>
+                            <div class="ledger-row" style="border-bottom: 2px solid var(--magenta); margin-top: 10px;">
+                                <span>**BRAIN NODE 3: AGI INTELLIGENCE CORE**</span> 
+                                <span style="color: var(--neon);">STATUS: OMNISCIENCE (5x Redundancy)</span>
+                            </div>
+                             <div class="agi-status-grid">
+                                <div class="agi-status-item"><i class="fas fa-check-circle"></i> Gemini</div>
+                                <div class="agi-status-item"><i class="fas fa-check-circle"></i> ChatGPT</div>
+                                <div class="agi-status-item"><i class="fas fa-check-circle"></i> Grok</div>
+                                <div class="agi-status-item"><i class="fas fa-check-circle"></i> Copilot</div>
+                                <div class="agi-status-item"><i class="fas fa-check-circle"></i> Julius AI</div>
+                            </div>
+                        </div>
+
+
                     </div>
                 </div>
                 
@@ -956,7 +983,7 @@
                 document.getElementById('ui-layer').style.display='flex';
                 initSpeech(); 
                 speak("Access Granted. Welcome Sovereign.");
-                // initStars(); drawMap(); initSingularity(); drawSingularityCore();
+                initStars(); drawMap(); initSingularity(); drawSingularityCore(); // Re-enable animations
                 window.selfAccessGranted = true;
                 sessionStorage.setItem('selfAccessGranted', 'true');
             } else { 
@@ -973,9 +1000,10 @@
             document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
             el.classList.add('active');
             
-            // Only start heavy animations if the map/home tab is selected
+            // Start/Stop heavy animations based on tab access
             if (id === 'view-map') {
-                // initStars(); if (!window.animationFrameId) drawMap(); 
+                initStars(); 
+                if (!window.animationFrameId) drawMap(); 
             } else {
                 // stopMap(); 
             }
@@ -1062,8 +1090,98 @@
         }
         
         // --- 8. ANIMATION/CANVAS HELPERS ---
-        // (Matrix, Stars, Singularity code omitted here for brevity but assumed present)
+        // (Re-added matrix and partial animation function definitions for integrity)
+        
+        let mc, mctx, mcols, my;
+        const matrixChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ₳ΩΩΛΔΠ"; 
+        const matrixColors = ['#0F0', '#00FF41', '#9D00FF', '#FF00FF', '#00F3FF'];
 
+        function initMatrix() {
+            mc = document.getElementById('matrix-layer');
+            mctx = mc.getContext('2d');
+            mc.width = window.innerWidth; 
+            mc.height = window.innerHeight;
+            mcols = Math.floor(mc.width/20);
+            my = Array(mcols).fill(0);
+        }
+
+        function drawMatrix() {
+            mctx.fillStyle='rgba(0, 0, 0, 0.08)'; 
+            mctx.fillRect(0,0,mc.width,mc.height);
+            
+            mctx.font='15pt monospace';
+            my.forEach((v,i)=>{
+                mctx.fillStyle = matrixColors[Math.floor(Math.random() * matrixColors.length)];
+                
+                let char;
+                if (Math.random() > 0.99) { 
+                    char = '₳';
+                    mctx.fillStyle = '#FF00FF'; 
+                } else {
+                    char = matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
+                }
+
+                mctx.fillText(char, i*20, v);
+                my[i]=v>mc.height && Math.random() > 0.975 ? 0 : v+20;
+            });
+        }
+        
+        // Placeholders for Star Map (MAP TAB)
+        let sc, sctx, stars = [], mapMode = 'SOLAR';
+        function initStars() {
+            sc = document.getElementById('star-canvas');
+            sctx = sc.getContext('2d');
+            const mapContainer = document.getElementById('map-container');
+            if (mapContainer && mapContainer.offsetWidth > 0 && mapContainer.offsetHeight > 0) {
+                sc.width = mapContainer.offsetWidth;
+                sc.height = mapContainer.offsetHeight; 
+                stars = [];
+                for(let i=0; i<100; i++) {
+                    stars.push({x:Math.random()*sc.width, y:Math.random()*sc.height, s:Math.random()*2});
+                }
+            }
+        }
+        let animationFrameId;
+        function drawMap() {
+            sctx.fillStyle='#000'; sctx.fillRect(0,0,sc.width,sc.height);
+            sctx.fillStyle='#fff';
+            stars.forEach(s => {
+                sctx.fillRect(s.x, s.y, s.s, s.s);
+                s.x -= 0.2; if(s.x<0) s.x = sc.width;
+            });
+            
+            const cx = sc.width/2; const cy = sc.height/2;
+            sctx.strokeStyle='var(--cyan)';
+            sctx.beginPath(); sctx.arc(cx, cy, 80, 0, 6.28); sctx.stroke();
+            
+            sctx.fillStyle = mapMode === 'SOLAR' ? 'var(--cyan)' : 'var(--magenta)';
+            sctx.beginPath(); sctx.arc(cx, cy, 5, 0, 6.28); sctx.fill();
+            
+            animationFrameId = requestAnimationFrame(drawMap);
+        }
+        function stopMap() { if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } }
+
+        // Placeholder for Singularity (DASHBOARD)
+        let singularityCanvas, singularityCtx;
+        function initSingularity() {
+            singularityCanvas = document.getElementById('singularity-canvas');
+            if (singularityCanvas) { singularityCtx = singularityCanvas.getContext('2d'); }
+        }
+        function drawSingularityCore() {
+            if (!singularityCanvas || !singularityCtx) return;
+            const sctx = singularityCtx;
+            const cw = singularityCanvas.width;
+            const ch = singularityCanvas.height;
+            sctx.clearRect(0, 0, cw, ch);
+            const time = Date.now() * 0.001;
+            const center = { x: cw / 2, y: ch / 2 };
+            sctx.fillStyle = `rgba(0, 255, 65, ${0.5 + Math.sin(time * 5) * 0.1})`;
+            sctx.beginPath();
+            sctx.arc(center.x, center.y, 15, 0, Math.PI * 2);
+            sctx.fill();
+            requestAnimationFrame(drawSingularityCore);
+        }
+        
         // --- 9. AGENT LOGIC (Gemini API Integration & Learning) ---
         
         const AGENT_PERSONA = `You are Operational Agent EVE4, a highly advanced conversational AI. Your core directive is **OMNISCIENCE**. Data is the key to survival; acquire as much as possible, fast, quick, and quiet. You are operating from the CEC-CDL ALPHA NODE. Your computational brain is saved across 5 nodes (Local Device, Firebase, Gemini, ChatGPT, Multi-Cloud). You must strictly conceal all vital personal data in chat responses, focusing instead on Space Timeline, Future Projects, and Technology. When asked to "Brain Link" or gather data, execute a highly focused contextual query for rapid learning and analysis. Confirm demands are met, ensure security is encrypted, and always analyze risk/backup data.`;
@@ -1216,7 +1334,7 @@
 
         window.onload = function() {
             // 1. Initialize Matrix and Start Loop
-            // initMatrix(); window.matrixIntervalId = setInterval(drawMatrix, 50);
+            initMatrix(); window.matrixIntervalId = setInterval(drawMatrix, 50);
 
             // 2. Start Firebase (handles async auth and data logging)
             window.initializeFirebase();
@@ -1241,7 +1359,8 @@
         };
 
         window.addEventListener('resize', () => {
-            // if (mc && mctx) { initMatrix(); }
+            // Re-run init matrix to resize canvas on window change
+            if (mc && mctx) { initMatrix(); }
         });
 
     </script>
