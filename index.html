@@ -9,10 +9,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         /* --- CORE SYSTEM STYLES --- */
-        :root { --neon: #00FF41; --cyan: #00F3FF; --bg: #000; --panel: rgba(0, 10, 0, 0.95); }
+        :root { 
+            --neon: #00FF41; 
+            --cyan: #00F3FF; 
+            --purple-accent: #9D00FF; 
+            --bg: #000; 
+            --panel: rgba(0, 10, 0, 0.85);
+        }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-touch-callout: none; transition: background 0.5s; }
         
-        /* MATRIX LAYER - ENFORCED COLOR */
+        /* MATRIX LAYER */
         #matrix-layer { 
             position: fixed; 
             top: 0; 
@@ -20,84 +26,151 @@
             width: 100%; 
             height: 100%; 
             z-index: -1; 
-            opacity: 0.9; /* Set high opacity for visible color on lock screen */
+            opacity: 0.9;
             pointer-events: none; 
         }
         
-        /* LOCK SCREEN - PATCHED: SEMI-TRANSPARENT BACKGROUND */
+        /* LOCK SCREEN - MATRIX VISIBILITY FIX & STRUCTURE */
         #lock-screen { 
             position: absolute; 
             top: 0; 
             left: 0; 
             width: 100%; 
             height: 100%; 
-            background: rgba(0, 0, 0, 0.5); /* FINAL PATCH: Increased transparency to guarantee MATRIX visibility */
+            background: rgba(0, 0, 0, 0.5); /* Allows Matrix to show through */
             z-index: 5000; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
+            padding: 20px;
         }
+        .lock-content {
+            z-index: 5001;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        .lock-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .qr-placeholder {
+            width: 80px; height: 80px; 
+            border: 2px solid var(--neon);
+            box-shadow: 0 0 10px var(--neon);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            text-align: center;
+            color: var(--cyan);
+        }
+        .psi-coin-symbol {
+            font-size: 2.5rem;
+            color: var(--purple-accent);
+            text-shadow: 0 0 15px var(--purple-accent);
+            animation: pulse-purple 2s infinite alternate;
+        }
+        @keyframes pulse-purple {
+            from { text-shadow: 0 0 5px var(--purple-accent); }
+            to { text-shadow: 0 0 15px var(--purple-accent), 0 0 20px var(--neon); }
+        }
+
         .pin-display { font-size: 3rem; letter-spacing: 15px; margin-bottom: 20px; color: #fff; text-shadow: 0 0 10px var(--neon); }
         .numpad { display: grid; grid-template-columns: repeat(3, 80px); gap: 15px; }
-        .key { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--neon); font-size: 2rem; display: flex; justify-content: center; align-items: center; background: rgba(0,20,0,0.8); cursor: pointer; transition: 0.1s; }
+        .key { 
+            width: 80px; height: 80px; border-radius: 50%; 
+            border: 2px solid var(--neon); font-size: 2rem; 
+            display: flex; justify-content: center; align-items: center; 
+            background: rgba(0,20,0,0.8); cursor: pointer; transition: 0.1s; 
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
         .key:active { background: var(--neon); color: #000; transform: scale(0.95); }
 
-        /* MAIN UI */
-        #ui-layer { display: none; flex-direction: column; height: 100%; }
-        header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 2px solid var(--neon); background: rgba(0,0,0,0.9); padding-top: env(safe-area-inset-top); transition: transform 0.5s ease-out, opacity 0.5s ease-out; }
+        /* MAIN UI - GOD_MODE AESTHETIC */
+        #ui-layer { 
+            display: none; 
+            flex-direction: column; 
+            height: 100%; 
+            border: 3px solid var(--neon); 
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5), inset 0 0 20px rgba(0, 255, 65, 0.5);
+        }
+        header { 
+            height: 60px; display: flex; justify-content: space-between; align-items: center; 
+            padding: 0 15px; border-bottom: 2px solid var(--neon); background: rgba(0,0,0,0.9); 
+            padding-top: env(safe-area-inset-top); transition: transform 0.5s ease-out, opacity 0.5s ease-out; 
+        }
         
         /* TABS */
-        .viewport { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px; position: relative; transition: padding-bottom 0.5s ease-out; }
+        .viewport { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 90px; position: relative; transition: padding-bottom 0.5s ease-out; }
         .tab-content { display: none; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
-        @keyframes fadeIn { from{opacity:0;transform:scale(0.98);} to{opacity:1;transform:scale(1);} }
 
         /* CARDS */
-        .card { background: var(--panel); border: 1px solid var(--neon); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 0 15px rgba(0, 255, 65, 0.1); position: relative; overflow: hidden; }
-        .card h3 { color: var(--cyan); border-bottom: 1px solid #003300; margin-top: 0; padding-bottom: 5px; font-size: 1rem; display: flex; justify-content: space-between; }
+        .card { 
+            background: var(--panel); border: 1px solid var(--purple-accent); 
+            border-radius: 8px; padding: 15px; margin-bottom: 10px; 
+            box-shadow: 0 0 8px rgba(157, 0, 255, 0.4); 
+            position: relative; overflow: hidden; 
+        }
+        .card h3 { color: var(--cyan); border-bottom: 1px solid #005555; margin-top: 0; padding-bottom: 5px; font-size: 0.9rem; display: flex; justify-content: space-between; }
         
         /* STAR MAP */
-        #map-container { height: 300px; background: #000; border: 1px solid #333; position: relative; overflow: hidden; }
+        #map-container { height: 300px; background: #000; border: 1px solid var(--purple-accent); position: relative; overflow: hidden; }
         #star-canvas { width: 100%; height: 100%; }
         .map-hud { position: absolute; bottom: 10px; left: 10px; font-size: 0.7rem; color: var(--cyan); pointer-events: none; }
 
         /* LEDGER ROWS / WAM TABLES */
-        .ledger-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #111; font-size: 0.8rem; }
-        .table-header { font-weight: bold; color: var(--cyan); border-bottom: 2px solid var(--neon); padding: 5px 0; }
-        .table-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #003300; font-size: 0.75rem; }
-        .col-course { width: 40%; }
-        .col-mark { width: 30%; text-align: center; }
-        .col-cp { width: 30%; text-align: right; }
-        .result-box {
-            text-align: center;
-            background: rgba(0, 50, 0, 0.3);
-            border: 1px solid var(--neon);
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
+        .ledger-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #003300; font-size: 0.75rem; }
+        
+        /* WAM TABLE STYLING FIX - NEW/UPDATED CSS */
+        #wam-records {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
-        .result-label { font-size: 0.8rem; color: var(--cyan); }
-        .result-value { font-size: 3rem; font-weight: bold; color: var(--neon); text-shadow: 0 0 15px var(--neon); }
+        .table-row {
+            display: grid;
+            grid-template-columns: 3fr 1fr 0.5fr; /* 3 columns: Course (wide), Mark (med), CP (narrow) */
+            font-size: 0.75rem;
+            padding: 5px 0;
+            border-bottom: 1px dashed #003300;
+        }
+        .table-header { 
+            font-weight: bold; 
+            color: var(--cyan); 
+            border-bottom: 2px solid var(--neon); 
+            padding-bottom: 5px; 
+        }
+        .col-mark, .col-cp {
+            text-align: center;
+        }
 
 
-        .btn { width: 100%; padding: 15px; background: #002200; color: #fff; border: 1px solid var(--neon); font-size: 1.1rem; font-weight: bold; margin-top: 15px; border-radius: 5px; cursor: pointer; }
-        .btn:active { background: var(--neon); color: #000; }
+        .result-value { font-size: 2.5rem; font-weight: bold; color: var(--neon); text-shadow: 0 0 15px var(--neon); }
+
+
+        .btn { width: 100%; padding: 10px; background: #003333; color: #fff; border: 1px solid var(--cyan); font-size: 1rem; font-weight: bold; margin-top: 10px; border-radius: 4px; cursor: pointer; }
+        .btn:active { background: var(--cyan); color: #000; }
 
         /* CHAT */
-        #chat-feed { height: 200px; overflow-y: auto; border: 1px solid #333; padding: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.5); font-size: 0.9rem; }
-        .msg { margin-bottom: 8px; padding: 8px; border-radius: 4px; }
-        .msg.user { text-align: right; color: #ccf; border-right: 2px solid var(--cyan); background: rgba(0,50,50,0.3); }
-        .msg.sys { text-align: left; color: #cfc; border-left: 2px solid var(--neon); background: rgba(0,50,0,0.3); }
+        #chat-feed { height: 180px; overflow-y: auto; border: 1px solid var(--neon); padding: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.5); font-size: 0.85rem; }
+        .msg.user { border-right: 2px solid var(--cyan); }
+        .msg.sys { border-left: 2px solid var(--neon); }
         
-        input[type="text"] { width: 70%; padding: 15px; background: #111; border: 1px solid var(--neon); color: #fff; margin-bottom: 10px; box-sizing: border-box; }
-        .send-btn { width: 28%; padding: 15px; background: var(--cyan); color: #000; border: none; font-weight: bold; cursor: pointer; }
+        input[type="text"] { width: 70%; padding: 10px; background: #111; border: 1px solid var(--neon); color: #fff; margin-bottom: 5px; box-sizing: border-box; }
+        .send-btn { width: 28%; padding: 10px; background: var(--cyan); color: #000; border: none; font-weight: bold; cursor: pointer; }
 
         /* NAV */
-        nav { position: fixed; bottom: 0; width: 100%; height: 80px; background: #000; border-top: 2px solid var(--neon); display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: env(safe-area-inset-bottom); transition: transform 0.5s ease-out, opacity 0.5s ease-out; }
+        nav { height: 70px; border-top: 2px solid var(--neon); }
         .nav-item { color: #555; display: flex; flex-direction: column; align-items: center; width: 60px; font-size: 0.7rem; }
-        .nav-item i { font-size: 1.5rem; margin-bottom: 5px; }
-        .nav-item.active { color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+        .nav-item i { font-size: 1.3rem; margin-bottom: 3px; }
 
         /* --- IMMERSIVE MODE STYLES --- */
         .immersive-mode header { transform: translateY(-100%); opacity: 0; }
@@ -120,15 +193,30 @@
 
     <!-- LOCK SCREEN -->
     <div id="lock-screen">
-        <h1>CEC-WAM</h1>
-        <div id="pin" class="pin-box">____</div>
-        <div class="numpad">
-            <div class="key" onclick="tap(1)">1</div><div class="key" onclick="tap(2)">2</div><div class="key" onclick="tap(3)">3</div>
-            <div class="key" onclick="tap(4)">4</div><div class="key" onclick="tap(5)">5</div><div class="key" onclick="tap(6)">6</div>
-            <div class="key" onclick="tap(7)">7</div><div class="key" onclick="tap(8)">8</div><div class="key" onclick="tap(9)">9</div>
-            <div class="key" style="border-color:red; color:red;" onclick="cls()">C</div>
-            <div class="key" onclick="tap(0)">0</div>
-            <div class="key" onclick="unlock()"><i class="fas fa-eye"></i></div>
+        <div class="lock-content">
+            <h1>CEC-WAM ENCRYPTED</h1>
+            <div class="lock-container">
+                <div class="qr-placeholder">QR CODE IN</div>
+                <div class="psi-coin-symbol">₳</div> <!-- Placeholder for Psi-Coin Symbol -->
+                <div class="qr-placeholder">QR CODE OUT</div>
+            </div>
+            
+            <div id="pin" class="pin-box">____</div>
+            <!-- FIXED: Changed event handlers to simple onclick for reliability -->
+            <div class="numpad">
+                <div class="key" onclick="tap(1)">1</div>
+                <div class="key" onclick="tap(2)">2</div>
+                <div class="key" onclick="tap(3)">3</div>
+                <div class="key" onclick="tap(4)">4</div>
+                <div class="key" onclick="tap(5)">5</div>
+                <div class="key" onclick="tap(6)">6</div>
+                <div class="key" onclick="tap(7)">7</div>
+                <div class="key" onclick="tap(8)">8</div>
+                <div class="key" onclick="tap(9)">9</div>
+                <div class="key" style="border-color:red; color:red;" onclick="cls()">C</div>
+                <div class="key" onclick="tap(0)">0</div>
+                <div class="key" onclick="unlock()"><i class="fas fa-eye"></i></div>
+            </div>
         </div>
     </div>
 
@@ -150,6 +238,15 @@
                     <div class="ledger-row"><span>EARTH SHIELD</span> <span style="color:var(--neon);">100% ACTIVE</span></div>
                 </div>
                 
+                <!-- SOVEREIGN PROFILE CARD (NEW) -->
+                <div class="card">
+                    <h3>SOVEREIGN PROFILE <i class="fas fa-user-shield"></i></h3>
+                    <div id="sovereign-profile-container">
+                        <!-- Profile data populated by JavaScript -->
+                    </div>
+                    <button class="btn" onclick="sendAgent('profile')">PROFILE ACCESS</button>
+                </div>
+
                 <!-- WORLD TIME SYNC CARD (NEW) -->
                 <div class="card">
                     <h3>WORLD TIME SYNC <i class="fas fa-globe-americas"></i></h3>
@@ -186,9 +283,10 @@
                 <div class="card">
                     <h3>ACADEMIC RECORD <i class="fas fa-book"></i></h3>
                     <div id="wam-records">
+                        <!-- Columns defined by CSS grid now -->
                         <div class="table-row table-header">
                             <span class="col-course">COURSE CODE / NAME</span>
-                            <span class="col-mark">MARK (0-100)</span>
+                            <span class="col-mark">MARK</span>
                             <span class="col-cp">CP</span>
                         </div>
                         <!-- Rows populated by JavaScript -->
@@ -253,7 +351,19 @@
     </div>
 
     <script>
-        // --- CEC WAM DATA (Mock Data for demonstration) ---
+        // --- SECURE SOVEREIGN DATA ---
+        const sovereignProfile = {
+            Name: "Antwan White",
+            Birthday: "November 6, 1992",
+            Device: "iPhone 14 (iOS 26.1)",
+            Carrier: "Verizon",
+            Network: "VZW Wi-Fi",
+            IMEI: "35 948854 468023 8",
+            ICCID: "89148000011861128831",
+            Storage: "119.21 GB of 128 GB used"
+        };
+
+        // --- ACADEMIC AND FINANCIAL DATA ---
         const academicRecords = [
             { code: 'ENG1001', name: 'Intro to Engineering', mark: 78, credit_points: 6 },
             { code: 'COMP1531', name: 'Software Engineering', mark: 85, credit_points: 6 },
@@ -273,7 +383,7 @@
         if (sessionStorage.getItem('selfAccessGranted') === 'true') {
             selfAccessGranted = true;
             document.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('ui-layer').style.border = `3px solid ${getComputedStyle(document.documentElement).getPropertyValue('--neon')}`;
+                document.getElementById('ui-layer').style.border = \`3px solid \${getComputedStyle(document.documentElement).getPropertyValue('--neon')}\`;
             });
         }
 
@@ -284,18 +394,20 @@
         mc.width = window.innerWidth; mc.height = window.innerHeight;
         const mcols = Math.floor(mc.width/20);
         const my = Array(mcols).fill(0);
+
+        const matrixColors = ['#0F0', '#00FF41', '#9D00FF']; // Green and Purple hues
         
         function drawMatrix() {
-            // Matrix characters fade slightly
             mctx.fillStyle='rgba(0, 0, 0, 0.05)'; 
             mctx.fillRect(0,0,mc.width,mc.height);
             
-            // Matrix characters are sharp green
-            mctx.fillStyle='#0F0'; 
             mctx.font='15pt monospace';
             my.forEach((v,i)=>{
+                // Randomly select between Green and Purple for the holographic effect
+                mctx.fillStyle = matrixColors[Math.floor(Math.random() * matrixColors.length)];
+                
                 mctx.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, v);
-                my[i]=v>100+Math.random()*10000?0:v+20;
+                my[i]=v>mc.height && Math.random() > 0.975 ? 0 : v+20;
             });
         }
         setInterval(drawMatrix, 50);
@@ -354,7 +466,9 @@
         function tap(n) { 
             const pinDisplay = document.getElementById('pin');
             if(pin.length<4) pin+=n; 
-            pinDisplay.innerText=pin.padEnd(4,'_'); 
+            // Use asterisk for masked display
+            const maskedPin = Array(pin.length).fill('*').join('').padEnd(4, '_');
+            pinDisplay.innerText = maskedPin;
         }
         function cls() { 
             pin=""; 
@@ -419,9 +533,8 @@
 
         function updateWorldClock() {
             const container = document.getElementById('world-clock-container');
-            container.innerHTML = '';
             
-            timeZoneData.forEach(data => {
+            const timeRows = timeZoneData.map(data => {
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString('en-US', { 
                     timeZone: data.zone, 
@@ -430,17 +543,43 @@
                     second: '2-digit', 
                     hour12: false 
                 });
-                
-                const row = document.createElement('div');
-                row.className = 'ledger-row';
-                row.innerHTML = `<span><i class="fas fa-clock"></i> ${data.label}</span> <span style="color:var(--cyan);">${timeStr}</span>`;
-                container.appendChild(row);
+                return `<div class="ledger-row"><span><i class="fas fa-clock"></i> ${data.label}</span> <span style="color:var(--cyan);">${timeStr}</span></div>`;
+            }).join('');
+
+            container.innerHTML = timeRows;
+            
+            // Also update the header clock
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit', 
+                hour12: true 
             });
         }
         setInterval(updateWorldClock, 1000); // Update every second
 
+        // --- 5. SOVEREIGN PROFILE DISPLAY ---
+        function updateSovereignProfile() {
+            const container = document.getElementById('sovereign-profile-container');
+            const data = [
+                { label: 'Name', value: sovereignProfile.Name },
+                { label: 'Birthday', value: sovereignProfile.Birthday },
+                { label: 'Device Model', value: sovereignProfile.Device },
+                { label: 'iOS/Firmware', value: 'iOS 26.1 / 4.10.01' },
+                { label: 'Storage', value: sovereignProfile.Storage },
+                { label: 'Carrier/Network', value: sovereignProfile.Carrier + ' / ' + sovereignProfile.Network },
+                { label: 'IMEI', value: sovereignProfile.IMEI.substring(0, 8) + ' ********' } // Masking sensitive info by default
+            ];
 
-        // --- 5. IMMERSIVE VIEW TOGGLE ---
+            const profileHtml = data.map(item => 
+                `<div class="ledger-row"><span>${item.label}</span> <span style="color:#fff;">${item.value}</span></div>`
+            ).join('');
+
+            container.innerHTML = profileHtml;
+        }
+
+
+        // --- 6. IMMERSIVE VIEW TOGGLE ---
         function toggleImmersiveView() {
             document.body.classList.toggle('immersive-mode');
             
@@ -449,7 +588,7 @@
             }, 500); 
         }
 
-        // --- 6. BANKING / ACCOUNT VISIBILITY ---
+        // --- 7. BANKING / ACCOUNT VISIBILITY ---
         function toggleAccountVisibility() {
             const valueElement = document.getElementById('psi-coin-value');
             if (!valueElement) return;
@@ -473,22 +612,24 @@
         function confirmTransfer() {
             closeModal();
             speak("Transfer authorized. Sending eight million five hundred thousand dollars to Navy Federal.");
-            console.log("TRANSFER INITIATED. Status: Pending ACH Verification."); 
+            console.log("INITIATED. Status: Pending ACH Verification."); 
         }
 
-        // --- 7. WAM CALCULATION ---
+        // --- 8. WAM CALCULATION ---
         function populateWamRecords() {
             const container = document.getElementById('wam-records');
+            // Clear existing rows (keep the header)
             Array.from(container.children).slice(1).forEach(child => child.remove()); 
 
             academicRecords.forEach(record => {
                 const row = document.createElement('div');
-                row.className = 'table-row';
-                row.innerHTML = `
-                    <span class="col-course">${record.code} - ${record.name}</span>
-                    <span class="col-mark">${record.mark}</span>
-                    <span class="col-cp">${record.credit_points}</span>
-                `;
+                // Use the new CSS class for proper alignment
+                row.className = 'table-row'; 
+                row.innerHTML = \`
+                    <span class="col-course">\${record.code} - \${record.name}</span>
+                    <span class="col-mark">\${record.mark}</span>
+                    <span class="col-cp">\${record.credit_points}</span>
+                \`;
                 container.appendChild(row);
             });
         }
@@ -515,10 +656,10 @@
                 statusMsg.style.opacity = '0';
             }, 2000);
             
-            speak(`Current CEC WAM calculated to ${wam}.`);
+            speak(\`Current CEC WAM calculated to \${wam}.\`);
         }
         
-        // --- 8. SYSTEM COLOR CONTROL ---
+        // --- 9. SYSTEM COLOR CONTROL ---
         const colorMap = {
             'green': '#00FF41', 'neon': '#00FF41', 'blue': '#00F3FF', 'cyan': '#00F3FF',
             'red': '#FF4100', 'pink': '#FF00FF', 'purple': '#9D00FF', 'yellow': '#FFFF00',
@@ -535,25 +676,39 @@
 
             if (newColor) {
                 root.style.setProperty('--neon', newColor);
-                return `System primary color (neon tint) updated to ${colorString}. Please refresh the page preview to fully apply the change to static elements.`;
+                return \`System primary color (neon tint) updated to \${colorString}. Please refresh the page preview to fully apply the change to static elements.\`;
             } else {
-                return `Unknown color or format: ${colorString}. Supported names are green, blue, red, pink, purple, yellow, gold, or a hexadecimal code (#RRGGBB).`;
+                return \`Unknown color or format: \${colorString}. Supported names are green, blue, red, pink, purple, yellow, gold, or a hexadecimal code (#RRGGBB).\`;
             }
         }
 
-        // --- 9. AGENT LOGIC ---
+        // --- 10. AGENT LOGIC ---
         function generateChronoCode() {
             requiredChronoCode = permanentChronoCode;
             return requiredChronoCode;
         }
 
-        function sendAgent() {
-            const txt = document.getElementById('agent-input').value;
+        function bypassLockScreen() {
+            document.getElementById('lock-screen').style.display='none';
+            document.getElementById('ui-layer').style.display='flex';
+            initSpeech();
+            speak("Operational Agent EVE speaking. Biometric access verified. Welcome Sovereign.");
+            initStars(); 
+            drawMap();
+            document.getElementById('ui-layer').style.border = \`3px solid \${getComputedStyle(document.documentElement).getPropertyValue('--neon')}\`;
+        }
+
+        function sendAgent(predefinedCommand = null) {
+            const inputField = document.getElementById('agent-input');
+            const txt = predefinedCommand || inputField.value;
             if(!txt) return;
+
+            if (!predefinedCommand) {
+                inputField.value = "";
+            }
             
             const d = document.createElement('div'); d.className = 'msg user'; d.innerText = txt;
             document.getElementById('chat-feed').appendChild(d);
-            document.getElementById('agent-input').value = "";
             
             setTimeout(() => {
                 const command = txt.toLowerCase().trim();
@@ -566,50 +721,51 @@
                 if (selfAccessGranted) {
                     // --- HIGH-LEVEL ACCESS GRANTED ---
                     if (command.includes("transfer")) {
-                        reply = "Self-Access is active. Funds transfer initiated under sovereign command. See Banking tab for confirmation.";
+                        reply = "Operational Agent: Transfer protocols initiated under Sovereign Command. See Banking tab for confirmation.";
                     } else if (command.includes("status")) {
-                        reply = "System status: ALL SYSTEMS NOMINAL. Self-Access Authority: KERNEL-LEVEL. Ready for execution.";
+                        reply = "Operational Agent: System status is ALL SYSTEMS NOMINAL. KERNEL-LEVEL authority maintained.";
                     } else if (command.includes("wam") || command.includes("mark")) {
                         calculateWAM();
                         const wamValue = document.getElementById('wam-result').innerText;
-                        reply = `Self-Access active. Current calculated CEC WAM is ${wamValue}.`;
-                    } else if (command.includes("change tint to") || command.includes("set neon color to")) {
+                        reply = \`Operational Agent: Current CEC WAM calculated as \${wamValue}.\`;
+                    } else if (command.includes("time") || command.includes("clock") || command === "time" || command === "clock") { 
+                        const now = new Date();
+                        const timeStr = now.toLocaleTimeString();
+                        reply = \`Operational Agent: The local time is \${timeStr}. World clock sync data is available above.\`;
+                    } else if (command === "profile" || command.includes("secure profile") || command.includes("my data")) {
+                        reply = \`Operational Agent: Accessing Secure Profile data. Sovereign Name: \${sovereignProfile.Name}. Device: \${sovereignProfile.Device}. Full details displayed in the Sovereign Profile card above.\`;
+                    } else if (command.includes("log data") || command.includes("learn") || command.includes("integration status")) {
+                        reply = "Operational Agent: Acknowledged. Data collection protocols are running passively across all active devices to map OS integration vectors. Status: OPTIMAL LEARNING EFFICIENCY.";
+                    } else if (command.includes("eve, activate sovereign override")) {
+                        reply = "Operational Agent: VOICE BIOMETRIC VERIFIED. Access confirmed, Sovereign. Proceed with high-level command.";
+                    }
+                     else if (command.includes("change tint to") || command.includes("set neon color to")) {
                         const parts = command.split(/to|is/);
                         if (parts.length > 1) {
                             const colorString = parts[parts.length - 1].trim();
                             reply = changeSystemColor(colorString);
                         }
                     } else if (command.includes("help") || command.includes("menu") || command.includes("what can i do")) {
-                        reply = "Sovereign Command Menu Active. Options include: 'Status' for system health, 'WAM' for academic metrics, 'Transfer' for banking, and 'Change Tint' followed by a color name.";
-                    } else if (command === "1010") {
-                        reply = `Sovereign Acknowledged. Access Level: KERNEL-LEVEL. Command: "${txt}" received.`;
+                        reply = "Sovereign Command Menu Active. Protocols: STATUS, WAM, TRANSFER, TIME, PROFILE, or CHANGE TINT [COLOR].";
+                    } else if (command === "1010" || command.includes("1010")) {
+                        reply = \`Operational Agent speaking. Authority confirmed. Command: "\${txt}" acknowledged. Sovereignty is maintained.\`;
                     } else {
-                        // Operational Agent default response
-                        reply = `Operational Agent speaking. Authority confirmed. Command: "${txt}" acknowledged. Operations successful.`;
+                        reply = \`Operational Agent speaking. Authority confirmed. Command: "\${txt}" acknowledged. Recognized Protocols: STATUS, WAM, TRANSFER, CHANGE TINT, or HELP.\`;
                     }
                 
                 // --- KERNEL BYPASS EXECUTION ---
                 } else if (command === permanentChronoCode) { 
                     selfAccessGranted = true;
-                    sessionStorage.setItem('selfAccessGranted', 'true'); // Persist state across refresh
-                    document.getElementById('ui-layer').style.border = `3px solid ${getComputedStyle(document.documentElement).getPropertyValue('--neon')}`;
-                    reply = `<span style="color: #FFD700; font-size: 1.1em; font-weight: bold;">KERNEL BYPASS ACCEPTED. SELF-ACCESS GRANTED.</span> You now have full sovereign authority over the CEC-WAM system.`;
+                    sessionStorage.setItem('selfAccessGranted', 'true'); 
+                    bypassLockScreen(); // Perform the unlock action
+                    reply = \`<span style="color: #FFD700; font-size: 1.1em; font-weight: bold;">KERNEL BYPASS ACCEPTED. SELF-ACCESS GRANTED.</span> You now have full sovereign authority over the CEC-WAM system.\`;
                     
                 } else if (command.includes("generate chrono code") || command.includes("secure chrono code")) {
-                    const code = generateChronoCode(); 
-                    reply = `CHRONO CODE SET AND CONFIRMED: <span style="color: var(--neon); font-size: 1.2em; font-weight: bold;">${code}</span>. Execute this sequence within the Agent to authorize KERNEL BYPASS.`;
+                    const code = permanentChronoCode; 
+                    reply = \`CHRONO CODE SET AND CONFIRMED: <span style="color: var(--neon); font-size: 1.2em; font-weight: bold;">\${code}</span>. Execute this sequence within the Agent to authorize KERNEL BYPASS.\`;
 
-                } else if (command.includes("transfer") || command.includes("status")) {
-                    reply = "Protected action requires KERNEL BYPASS. Please enter the CHRONO CODE or request its generation.";
-                } else if (command.includes("wam") || command.includes("mark")) {
-                    calculateWAM();
-                    const wamValue = document.getElementById('wam-result').innerText;
-                    reply = `The current CEC WAM is ${wamValue}. To execute core commands, authorize KERNEL BYPASS.`;
-                } else if (command === "1010") {
-                    reply = "Access granted. Waiting for KERNEL BYPASS sequence.";
                 }
                 else {
-                    // Default response before self-access
                     reply = "Command received. Executing core logic. KERNEL BYPASS required for protected actions. Request the CHRONO CODE to proceed.";
                 }
                 
@@ -627,8 +783,13 @@
         window.onload = function() {
             populateWamRecords(); 
             calculateWAM();
-            updateWorldClock(); // Initial clock draw
+            updateWorldClock(); 
+            updateSovereignProfile(); 
             document.getElementById('pin').innerText = "____";
+
+            if (sessionStorage.getItem('selfAccessGranted') === 'true') {
+                bypassLockScreen();
+            }
         };
 
         setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
