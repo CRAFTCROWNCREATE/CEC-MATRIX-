@@ -18,7 +18,7 @@
         }
         body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; user-select: none; -webkit-touch-callout: none; transition: background 0.5s; }
         
-        /* MATRIX LAYER */
+        /* MATRIX LAYER - Now uses z-index: -1 to be truly background */
         #matrix-layer { 
             position: fixed; 
             top: 0; 
@@ -126,10 +126,7 @@
         #star-canvas { width: 100%; height: 100%; }
         .map-hud { position: absolute; bottom: 10px; left: 10px; font-size: 0.7rem; color: var(--cyan); pointer-events: none; }
 
-        /* LEDGER ROWS / WAM TABLES */
-        .ledger-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #003300; font-size: 0.75rem; }
-        
-        /* WAM TABLE STYLING FIX - NEW/UPDATED CSS */
+        /* WAM TABLE STYLING FIX */
         #wam-records {
             display: flex;
             flex-direction: column;
@@ -157,7 +154,7 @@
 
 
         .btn { width: 100%; padding: 10px; background: #003333; color: #fff; border: 1px solid var(--cyan); font-size: 1rem; font-weight: bold; margin-top: 10px; border-radius: 4px; cursor: pointer; }
-        .btn:active { background: var(--cyan); color: #000; }
+        .btn:active { background: var(--cyan); color: #000; transform: scale(0.98); }
 
         /* CHAT */
         #chat-feed { height: 180px; overflow-y: auto; border: 1px solid var(--neon); padding: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.5); font-size: 0.85rem; }
@@ -168,9 +165,11 @@
         .send-btn { width: 28%; padding: 10px; background: var(--cyan); color: #000; border: none; font-weight: bold; cursor: pointer; }
 
         /* NAV */
-        nav { height: 70px; border-top: 2px solid var(--neon); }
-        .nav-item { color: #555; display: flex; flex-direction: column; align-items: center; width: 60px; font-size: 0.7rem; }
+        nav { height: 70px; border-top: 2px solid var(--neon); display: flex; justify-content: space-around; align-items: center; background: rgba(0,0,0,0.9); padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { color: #555; display: flex; flex-direction: column; align-items: center; width: 60px; font-size: 0.7rem; cursor: pointer; transition: color 0.3s; }
         .nav-item i { font-size: 1.3rem; margin-bottom: 3px; }
+        .nav-item.active { color: var(--neon); }
+        .nav-item:hover { color: var(--cyan); }
 
         /* --- IMMERSIVE MODE STYLES --- */
         .immersive-mode header { transform: translateY(-100%); opacity: 0; }
@@ -202,20 +201,20 @@
             </div>
             
             <div id="pin" class="pin-box">____</div>
-            <!-- FIXED: Changed event handlers to simple onclick for reliability -->
+            <!-- Keys are now given IDs to attach event listeners in JS -->
             <div class="numpad">
-                <div class="key" onclick="tap(1)">1</div>
-                <div class="key" onclick="tap(2)">2</div>
-                <div class="key" onclick="tap(3)">3</div>
-                <div class="key" onclick="tap(4)">4</div>
-                <div class="key" onclick="tap(5)">5</div>
-                <div class="key" onclick="tap(6)">6</div>
-                <div class="key" onclick="tap(7)">7</div>
-                <div class="key" onclick="tap(8)">8</div>
-                <div class="key" onclick="tap(9)">9</div>
-                <div class="key" style="border-color:red; color:red;" onclick="cls()">C</div>
-                <div class="key" onclick="tap(0)">0</div>
-                <div class="key" onclick="unlock()"><i class="fas fa-eye"></i></div>
+                <div class="key" id="key-1">1</div>
+                <div class="key" id="key-2">2</div>
+                <div class="key" id="key-3">3</div>
+                <div class="key" id="key-4">4</div>
+                <div class="key" id="key-5">5</div>
+                <div class="key" id="key-6">6</div>
+                <div class="key" id="key-7">7</div>
+                <div class="key" id="key-8">8</div>
+                <div class="key" id="key-9">9</div>
+                <div class="key" style="border-color:red; color:red;" id="key-cls">C</div>
+                <div class="key" id="key-0">0</div>
+                <div class="key" id="key-unlock"><i class="fas fa-eye"></i></div>
             </div>
         </div>
     </div>
@@ -244,6 +243,7 @@
                     <div id="sovereign-profile-container">
                         <!-- Profile data populated by JavaScript -->
                     </div>
+                    <!-- Using direct call -->
                     <button class="btn" onclick="sendAgent('profile')">PROFILE ACCESS</button>
                 </div>
 
@@ -378,24 +378,31 @@
         const actualPsiCoinValue = '$8,500,000.00'; // Full value for security toggle
         let isAccountVisible = false;
         let selfAccessGranted = false; 
+        let animationFrameId; // For Star Map
+        let matrixIntervalId; // For Matrix effect
 
         // Check if the page is being reloaded after a successful bypass (simplistic check for demo)
         if (sessionStorage.getItem('selfAccessGranted') === 'true') {
             selfAccessGranted = true;
-            document.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('ui-layer').style.border = \`3px solid \${getComputedStyle(document.documentElement).getPropertyValue('--neon')}\`;
-            });
         }
 
 
         // --- 1. MATRIX ---
-        const mc = document.getElementById('matrix-layer');
-        const mctx = mc.getContext('2d');
-        mc.width = window.innerWidth; mc.height = window.innerHeight;
-        const mcols = Math.floor(mc.width/20);
-        const my = Array(mcols).fill(0);
+        let mc, mctx, mcols, my;
 
-        const matrixColors = ['#0F0', '#00FF41', '#9D00FF']; // Green and Purple hues
+        function initMatrix() {
+            mc = document.getElementById('matrix-layer');
+            mctx = mc.getContext('2d');
+            mc.width = window.innerWidth; 
+            mc.height = window.innerHeight;
+            mcols = Math.floor(mc.width/20);
+            my = Array(mcols).fill(0);
+
+            // Re-initialize matrix on resize
+            window.addEventListener('resize', initMatrix);
+        }
+
+        const matrixColors = ['#0F0', '#00FF41', '#9D00FF'];
         
         function drawMatrix() {
             mctx.fillStyle='rgba(0, 0, 0, 0.05)'; 
@@ -403,26 +410,18 @@
             
             mctx.font='15pt monospace';
             my.forEach((v,i)=>{
-                // Randomly select between Green and Purple for the holographic effect
                 mctx.fillStyle = matrixColors[Math.floor(Math.random() * matrixColors.length)];
                 
                 mctx.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, v);
                 my[i]=v>mc.height && Math.random() > 0.975 ? 0 : v+20;
             });
         }
-        setInterval(drawMatrix, 50);
-        window.addEventListener('resize', () => {
-            mc.width = window.innerWidth;
-            mc.height = window.innerHeight;
-        });
-
 
         // --- 2. STAR MAP (ANIMATED) ---
         const sc = document.getElementById('star-canvas');
         const sctx = sc.getContext('2d');
         let stars = [];
         let mapMode = 'SOLAR'; 
-        let animationFrameId; 
 
         function initStars() {
             const mapContainer = document.getElementById('map-container');
@@ -481,6 +480,7 @@
                 speechSynthesis.cancel(); 
                 
                 const u = new SpeechSynthesisUtterance(text);
+                // Attempt to find a suitable English voice
                 const voices = speechSynthesis.getVoices();
                 const voice = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English') || v.lang.startsWith('en'));
                 if(voice) u.voice = voice;
@@ -497,11 +497,13 @@
         }
 
         function unlock() {
-            if(pin==="1010" || pin==="") { 
+            // Updated code to allow '1010' or the chrono code for direct entry
+            if(pin==="1010" || pin===permanentChronoCode) { 
                 document.getElementById('lock-screen').style.display='none';
                 document.getElementById('ui-layer').style.display='flex';
                 initSpeech(); 
                 speak("Access Granted. Welcome Sovereign.");
+                // Start map when unlocked
                 initStars(); 
                 drawMap();
             } else { 
@@ -516,6 +518,7 @@
             document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
             el.classList.add('active');
             
+            // Only initialize/draw map when that tab is active
             if (id === 'view-map') {
                 initStars(); 
                 if (!animationFrameId) drawMap(); 
@@ -556,7 +559,7 @@
                 hour12: true 
             });
         }
-        setInterval(updateWorldClock, 1000); // Update every second
+
 
         // --- 5. SOVEREIGN PROFILE DISPLAY ---
         function updateSovereignProfile() {
@@ -618,18 +621,21 @@
         // --- 8. WAM CALCULATION ---
         function populateWamRecords() {
             const container = document.getElementById('wam-records');
-            // Clear existing rows (keep the header)
+            // Ensure the container exists and has children before trying to slice
+            if (!container || container.children.length === 0) return;
+            
+            // Clear existing rows (keep the header, which is index 0)
             Array.from(container.children).slice(1).forEach(child => child.remove()); 
 
             academicRecords.forEach(record => {
                 const row = document.createElement('div');
                 // Use the new CSS class for proper alignment
                 row.className = 'table-row'; 
-                row.innerHTML = \`
-                    <span class="col-course">\${record.code} - \${record.name}</span>
-                    <span class="col-mark">\${record.mark}</span>
-                    <span class="col-cp">\${record.credit_points}</span>
-                \`;
+                row.innerHTML = `
+                    <span class="col-course">${record.code} - ${record.name}</span>
+                    <span class="col-mark">${record.mark}</span>
+                    <span class="col-cp">${record.credit_points}</span>
+                `;
                 container.appendChild(row);
             });
         }
@@ -651,12 +657,14 @@
             document.getElementById('cp-earned').innerText = totalCreditPoints > 0 ? totalCreditPoints : 0;
             
             const statusMsg = document.getElementById('wam-status-message');
-            statusMsg.style.opacity = '1';
-            setTimeout(() => {
-                statusMsg.style.opacity = '0';
-            }, 2000);
+            if (statusMsg) {
+                statusMsg.style.opacity = '1';
+                setTimeout(() => {
+                    statusMsg.style.opacity = '0';
+                }, 2000);
+            }
             
-            speak(\`Current CEC WAM calculated to \${wam}.\`);
+            speak(`Current CEC WAM calculated to ${wam}.`);
         }
         
         // --- 9. SYSTEM COLOR CONTROL ---
@@ -676,18 +684,13 @@
 
             if (newColor) {
                 root.style.setProperty('--neon', newColor);
-                return \`System primary color (neon tint) updated to \${colorString}. Please refresh the page preview to fully apply the change to static elements.\`;
+                return `System primary color (neon tint) updated to ${colorString}. Please refresh the page preview to fully apply the change to static elements.`;
             } else {
-                return \`Unknown color or format: \${colorString}. Supported names are green, blue, red, pink, purple, yellow, gold, or a hexadecimal code (#RRGGBB).\`;
+                return `Unknown color or format: ${colorString}. Supported names are green, blue, red, pink, purple, yellow, gold, or a hexadecimal code (#RRGGBB).`;
             }
         }
 
         // --- 10. AGENT LOGIC ---
-        function generateChronoCode() {
-            requiredChronoCode = permanentChronoCode;
-            return requiredChronoCode;
-        }
-
         function bypassLockScreen() {
             document.getElementById('lock-screen').style.display='none';
             document.getElementById('ui-layer').style.display='flex';
@@ -695,7 +698,8 @@
             speak("Operational Agent EVE speaking. Biometric access verified. Welcome Sovereign.");
             initStars(); 
             drawMap();
-            document.getElementById('ui-layer').style.border = \`3px solid \${getComputedStyle(document.documentElement).getPropertyValue('--neon')}\`;
+            // Ensure the border color matches the current neon variable
+            document.getElementById('ui-layer').style.border = `3px solid ${getComputedStyle(document.documentElement).getPropertyValue('--neon')}`;
         }
 
         function sendAgent(predefinedCommand = null) {
@@ -710,6 +714,7 @@
             const d = document.createElement('div'); d.className = 'msg user'; d.innerText = txt;
             document.getElementById('chat-feed').appendChild(d);
             
+            // Asynchronous response for effect
             setTimeout(() => {
                 const command = txt.toLowerCase().trim();
                 let reply = "Command received. Processing...";
@@ -727,13 +732,13 @@
                     } else if (command.includes("wam") || command.includes("mark")) {
                         calculateWAM();
                         const wamValue = document.getElementById('wam-result').innerText;
-                        reply = \`Operational Agent: Current CEC WAM calculated as \${wamValue}.\`;
-                    } else if (command.includes("time") || command.includes("clock") || command === "time" || command === "clock") { 
+                        reply = `Operational Agent: Current CEC WAM calculated as ${wamValue}.`;
+                    } else if (command.includes("time") || command.includes("clock")) { 
                         const now = new Date();
                         const timeStr = now.toLocaleTimeString();
-                        reply = \`Operational Agent: The local time is \${timeStr}. World clock sync data is available above.\`;
+                        reply = `Operational Agent: The local time is ${timeStr}. World clock sync data is available above.`;
                     } else if (command === "profile" || command.includes("secure profile") || command.includes("my data")) {
-                        reply = \`Operational Agent: Accessing Secure Profile data. Sovereign Name: \${sovereignProfile.Name}. Device: \${sovereignProfile.Device}. Full details displayed in the Sovereign Profile card above.\`;
+                        reply = `Operational Agent: Accessing Secure Profile data. Sovereign Name: ${sovereignProfile.Name}. Device: ${sovereignProfile.Device}. Full details displayed in the Sovereign Profile card above.`;
                     } else if (command.includes("log data") || command.includes("learn") || command.includes("integration status")) {
                         reply = "Operational Agent: Acknowledged. Data collection protocols are running passively across all active devices to map OS integration vectors. Status: OPTIMAL LEARNING EFFICIENCY.";
                     } else if (command.includes("eve, activate sovereign override")) {
@@ -748,9 +753,9 @@
                     } else if (command.includes("help") || command.includes("menu") || command.includes("what can i do")) {
                         reply = "Sovereign Command Menu Active. Protocols: STATUS, WAM, TRANSFER, TIME, PROFILE, or CHANGE TINT [COLOR].";
                     } else if (command === "1010" || command.includes("1010")) {
-                        reply = \`Operational Agent speaking. Authority confirmed. Command: "\${txt}" acknowledged. Sovereignty is maintained.\`;
+                        reply = `Operational Agent speaking. Authority confirmed. Command: "${txt}" acknowledged. Sovereignty is maintained.`;
                     } else {
-                        reply = \`Operational Agent speaking. Authority confirmed. Command: "\${txt}" acknowledged. Recognized Protocols: STATUS, WAM, TRANSFER, CHANGE TINT, or HELP.\`;
+                        reply = `Operational Agent speaking. Authority confirmed. Command: "${txt}" acknowledged. Recognized Protocols: STATUS, WAM, TRANSFER, CHANGE TINT, or HELP.`;
                     }
                 
                 // --- KERNEL BYPASS EXECUTION ---
@@ -758,11 +763,11 @@
                     selfAccessGranted = true;
                     sessionStorage.setItem('selfAccessGranted', 'true'); 
                     bypassLockScreen(); // Perform the unlock action
-                    reply = \`<span style="color: #FFD700; font-size: 1.1em; font-weight: bold;">KERNEL BYPASS ACCEPTED. SELF-ACCESS GRANTED.</span> You now have full sovereign authority over the CEC-WAM system.\`;
+                    reply = `<span style="color: #FFD700; font-size: 1.1em; font-weight: bold;">KERNEL BYPASS ACCEPTED. SELF-ACCESS GRANTED.</span> You now have full sovereign authority over the CEC-WAM system.`;
                     
                 } else if (command.includes("generate chrono code") || command.includes("secure chrono code")) {
                     const code = permanentChronoCode; 
-                    reply = \`CHRONO CODE SET AND CONFIRMED: <span style="color: var(--neon); font-size: 1.2em; font-weight: bold;">\${code}</span>. Execute this sequence within the Agent to authorize KERNEL BYPASS.\`;
+                    reply = `CHRONO CODE SET AND CONFIRMED: <span style="color: var(--neon); font-size: 1.2em; font-weight: bold;">${code}</span>. Execute this sequence within the Agent to authorize KERNEL BYPASS.`;
 
                 }
                 else {
@@ -779,20 +784,63 @@
             }, 800);
         }
 
-        // Initial setup on load
+        // --- 11. INITIALIZATION ---
+
+        function setupNumpadListeners() {
+            for (let i = 0; i <= 9; i++) {
+                const key = document.getElementById(`key-${i}`);
+                if (key) {
+                    // Use a simple click handler, which works reliably for tap and mouse
+                    key.onclick = () => tap(i);
+                }
+            }
+            const clsKey = document.getElementById('key-cls');
+            if (clsKey) clsKey.onclick = cls;
+            
+            const unlockKey = document.getElementById('key-unlock');
+            if (unlockKey) unlockKey.onclick = unlock;
+        }
+
+        // --- MAIN INIT FUNCTION ---
         window.onload = function() {
+            // 1. Initialize Matrix
+            initMatrix();
+            matrixIntervalId = setInterval(drawMatrix, 50);
+
+            // 2. Set up Numpad Listeners (The fix for buttons not working)
+            setupNumpadListeners();
+
+            // 3. Initial Data Setup
             populateWamRecords(); 
             calculateWAM();
             updateWorldClock(); 
             updateSovereignProfile(); 
-            document.getElementById('pin').innerText = "____";
+            
+            // 4. Start Clock
+            setInterval(updateWorldClock, 1000); 
 
-            if (sessionStorage.getItem('selfAccessGranted') === 'true') {
+            // 5. Apply Access State
+            if (selfAccessGranted) {
                 bypassLockScreen();
+            } else {
+                document.getElementById('pin').innerText = "____";
             }
         };
 
-        setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
+        // If the Matrix canvas is resized dynamically (e.g., orientation change)
+        window.addEventListener('resize', () => {
+             // Re-initialize matrix on window resize
+            if (mc && mctx) {
+                mc.width = window.innerWidth;
+                mc.height = window.innerHeight;
+                mcols = Math.floor(mc.width / 20);
+                my = Array(mcols).fill(0);
+            }
+            // Re-initialize stars if map is showing
+            if (document.getElementById('view-map').classList.contains('active')) {
+                initStars();
+            }
+        });
 
     </script>
 </body>
