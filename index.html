@@ -344,12 +344,14 @@
             width: 100%;
             max-width: 150px;
         }
+        /* KEYBOARD FIX: Psi-Coin Symbol over the number */
         .key { 
             width: 40px; height: 40px; 
             border-radius: 5px; 
             border: 1px solid var(--neon); 
             font-size: 1rem; 
             display: flex; 
+            flex-direction: column; /* Stack symbol and number */
             justify-content: center; 
             align-items: center; 
             background: rgba(0,20,0,0.6); 
@@ -357,7 +359,25 @@
             transition: 0.1s; 
             box-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
         }
+        .key-symbol {
+            font-size: 0.8rem;
+            color: var(--magenta);
+            line-height: 0.8;
+        }
+        .key-number {
+            font-size: 0.7rem;
+            line-height: 1;
+        }
+        .key-cls { 
+            border-color:var(--magenta) !important; 
+            color:var(--magenta) !important; 
+            font-size: 1rem !important;
+            padding-top: 0 !important;
+            justify-content: center !important;
+        }
         .key:active { background: var(--neon); color: #000; transform: scale(0.95); }
+        
+
         .pin-display { 
             font-size: 1.5rem; 
             letter-spacing: 5px; 
@@ -617,17 +637,48 @@
                     <span style="color:var(--neon);">ACCESS CODE INPUT</span>
                     <div id="pin" class="pin-display">____</div>
                     <div class="numpad">
-                        <div class="key" id="key-1">1</div>
-                        <div class="key" id="key-2">2</div>
-                        <div class="key" id="key-3">3</div>
-                        <div class="key" id="key-4">4</div>
-                        <div class="key" id="key-5">5</div>
-                        <div class="key" id="key-6">6</div>
-                        <div class="key" id="key-7">7</div>
-                        <div class="key" id="key-8">8</div>
-                        <div class="key" id="key-9">9</div>
-                        <div class="key" style="border-color:var(--magenta); color:var(--magenta);" id="key-cls">C</div>
-                        <div class="key" id="key-0">0</div>
+                        <!-- KEYBOARD FIX: Psi-Coin Symbol Over the number -->
+                        <div class="key" id="key-1">
+                            <span class="key-symbol">₳</span>
+                            <span class="key-number">1</span>
+                        </div>
+                        <div class="key" id="key-2">
+                             <span class="key-symbol">₳</span>
+                            <span class="key-number">2</span>
+                        </div>
+                        <div class="key" id="key-3">
+                             <span class="key-symbol">₳</span>
+                            <span class="key-number">3</span>
+                        </div>
+                        <div class="key" id="key-4">
+                             <span class="key-symbol">₳</span>
+                            <span class="key-number">4</span>
+                        </div>
+                        <div class="key" id="key-5">
+                             <span class="key-symbol">₳</span>
+                            <span class="key-number">5</span>
+                        </div>
+                        <div class="key" id="key-6">
+                             <span class="key-symbol">₳</span>
+                            <span class="key-number">6</span>
+                        </div>
+                        <div class="key" id="key-7">
+                             <span class="key-symbol">₳</span>
+                            <span class="key-number">7</span>
+                        </div>
+                        <div class="key" id="key-8">
+                             <span class="key-symbol">₳</span>
+                            <span class="key-number">8</span>
+                        </div>
+                        <div class="key" id="key-9">
+                             <span class="key-symbol">₳</span>
+                            <span class="key-number">9</span>
+                        </div>
+                        <div class="key key-cls" id="key-cls">C</div>
+                        <div class="key" id="key-0">
+                             <span class="key-symbol">₳</span>
+                            <span class="key-number">0</span>
+                        </div>
                         <div class="key" id="key-unlock"><i class="fas fa-key"></i></div>
                     </div>
                 </div>
@@ -1316,7 +1367,8 @@
             for (let i = 0; i <= 9; i++) {
                 const key = document.getElementById(`key-${i}`);
                 if (key) {
-                    key.onclick = () => tap(i);
+                    // Attach event listener using the correct structure
+                    key.onclick = (() => tap(i));
                 }
             }
             const clsKey = document.getElementById('key-cls');
@@ -1363,6 +1415,98 @@
             if (mc && mctx) { initMatrix(); }
         });
 
+        // --- 8. ANIMATION/CANVAS HELPERS (Full Definitions) ---
+        
+        let mc, mctx, mcols, my;
+        const matrixChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ₳ΩΩΛΔΠ"; 
+        const matrixColors = ['#0F0', '#00FF41', '#9D00FF', '#FF00FF', '#00F3FF'];
+
+        function initMatrix() {
+            mc = document.getElementById('matrix-layer');
+            mctx = mc.getContext('2d');
+            mc.width = window.innerWidth; 
+            mc.height = window.innerHeight;
+            mcols = Math.floor(mc.width/20);
+            my = Array(mcols).fill(0);
+        }
+
+        function drawMatrix() {
+            mctx.fillStyle='rgba(0, 0, 0, 0.08)'; 
+            mctx.fillRect(0,0,mc.width,mc.height);
+            
+            mctx.font='15pt monospace';
+            my.forEach((v,i)=>{
+                mctx.fillStyle = matrixColors[Math.floor(Math.random() * matrixColors.length)];
+                
+                let char;
+                if (Math.random() > 0.99) { 
+                    char = '₳';
+                    mctx.fillStyle = '#FF00FF'; 
+                } else {
+                    char = matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
+                }
+
+                mctx.fillText(char, i*20, v);
+                my[i]=v>mc.height && Math.random() > 0.975 ? 0 : v+20;
+            });
+        }
+        
+        // Placeholders for Star Map (MAP TAB)
+        let sc, sctx, stars = [], mapMode = 'SOLAR';
+        function initStars() {
+            sc = document.getElementById('star-canvas');
+            sctx = sc.getContext('2d');
+            const mapContainer = document.getElementById('map-container');
+            if (mapContainer && mapContainer.offsetWidth > 0 && mapContainer.offsetHeight > 0) {
+                sc.width = mapContainer.offsetWidth;
+                sc.height = mapContainer.offsetHeight; 
+                stars = [];
+                for(let i=0; i<100; i++) {
+                    stars.push({x:Math.random()*sc.width, y:Math.random()*sc.height, s:Math.random()*2});
+                }
+            }
+        }
+        let animationFrameId;
+        function drawMap() {
+            sctx.fillStyle='#000'; sctx.fillRect(0,0,sc.width,sc.height);
+            sctx.fillStyle='#fff';
+            stars.forEach(s => {
+                sctx.fillRect(s.x, s.y, s.s, s.s);
+                s.x -= 0.2; if(s.x<0) s.x = sc.width;
+            });
+            
+            const cx = sc.width/2; const cy = sc.height/2;
+            sctx.strokeStyle='var(--cyan)';
+            sctx.beginPath(); sctx.arc(cx, cy, 80, 0, 6.28); sctx.stroke();
+            
+            sctx.fillStyle = mapMode === 'SOLAR' ? 'var(--cyan)' : 'var(--magenta)';
+            sctx.beginPath(); sctx.arc(cx, cy, 5, 0, 6.28); sctx.fill();
+            
+            animationFrameId = requestAnimationFrame(drawMap);
+        }
+        function stopMap() { if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } }
+
+        // Placeholder for Singularity (DASHBOARD)
+        let singularityCanvas, singularityCtx;
+        function initSingularity() {
+            singularityCanvas = document.getElementById('singularity-canvas');
+            if (singularityCanvas) { singularityCtx = singularityCanvas.getContext('2d'); }
+        }
+        function drawSingularityCore() {
+            if (!singularityCanvas || !singularityCtx) return;
+            const sctx = singularityCtx;
+            const cw = singularityCanvas.width;
+            const ch = singularityCanvas.height;
+            sctx.clearRect(0, 0, cw, ch);
+            const time = Date.now() * 0.001;
+            const center = { x: cw / 2, y: ch / 2 };
+            sctx.fillStyle = `rgba(0, 255, 65, ${0.5 + Math.sin(time * 5) * 0.1})`;
+            sctx.beginPath();
+            sctx.arc(center.x, center.y, 15, 0, Math.PI * 2);
+            sctx.fill();
+            requestAnimationFrame(drawSingularityCore);
+        }
+        
     </script>
 </body>
 </html>
