@@ -2,455 +2,336 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>CEC-WAM | MASTER BOARD</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CEC-CDL OMNI-NEXUS V2</title>
     
-    <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <!-- React -->
-    <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 
     <style>
-        /* --- UNIFIED STYLING --- */
         :root {
             --neon: #00FF41; 
             --cyan: #00F3FF; 
             --magenta: #FF00FF;
             --bg-dark: #000000;
-            --panel-bg: rgba(0, 10, 20, 0.95);
-            --border-color: #30363d;
         }
         
         body {
-            font-family: 'Courier New', monospace;
             background-color: var(--bg-dark);
             color: var(--neon);
-            margin: 0;
+            font-family: 'Courier New', monospace;
+            overflow: hidden; /* Prevent scrolling on main body */
             height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            user-select: none;
-            -webkit-touch-callout: none;
+            width: 100vw;
+            margin: 0;
         }
 
-        /* LAYERS */
-        #matrix-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.4; pointer-events: none; }
+        /* --- VISUAL LAYER (MATRIX & RINGS) --- */
+        #visual-stack {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+        #matrix-canvas { position: absolute; top: 0; left: 0; opacity: 0.3; }
         
-        /* LOCK SCREEN */
-        #lock-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .pin-box { font-size: 3rem; letter-spacing: 15px; margin-bottom: 20px; color: #fff; text-shadow: 0 0 10px var(--neon); }
-        .numpad { display: grid; grid-template-columns: repeat(3, 80px); gap: 15px; }
-        .key { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--neon); font-size: 2rem; display: flex; justify-content: center; align-items: center; background: rgba(0,20,0,0.8); cursor: pointer; transition: 0.1s; }
-        .key:active { background: var(--neon); color: #000; transform: scale(0.95); }
-
-        /* MAIN UI */
-        #ui-layer { display: none; flex-direction: column; height: 100%; }
-        header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 2px solid var(--neon); background: rgba(0,0,0,0.9); padding-top: env(safe-area-inset-top); }
+        /* 3D RINGS ANIMATION */
+        .cluster-box {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw; height: 80vw; max-width: 500px; max-height: 500px;
+            opacity: 0.4; perspective: 1000px;
+        }
+        .ring-core { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: spin 40s linear infinite; }
+        .ring { position: absolute; border-radius: 50%; border: 2px solid var(--magenta); box-shadow: 0 0 15px var(--magenta); }
+        .ring:nth-child(1) { width: 100%; height: 100%; transform: rotateX(70deg); border-color: var(--cyan); }
+        .ring:nth-child(2) { width: 70%; height: 70%; top: 15%; left: 15%; transform: rotateY(60deg); border-color: var(--neon); }
         
-        /* TABS */
-        .viewport { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px; position: relative; }
-        .tab-content { display: none; animation: fadeIn 0.3s; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from{opacity:0;transform:scale(0.98);} to{opacity:1;transform:scale(1);} }
+        @keyframes spin { from { transform: rotateX(0) rotateY(0); } to { transform: rotateX(360deg) rotateY(360deg); } }
 
-        /* CARDS */
-        .holographic-card {
-            background-color: var(--panel-bg);
+        /* --- LOCK SCREEN --- */
+        #lock-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s;
+        }
+        .numpad-btn {
+            width: 70px; height: 70px; margin: 10px;
+            border: 2px solid var(--neon); border-radius: 50%;
+            font-size: 1.5rem; color: var(--neon); background: #000;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .numpad-btn:active { background: var(--neon); color: #000; transform: scale(0.9); }
+
+        /* --- MAIN INTERFACE --- */
+        #main-interface {
+            position: relative; z-index: 10;
+            height: 100%; display: flex; flex-direction: column;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(2px);
+            display: none; /* Hidden until unlocked */
+            opacity: 0; transition: opacity 1s;
+        }
+
+        .holographic-panel {
+            background: rgba(13, 17, 23, 0.85);
             border: 1px solid var(--cyan);
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2), inset 0 0 5px rgba(255, 0, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.15);
             border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .header-glow {
-            color: var(--magenta);
-            text-shadow: 0 0 5px var(--magenta);
-            font-weight: bold;
-            text-transform: uppercase;
-            border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 10px;
+            padding: 15px;
             margin-bottom: 15px;
-            font-size: 1.2rem;
         }
 
-        /* DATA VIZ */
-        .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--border-color); font-size: 0.9rem; }
-        .critical { color: var(--magenta); text-shadow: 0 0 3px var(--magenta); }
-        .success { color: var(--neon); text-shadow: 0 0 3px var(--neon); }
+        /* TABS */
+        .tab-btn { flex: 1; text-align: center; padding: 15px; cursor: pointer; border-bottom: 2px solid #333; color: #666; font-weight: bold; }
+        .tab-btn.active { border-bottom: 2px solid var(--neon); color: var(--neon); text-shadow: 0 0 8px var(--neon); background: rgba(0, 255, 65, 0.1); }
         
-        /* NAV */
-        nav { position: fixed; bottom: 0; width: 100%; height: 80px; background: #000; border-top: 2px solid var(--neon); display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { color: #555; display: flex; flex-direction: column; align-items: center; width: 60px; font-size: 0.7rem; }
-        .nav-item i { font-size: 1.5rem; margin-bottom: 5px; }
-        .nav-item.active { color: var(--neon); text-shadow: 0 0 10px var(--neon); }
-        
-        /* QR */
-        #qr-container { margin-top: 30px; padding: 10px; background: #fff; border: 2px solid var(--neon); display: none; }
-        
-        /* BUTTONS */
-        .btn { width: 100%; padding: 15px; background: #002200; color: #fff; border: 1px solid var(--neon); font-size: 1.1rem; font-weight: bold; margin-top: 15px; border-radius: 5px; cursor: pointer; }
-
-        /* LOG PANEL */
-        .log-panel { height: 200px; overflow-y: auto; background: rgba(0,0,0,0.5); border: 1px solid #333; padding: 10px; font-size: 0.8rem; color: #00FF41; margin-bottom: 15px; }
-        .log-entry { border-bottom: 1px solid #222; padding: 2px 0; }
-        
-        /* INPUT */
-        input[type="text"] { width: 70%; padding: 15px; background: #111; border: 1px solid var(--neon); color: #fff; }
-
+        /* CHAT */
+        .msg { padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; font-size: 0.9rem; max-width: 85%; }
+        .msg.sys { align-self: flex-start; border-left: 3px solid var(--neon); background: rgba(0, 255, 65, 0.1); color: var(--neon); }
+        .msg.user { align-self: flex-end; border-right: 3px solid var(--cyan); background: rgba(0, 243, 255, 0.1); color: var(--cyan); text-align: right; }
     </style>
 </head>
 <body>
 
-    <canvas id="matrix-layer"></canvas>
-
-    <!-- LOCK SCREEN -->
-    <div id="lock-screen">
-        <h1 style="color:var(--neon); text-shadow: 0 0 10px var(--neon);">CEC-WAM</h1>
-        <div id="pin" class="pin-box">____</div>
-        <div class="numpad">
-            <div class="key" onclick="tap(1)">1</div><div class="key" onclick="tap(2)">2</div><div class="key" onclick="tap(3)">3</div>
-            <div class="key" onclick="tap(4)">4</div><div class="key" onclick="tap(5)">5</div><div class="key" onclick="tap(6)">6</div>
-            <div class="key" onclick="tap(7)">7</div><div class="key" onclick="tap(8)">8</div><div class="key" onclick="tap(9)">9</div>
-            <div class="key" style="border-color:red; color:red;" onclick="cls()">C</div>
-            <div class="key" onclick="tap(0)">0</div>
-            <div class="key" onclick="unlock()"><i class="fas fa-eye"></i></div>
+    <div id="visual-stack">
+        <canvas id="matrix-canvas"></canvas>
+        <div class="cluster-box">
+            <div class="ring-core">
+                <div class="ring"></div>
+                <div class="ring"></div>
+            </div>
         </div>
-        <button class="btn" style="width: auto; margin-top: 20px; background: transparent;" onclick="toggleQR()">SHOW QR</button>
-        <div id="qr-container"></div>
     </div>
 
-    <!-- MAIN UI -->
-    <div id="ui-layer">
-        <header>
-            <div><i class="fas fa-brain"></i> SYSTEM: <b>ONLINE</b></div>
-            <div id="clock">00:00</div>
+    <div id="lock-screen">
+        <h1 class="text-3xl font-bold tracking-[10px] text-cyan-400 mb-8 animate-pulse">CEC-WAM</h1>
+        <div id="pin-display" class="text-4xl text-white mb-8 tracking-[15px] h-12">____</div>
+        
+        <div class="grid grid-cols-3 gap-2">
+            <div class="numpad-btn" onclick="tapPin(1)">1</div>
+            <div class="numpad-btn" onclick="tapPin(2)">2</div>
+            <div class="numpad-btn" onclick="tapPin(3)">3</div>
+            <div class="numpad-btn" onclick="tapPin(4)">4</div>
+            <div class="numpad-btn" onclick="tapPin(5)">5</div>
+            <div class="numpad-btn" onclick="tapPin(6)">6</div>
+            <div class="numpad-btn" onclick="tapPin(7)">7</div>
+            <div class="numpad-btn" onclick="tapPin(8)">8</div>
+            <div class="numpad-btn" onclick="tapPin(9)">9</div>
+            <div class="numpad-btn border-red-500 text-red-500" onclick="clearPin()">C</div>
+            <div class="numpad-btn" onclick="tapPin(0)">0</div>
+            <div class="numpad-btn border-green-500 text-green-500" onclick="unlock()"><i class="fas fa-unlock"></i></div>
+        </div>
+        <div class="mt-8 text-xs text-gray-500">SECURE TERMINAL // ID: SOVEREIGN</div>
+    </div>
+
+    <div id="main-interface">
+        
+        <header class="flex justify-between items-center p-4 border-b border-green-900 bg-black/80">
+            <div>
+                <div class="text-xl font-bold text-cyan-400">CEC-CDL OMNI</div>
+                <div class="text-[10px] text-green-500">SYSTEM: ONLINE // V2.0</div>
+            </div>
+            <div class="text-right">
+                <div id="clock" class="text-lg font-bold text-white">00:00</div>
+                <div class="text-[10px] text-purple-400">MEMORY ACTIVE</div>
+            </div>
         </header>
 
-        <div class="viewport">
+        <div class="flex-1 overflow-y-auto p-4 space-y-4" id="content-container">
             
-            <!-- HOME TAB -->
-            <div id="view-home" class="tab-content active">
-                <!-- REACT ROOT -->
-                <div id="operational-root"></div>
-                
-                <div class="holographic-card">
-                    <h2 class="header-glow">AGENT EVE4 INTERFACE</h2>
-                    <div id="chat-feed" class="log-panel">
-                        <div class="log-entry">SYSTEM: Welcome Sovereign. Agent EVE4 Online.</div>
+            <div id="tab-dash" class="view-section">
+                <div class="holographic-panel">
+                    <h2 class="text-sm text-purple-400 border-b border-purple-900 pb-2 mb-2">SYSTEM METRICS</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white">100%</div>
+                            <div class="text-[10px] text-gray-400">MATRIX INTEGRITY</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white" id="threat-level">LOW</div>
+                            <div class="text-[10px] text-gray-400">THREAT LEVEL</div>
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="agent-input" placeholder="Command...">
-                        <button class="btn" style="width: 30%; margin: 0;" onclick="sendAgent()">SEND</button>
+                </div>
+
+                <div class="holographic-panel flex flex-col h-64">
+                    <h2 class="text-sm text-green-400 border-b border-green-900 pb-2 mb-2">AGENT EVE4 LINK</h2>
+                    <div id="chat-feed" class="flex-1 overflow-y-auto flex flex-col gap-2 mb-2 p-2 bg-black/30 rounded border border-gray-800">
+                        <div class="msg sys">SYSTEM: V2 CORE LOADED. MEMORY MODULE ACTIVE.</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="agent-input" class="flex-1 bg-gray-900 border border-green-500 text-white p-2 text-sm rounded focus:outline-none" placeholder="Command...">
+                        <button onclick="sendAgent()" class="bg-green-700 text-white px-4 rounded text-sm font-bold">SEND</button>
                     </div>
                 </div>
             </div>
 
-            <!-- DATA TAB -->
-            <div id="view-data" class="tab-content">
-                <div class="holographic-card">
-                    <h2 class="header-glow">FINANCIAL LEDGER</h2>
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="text-center">
-                            <div class="text-3xl font-extrabold critical">$8,472,500</div>
-                            <div class="data-label text-xs">PSI-COIN ASSET</div>
-                        </div>
-                        <div class="text-center">
-                             <div class="text-3xl font-extrabold alert">$27,500</div>
-                            <div class="data-label text-xs">EXPENDITURE</div>
-                        </div>
+            <div id="tab-bank" class="view-section hidden">
+                <div class="holographic-panel">
+                    <h2 class="text-sm text-cyan-400 mb-4">SECURE LEDGER</h2>
+                    <div class="text-center py-6">
+                        <div class="text-xs text-gray-500">TOTAL ASSET VALUE</div>
+                        <div class="text-4xl font-bold text-white my-2 tracking-widest">$8,472,500</div>
+                        <div class="text-xs text-green-500">NAVY FEDERAL LINKED</div>
                     </div>
-                    <canvas id="financialChart"></canvas>
-                </div>
-                
-                <div class="holographic-card">
-                    <h2 class="header-glow">ACADEMIC WAM</h2>
-                    <div style="text-align: center; font-size: 2rem; color: var(--cyan);" id="wam-display">--</div>
-                    <table style="width:100%; margin-top:10px; font-size:0.8rem;">
-                        <thead><tr style="border-bottom:1px solid #fff;"><th>CODE</th><th>MARK</th></tr></thead>
-                        <tbody id="wam-body"></tbody>
-                    </table>
+                    <div class="h-40">
+                        <canvas id="financeChart"></canvas>
+                    </div>
                 </div>
             </div>
-
+            
         </div>
 
-        <nav>
-            <div class="nav-item active" onclick="tab('view-home', this)"><i class="fas fa-th-large"></i><br>HOME</div>
-            <div class="nav-item" onclick="tab('view-data', this)"><i class="fas fa-chart-line"></i><br>DATA</div>
+        <nav class="flex border-t border-green-900 bg-black/90 pb-safe">
+            <div class="tab-btn active" onclick="switchTab('dash', this)">CMD</div>
+            <div class="tab-btn" onclick="switchTab('bank', this)">BANK</div>
         </nav>
+
     </div>
 
-    <!-- REACT LOGIC -->
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-
-        const OperationalDash = () => {
-            const [status, setStatus] = useState('ONLINE');
-            const [logs, setLogs] = useState([]);
-
-            const addLog = (msg) => {
-                const time = new Date().toLocaleTimeString('en-US', {hour12:false});
-                setLogs(prev => [{time, msg}, ...prev].slice(0,5));
-            };
-
-            return (
-                <div className="holographic-card">
-                    <h2 className="header-glow">OPERATIONAL CONTROL</h2>
-                    <div style={{display:'flex', justifyContent:'space-between', marginBottom:'10px'}}>
-                        <span>STATUS</span> <span style={{color:'var(--neon)'}}>{status}</span>
-                    </div>
-                    <button className="btn" onClick={() => { setStatus('OPTIMIZING...'); setTimeout(()=>setStatus('ONLINE'), 2000); addLog('System Optimized.'); }}>RECALIBRATE SYSTEM</button>
-                    <div className="log-panel" style={{marginTop:'15px', height:'100px'}}>
-                        {logs.map((l,i) => <div key={i} className="log-entry">[{l.time}] {l.msg}</div>)}
-                    </div>
-                </div>
-            );
-        };
-
-        ReactDOM.render(<OperationalDash />, document.getElementById('operational-root'));
-    </script>
-
     <script>
-        // MATRIX
-        const c=document.getElementById('matrix-layer'), x=c.getContext('2d');
-        c.width=window.innerWidth; c.height=window.innerHeight;
-        const cols=Math.floor(c.width/20), y=Array(cols).fill(0);
-        setInterval(()=>{
-            x.fillStyle='#0001'; x.fillRect(0,0,c.width,c.height);
-            x.fillStyle='#0F0'; x.font='15pt monospace';
-            y.forEach((v,i)=>{
-                x.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, v);
-                y[i]=v>100+Math.random()*10000?0:v+20;
+        // --- 1. CONFIGURATION ---
+        const PIN_CODE = "1010";
+        const MEMORY_KEY = "cec_v2_memory";
+        let currentPin = "";
+
+        // --- 2. LOCK SCREEN LOGIC ---
+        function tapPin(num) {
+            if(currentPin.length < 4) {
+                currentPin += num;
+                updatePinDisplay();
+            }
+        }
+        function clearPin() { currentPin = ""; updatePinDisplay(); }
+        function updatePinDisplay() {
+            const display = document.getElementById('pin-display');
+            display.innerText = currentPin.padEnd(4, "_").split('').join(' ');
+        }
+        function unlock() {
+            if(currentPin === PIN_CODE) {
+                document.getElementById('lock-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('lock-screen').style.display = 'none';
+                    const main = document.getElementById('main-interface');
+                    main.style.display = 'flex';
+                    setTimeout(() => main.style.opacity = '1', 50);
+                    loadMemory(); // Load chat history on unlock
+                }, 500);
+            } else {
+                currentPin = ""; updatePinDisplay();
+                alert("ACCESS DENIED");
+            }
+        }
+
+        // --- 3. AGENT LOGIC (FIXED) ---
+        function loadMemory() {
+            const saved = localStorage.getItem(MEMORY_KEY);
+            if(saved) {
+                const feed = document.getElementById('chat-feed');
+                feed.innerHTML = ''; // Clear default
+                JSON.parse(saved).forEach(msg => appendMsg(msg.type, msg.text, false));
+                feed.scrollTop = feed.scrollHeight;
+            }
+        }
+
+        function appendMsg(type, text, save = true) {
+            const feed = document.getElementById('chat-feed');
+            const div = document.createElement('div');
+            div.className = `msg ${type}`;
+            div.innerText = text;
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+
+            if(save) {
+                const history = JSON.parse(localStorage.getItem(MEMORY_KEY) || "[]");
+                history.push({type, text});
+                if(history.length > 50) history.shift();
+                localStorage.setItem(MEMORY_KEY, JSON.stringify(history));
+            }
+        }
+
+        function sendAgent() {
+            const input = document.getElementById('agent-input');
+            const text = input.value;
+            if(!text) return;
+
+            appendMsg('user', text);
+            input.value = "";
+
+            // FIXED RESPONSE LOGIC
+            setTimeout(() => {
+                let response = "EVE4: Processing...";
+                const cmd = text.toLowerCase();
+
+                if(cmd.includes('status')) response = "EVE4: Systems Nominal. Matrix Secure. Agent Active.";
+                else if(cmd.includes('clear')) {
+                    localStorage.removeItem(MEMORY_KEY);
+                    response = "EVE4: Memory Wipe Complete.";
+                    setTimeout(() => location.reload(), 1000);
+                }
+                else if(cmd.includes('transfer')) response = "EVE4: Banking Node Offline. Transaction logged locally.";
+                else response = `EVE4: Acknowledged. Logged: "${text}"`;
+
+                appendMsg('sys', response);
+            }, 600);
+        }
+
+        // --- 4. TABS & VISUALS ---
+        function switchTab(id, btn) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${id}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if(id === 'bank') initChart();
+        }
+
+        // --- 5. MATRIX RAIN ---
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const chars = "CEC-CDL-010101".split('');
+        const drops = Array(Math.floor(canvas.width/20)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = '15px monospace';
+            
+            drops.forEach((y, i) => {
+                const text = chars[Math.floor(Math.random()*chars.length)];
+                ctx.fillText(text, i*20, y*20);
+                if(y*20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
             });
-        }, 50);
+        }
+        setInterval(drawMatrix, 50);
 
-        // LOGIC
-        let pin="";
-        function tap(n){ if(pin.length<4)pin+=n; document.getElementById('pin').innerText=pin.padEnd(4,'_'); }
-        function cls(){ pin=""; document.getElementById('pin').innerText="____"; }
-        function unlock(){
-            if(pin==="1010") {
-                document.getElementById('lock-screen').style.display='none';
-                document.getElementById('ui-layer').style.display='flex';
-                initCharts(); renderWAM();
-            } else { alert("INVALID"); cls(); }
-        }
-        function tab(id, el){
-            document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-            el.classList.add('active');
-        }
-        
-        // DATA
-        const ACADEMIC = [{code:'ENG1001', mark:78}, {code:'COMP1531', mark:85}, {code:'MATH1081', mark:64}];
-        function renderWAM() {
-            document.getElementById('wam-body').innerHTML = ACADEMIC.map(a => `<tr><td>${a.code}</td><td>${a.mark}</td></tr>`).join('');
-            document.getElementById('wam-display').innerText = "75.67"; // Calculated avg
-        }
-
-        function initCharts() {
-            new Chart(document.getElementById('financialChart'), {
+        // --- 6. CHART ---
+        function initChart() {
+            const ctxC = document.getElementById('financeChart').getContext('2d');
+            if(window.myChart) window.myChart.destroy();
+            window.myChart = new Chart(ctxC, {
                 type: 'bar',
                 data: {
-                    labels: ['Asset', 'Spent'],
+                    labels: ['Liquid', 'Invested'],
                     datasets: [{
-                        label: 'USD',
                         data: [8472500, 27500],
                         backgroundColor: ['#00F3FF', '#FF00FF']
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                options: { plugins: { legend: { display: false } }, scales: { y: { display: false } } }
             });
         }
 
-        // AGENT
-        function sendAgent() {
-            const t = document.getElementById('agent-input').value;
-            if(!t) return;
-            document.getElementById('chat-feed').innerHTML += `<div class="log-entry" style="color:#00F3FF">USER: ${t}</div>`;
-            document.getElementById('agent-input').value="";
-            setTimeout(()=>{
-                document.getElementById('chat-feed').innerHTML += `<div class="log-entry">EVE4: PROCESSING...</div>`;
-            }, 500);
-        }
+        // --- CLOCK ---
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }, 1000);
 
-        function toggleQR() {
-            const c = document.getElementById('qr-container');
-            if(c.innerHTML==="") new QRCode(c, { text: window.location.href, width: 200, height: 200 });
-            c.style.display = c.style.display==='none' ? 'block' : 'none';
-        }
-
-        setInterval(()=>document.getElementById('clock').innerText=new Date().toLocaleTimeString(), 1000);
     </script>
 </body>
 </html>
-    <script>
-        // --- 1. LOCAL STATE (REPLACES FIREBASE) ---
-        const LOCAL_STATE = {
-            balance: 8472500,
-            spent: 27500,
-            user: "Sovereign"
-        };
-
-        // --- 2. TABS LOGIC ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('block'));
-            
-            const target = document.getElementById(`view-${tabId}`);
-            target.classList.remove('hidden');
-            target.classList.add('block');
-
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            // Find the button that triggered this (fallback if event is missing)
-            const btns = document.querySelectorAll('.nav-btn');
-            if(tabId === 'dashboard') btns[0].classList.add('active');
-            if(tabId === 'agent') btns[1].classList.add('active');
-            if(tabId === 'defense') btns[2].classList.add('active');
-            if(tabId === 'finance') btns[3].classList.add('active');
-
-            if(tabId === 'finance') initChart();
-            if(tabId === 'agent') loadChatHistory(); // Load memory on tab switch
-        }
-
-        // --- 3. AGENT LOGIC (WITH MEMORY) ---
-        const MEMORY_KEY = 'cec_eve4_history';
-
-        function loadChatHistory() {
-            const feed = document.getElementById('chat-feed');
-            const saved = localStorage.getItem(MEMORY_KEY);
-            
-            // If empty, show default system message
-            if (!saved) return;
-
-            // Clear current feed (except the very first system msg if you want)
-            // Ideally, we rebuild the whole feed from memory
-            feed.innerHTML = ''; 
-            
-            const history = JSON.parse(saved);
-            history.forEach(item => {
-                const div = document.createElement('div');
-                div.className = `msg ${item.type}`;
-                div.innerText = item.text;
-                feed.appendChild(div);
-            });
-            feed.scrollTop = feed.scrollHeight;
-        }
-
-        function saveToMemory(type, text) {
-            let history = JSON.parse(localStorage.getItem(MEMORY_KEY) || "[]");
-            history.push({ type, text, time: new Date().toISOString() });
-            // Limit history to last 50 messages to save space
-            if (history.length > 50) history = history.slice(history.length - 50);
-            localStorage.setItem(MEMORY_KEY, JSON.stringify(history));
-        }
-
-        function sendAgentCmd() {
-            const input = document.getElementById('agent-input');
-            const txt = input.value;
-            if(!txt) return;
-
-            const feed = document.getElementById('chat-feed');
-            
-            // 1. Render User Msg
-            const u = document.createElement('div'); u.className = 'msg user'; u.innerText = txt;
-            feed.appendChild(u);
-            saveToMemory('user', txt); // Save to memory
-
-            input.value = "";
-
-            // 2. Bot Response (Simulated)
-            setTimeout(() => {
-                const b = document.createElement('div'); b.className = 'msg sys';
-                let responseText = "";
-
-                if(txt.toLowerCase().includes('status')) {
-                    responseText = "EVE4: All Systems Nominal. Running in Offline Mode.";
-                } else if (txt.toLowerCase().includes('clear memory')) {
-                    localStorage.removeItem(MEMORY_KEY);
-                    responseText = "EVE4: Memory cache purged. Rebooting cognitive functions.";
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    responseText = "EVE4: Command received. Processing locally.";
-                }
-
-                b.innerText = responseText;
-                feed.appendChild(b);
-                saveToMemory('sys', responseText); // Save to memory
-                feed.scrollTop = feed.scrollHeight;
-            }, 500);
-        }
-
-        // --- 4. CLOCK ---
-        setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
-        }, 1000);
-
-        // --- 5. MATRIX BACKGROUND ---
-        const canvas = document.getElementById('matrix-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        const cols = Math.floor(canvas.width / 20);
-        const ypos = Array(cols).fill(0);
-
-        function matrix() {
-            ctx.fillStyle = '#0001';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#0f0';
-            ctx.font = '15pt monospace';
-            ypos.forEach((y, ind) => {
-                const text = String.fromCharCode(Math.random() * 128);
-                const x = ind * 20;
-                ctx.fillText(text, x, y);
-                if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
-                else ypos[ind] = y + 20;
-            });
-        }
-        setInterval(matrix, 50);
-
-        // --- 6. CHART.JS ---
-        let chartInstance = null;
-        function initChart() {
-            const ctxC = document.getElementById('financeChart').getContext('2d');
-            if(chartInstance) chartInstance.destroy();
-            
-            chartInstance = new Chart(ctxC, {
-                type: 'bar',
-                data: {
-                    labels: ['Liquidity', 'Spent'],
-                    datasets: [{
-                        label: 'PSI-COIN',
-                        data: [LOCAL_STATE.balance, LOCAL_STATE.spent],
-                        backgroundColor: ['rgba(0, 243, 255, 0.5)', 'rgba(255, 0, 255, 0.5)'],
-                        borderColor: ['#00F3FF', '#FF00FF'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { ticks: { color: '#fff' }, grid: { color: '#333' } },
-                        x: { ticks: { color: '#fff' } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-        
-        // Initial load of history if Agent tab is default (optional)
-        // loadChatHistory(); 
-    </script>
-
-
