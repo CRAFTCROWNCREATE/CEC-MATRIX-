@@ -23,6 +23,54 @@
 
         let app, db, auth, userId = null;
 
+        // --- CORE LOGIC FUNCTIONS (MOVED UP FOR ASYNC ACCESS) ---
+
+        window.populateWamRecords = function() {
+            const container = document.getElementById('wam-records');
+            if (!container || container.children.length === 0) return;
+            
+            Array.from(container.children).slice(1).forEach(child => child.remove()); 
+
+            window.academicRecords.forEach(record => {
+                const row = document.createElement('div');
+                row.className = 'table-row'; 
+                row.innerHTML = `
+                    <span class="col-course">${record.code} - ${record.name}</span>
+                    <span class="col-mark">${record.mark}</span>
+                    <span class="col-cp">${record.credit_points}</span>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        window.calculateWAM = function() {
+            let totalWeightedMark = 0;
+            let totalCreditPoints = 0;
+
+            window.academicRecords.forEach(record => {
+                totalWeightedMark += record.mark * record.credit_points;
+                totalCreditPoints += record.credit_points;
+            });
+
+            const wam = totalCreditPoints > 0 
+                ? (totalWeightedMark / totalCreditPoints).toFixed(2)
+                : '--';
+
+            document.getElementById('wam-result').innerText = wam;
+            document.getElementById('cp-earned').innerText = totalCreditPoints > 0 ? totalCreditPoints : 0;
+            
+            const statusMsg = document.getElementById('wam-status-message');
+            if (statusMsg) {
+                statusMsg.style.opacity = '1';
+                setTimeout(() => {
+                    statusMsg.style.opacity = '0';
+                }, 2000);
+            }
+        }
+        
+        // --- END CORE LOGIC FUNCTIONS ---
+
+
         // Initialize Firebase and Authentication
         async function initializeFirebase() {
             try {
@@ -58,6 +106,8 @@
 
             } catch (error) {
                 console.error("Firebase Initialization Error:", error);
+                // NEW: Log network status failure
+                window.displayAlert("NETWORK ALERT: Firebase initialization failed. Check Wi-Fi/data connection.", "red");
             }
         }
         
@@ -121,6 +171,7 @@
                 const records = [];
                 snapshot.forEach(doc => records.push(doc.data()));
                 window.academicRecords = records;
+                // These functions are now defined earlier and globally accessible
                 window.populateWamRecords(); 
                 window.calculateWAM();
             });
@@ -137,7 +188,8 @@
             --cyan: #00F3FF; 
             --magenta: #FF00FF; 
             --bg: #000; 
-            --panel: rgba(0, 10, 20, 0.7); 
+            /* NEW: Reduced opacity for more "see-through, pearlescent" panel look */
+            --panel: rgba(0, 10, 20, 0.5); 
         }
         body { 
             background: var(--bg); 
@@ -430,7 +482,7 @@
         }
 
         .holographic-card { 
-            background: rgba(0, 10, 20, 0.7); 
+            background: var(--panel); /* Use lower opacity panel background */
             border: 1px solid var(--cyan); 
             border-radius: 5px; 
             padding: 15px; 
@@ -549,8 +601,10 @@
         }
 
         #chat-feed { height: 180px; overflow-y: auto; border: 1px solid var(--neon); padding: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.5); font-size: 0.85rem; }
+        /* NEW: AGI Response (EVE) is NEON GREEN */
         .msg.user { border-right: 2px solid var(--cyan); color: var(--cyan); }
-        .msg.sys { border-left: 2px solid var(--neon); color: var(--neon); }
+        .msg.sys { border-left: 2px solid var(--neon); color: var(--neon); } 
+        /* ERROR/PROTOCOL/ALERT STATUS will be MAGENTA, but we primarily use the global alert for major warnings */
 
         input[type="text"] { 
             width: 70%; 
@@ -746,9 +800,6 @@
                                     <!-- Dynamic Line Chart -->
                                     <polyline points="5,80 20,60 40,75 60,30 80,45 95,20" stroke="var(--cyan)" stroke-width="2" />
                                     <polyline points="5,70 20,50 40,65 60,40 80,55 95,40" stroke="var(--neon)" stroke-width="1" />
-                                    <text x="5" y="95" fill="var(--magenta)" font-size="6">AI</text>
-                                    <text x="95" y="95" fill="var(--magenta)" font-size="6" text-anchor="end">Quantum</text>
-                                    <!-- Psi-Coin Logo Overlay -->
                                     <text x="50" y="50" font-size="20" fill="var(--magenta)" text-anchor="middle" dominant-baseline="middle" opacity="0.2">₳</text>
                                 </svg>
                             </div>
@@ -952,12 +1003,14 @@
             document.getElementById('pin').innerText="____"; 
         }
         
+        // FIX: Enforce Voice Profile (Kore) and clean speech function
         function speak(text) {
             if('speechSynthesis' in window) {
                 speechSynthesis.cancel(); 
                 const u = new SpeechSynthesisUtterance(text);
                 const voices = speechSynthesis.getVoices();
-                const voice = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English') || v.lang.startsWith('en'));
+                // Prioritize voices based on requested persona (Firm female voice)
+                const voice = voices.find(v => v.name.includes('Kore') || v.lang.startsWith('en-US') && v.name.includes('female'));
                 if(voice) u.voice = voice;
                 speechSynthesis.speak(u);
             }
@@ -1033,7 +1086,7 @@
                 document.getElementById('lock-screen').style.display='none';
                 document.getElementById('ui-layer').style.display='flex';
                 initSpeech(); 
-                speak("Access Granted. Welcome Sovereign.");
+                speak("Operational Agent EVE4 speaking. Access Granted. Welcome Sovereign.");
                 initStars(); drawMap(); initSingularity(); drawSingularityCore(); // Re-enable animations
                 window.selfAccessGranted = true;
                 sessionStorage.setItem('selfAccessGranted', 'true');
@@ -1139,99 +1192,145 @@
                 window.displayAlert("FINANCIAL LOG FAIL: Failed to log transaction. Node 2 integrity compromised.", "red");
             }
         }
-        
-        // --- 8. ANIMATION/CANVAS HELPERS ---
-        // (Re-added matrix and partial animation function definitions for integrity)
-        
-        let mc, mctx, mcols, my;
-        const matrixChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ₳ΩΩΛΔΠ"; 
-        const matrixColors = ['#0F0', '#00FF41', '#9D00FF', '#FF00FF', '#00F3FF'];
 
-        function initMatrix() {
-            mc = document.getElementById('matrix-layer');
-            mctx = mc.getContext('2d');
-            mc.width = window.innerWidth; 
-            mc.height = window.innerHeight;
-            mcols = Math.floor(mc.width/20);
-            my = Array(mcols).fill(0);
-        }
-
-        function drawMatrix() {
-            mctx.fillStyle='rgba(0, 0, 0, 0.08)'; 
-            mctx.fillRect(0,0,mc.width,mc.height);
+        // --- WAM and Academic functions (Attached to window for Firebase listener) ---
+        window.populateWamRecords = function() {
+            const container = document.getElementById('wam-records');
+            if (!container || container.children.length === 0) return;
             
-            mctx.font='15pt monospace';
-            my.forEach((v,i)=>{
-                mctx.fillStyle = matrixColors[Math.floor(Math.random() * matrixColors.length)];
-                
-                let char;
-                if (Math.random() > 0.99) { 
-                    char = '₳';
-                    mctx.fillStyle = '#FF00FF'; 
-                } else {
-                    char = matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
-                }
+            Array.from(container.children).slice(1).forEach(child => child.remove()); 
 
-                mctx.fillText(char, i*20, v);
-                my[i]=v>mc.height && Math.random() > 0.975 ? 0 : v+20;
+            window.academicRecords.forEach(record => {
+                const row = document.createElement('div');
+                row.className = 'table-row'; 
+                row.innerHTML = `
+                    <span class="col-course">${record.code} - ${record.name}</span>
+                    <span class="col-mark">${record.mark}</span>
+                    <span class="col-cp">${record.credit_points}</span>
+                `;
+                container.appendChild(row);
             });
         }
-        
-        // Placeholders for Star Map (MAP TAB)
-        let sc, sctx, stars = [], mapMode = 'SOLAR';
-        function initStars() {
-            sc = document.getElementById('star-canvas');
-            sctx = sc.getContext('2d');
-            const mapContainer = document.getElementById('map-container');
-            if (mapContainer && mapContainer.offsetWidth > 0 && mapContainer.offsetHeight > 0) {
-                sc.width = mapContainer.offsetWidth;
-                sc.height = mapContainer.offsetHeight; 
-                stars = [];
-                for(let i=0; i<100; i++) {
-                    stars.push({x:Math.random()*sc.width, y:Math.random()*sc.height, s:Math.random()*2});
-                }
+
+        window.calculateWAM = function() {
+            let totalWeightedMark = 0;
+            let totalCreditPoints = 0;
+
+            window.academicRecords.forEach(record => {
+                totalWeightedMark += record.mark * record.credit_points;
+                totalCreditPoints += record.credit_points;
+            });
+
+            const wam = totalCreditPoints > 0 
+                ? (totalWeightedMark / totalCreditPoints).toFixed(2)
+                : '--';
+
+            document.getElementById('wam-result').innerText = wam;
+            document.getElementById('cp-earned').innerText = totalCreditPoints > 0 ? totalCreditPoints : 0;
+            
+            const statusMsg = document.getElementById('wam-status-message');
+            if (statusMsg) {
+                statusMsg.style.opacity = '1';
+                setTimeout(() => {
+                    statusMsg.style.opacity = '0';
+                }, 2000);
             }
         }
-        let animationFrameId;
-        function drawMap() {
-            sctx.fillStyle='#000'; sctx.fillRect(0,0,sc.width,sc.height);
-            sctx.fillStyle='#fff';
-            stars.forEach(s => {
-                sctx.fillRect(s.x, s.y, s.s, s.s);
-                s.x -= 0.2; if(s.x<0) s.x = sc.width;
-            });
-            
-            const cx = sc.width/2; const cy = sc.height/2;
-            sctx.strokeStyle='var(--cyan)';
-            sctx.beginPath(); sctx.arc(cx, cy, 80, 0, 6.28); sctx.stroke();
-            
-            sctx.fillStyle = mapMode === 'SOLAR' ? 'var(--cyan)' : 'var(--magenta)';
-            sctx.beginPath(); sctx.arc(cx, cy, 5, 0, 6.28); sctx.fill();
-            
-            animationFrameId = requestAnimationFrame(drawMap);
-        }
-        function stopMap() { if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } }
+        
+        // --- 8. ANIMATION/CANVAS HELPERS ---
+        // FIX: Encapsulate shared variables in an IIFE to prevent global redeclaration errors
+        
+        (function() {
+            let mc, mctx, mcols, my;
+            const matrixChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ₳ΩΩΛΔΠ"; 
+            const matrixColors = ['#0F0', '#00FF41', '#9D00FF', '#FF00FF', '#00F3FF'];
 
-        // Placeholder for Singularity (DASHBOARD)
-        let singularityCanvas, singularityCtx;
-        function initSingularity() {
-            singularityCanvas = document.getElementById('singularity-canvas');
-            if (singularityCanvas) { singularityCtx = singularityCanvas.getContext('2d'); }
-        }
-        function drawSingularityCore() {
-            if (!singularityCanvas || !singularityCtx) return;
-            const sctx = singularityCtx;
-            const cw = singularityCanvas.width;
-            const ch = singularityCanvas.height;
-            sctx.clearRect(0, 0, cw, ch);
-            const time = Date.now() * 0.001;
-            const center = { x: cw / 2, y: ch / 2 };
-            sctx.fillStyle = `rgba(0, 255, 65, ${0.5 + Math.sin(time * 5) * 0.1})`;
-            sctx.beginPath();
-            sctx.arc(center.x, center.y, 15, 0, Math.PI * 2);
-            sctx.fill();
-            requestAnimationFrame(drawSingularityCore);
-        }
+            window.initMatrix = function() {
+                mc = document.getElementById('matrix-layer');
+                mctx = mc.getContext('2d');
+                mc.width = window.innerWidth; 
+                mc.height = window.innerHeight;
+                mcols = Math.floor(mc.width/20);
+                my = Array(mcols).fill(0);
+            }
+
+            window.drawMatrix = function() {
+                mctx.fillStyle='rgba(0, 0, 0, 0.08)'; 
+                mctx.fillRect(0,0,mc.width,mc.height);
+                
+                mctx.font='15pt monospace';
+                my.forEach((v,i)=>{
+                    mctx.fillStyle = matrixColors[Math.floor(Math.random() * matrixColors.length)];
+                    
+                    let char;
+                    if (Math.random() > 0.99) { 
+                        char = '₳';
+                        mctx.fillStyle = '#FF00FF'; 
+                    } else {
+                        char = matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
+                    }
+
+                    mctx.fillText(char, i*20, v);
+                    my[i]=v>mc.height && Math.random() > 0.975 ? 0 : v+20;
+                });
+            }
+            
+            // Placeholders for Star Map (MAP TAB)
+            let sc, sctx, stars = [], mapMode = 'SOLAR';
+            window.initStars = function() {
+                sc = document.getElementById('star-canvas');
+                sctx = sc.getContext('2d');
+                const mapContainer = document.getElementById('map-container');
+                if (mapContainer && mapContainer.offsetWidth > 0 && mapContainer.offsetHeight > 0) {
+                    sc.width = mapContainer.offsetWidth;
+                    sc.height = mapContainer.offsetHeight; 
+                    stars = [];
+                    for(let i=0; i<100; i++) {
+                        stars.push({x:Math.random()*sc.width, y:Math.random()*sc.height, s:Math.random()*2});
+                    }
+                }
+            }
+            window.animationFrameId;
+            window.drawMap = function() {
+                sctx.fillStyle='#000'; sctx.fillRect(0,0,sc.width,sc.height);
+                sctx.fillStyle='#fff';
+                stars.forEach(s => {
+                    sctx.fillRect(s.x, s.y, s.s, s.s);
+                    s.x -= 0.2; if(s.x<0) s.x = sc.width;
+                });
+                
+                const cx = sc.width/2; const cy = sc.height/2;
+                sctx.strokeStyle='var(--cyan)';
+                sctx.beginPath(); sctx.arc(cx, cy, 80, 0, 6.28); sctx.stroke();
+                
+                sctx.fillStyle = mapMode === 'SOLAR' ? 'var(--cyan)' : 'var(--magenta)';
+                sctx.beginPath(); sctx.arc(cx, cy, 5, 0, 6.28); sctx.fill();
+                
+                window.animationFrameId = requestAnimationFrame(drawMap);
+            }
+            window.stopMap = function() { if (window.animationFrameId) { cancelAnimationFrame(window.animationFrameId); window.animationFrameId = null; } }
+
+            // Placeholder for Singularity (DASHBOARD)
+            let singularityCanvas, singularityCtx;
+            window.initSingularity = function() {
+                singularityCanvas = document.getElementById('singularity-canvas');
+                if (singularityCanvas) { singularityCtx = singularityCanvas.getContext('2d'); }
+            }
+            window.drawSingularityCore = function() {
+                if (!singularityCanvas || !singularityCtx) return;
+                const sctx = singularityCtx;
+                const cw = singularityCanvas.width;
+                const ch = singularityCanvas.height;
+                sctx.clearRect(0, 0, cw, ch);
+                const time = Date.now() * 0.001;
+                const center = { x: cw / 2, y: ch / 2 };
+                sctx.fillStyle = `rgba(0, 255, 65, ${0.5 + Math.sin(time * 5) * 0.1})`;
+                sctx.beginPath();
+                sctx.arc(center.x, center.y, 15, 0, Math.PI * 2);
+                sctx.fill();
+                requestAnimationFrame(drawSingularityCore);
+            }
+        })();
         
         // --- 9. AGENT LOGIC (Gemini API Integration & Learning) ---
         
@@ -1346,7 +1445,7 @@
             // --- Display Processing Message (Visual Feedback) ---
             const r = document.createElement('div');
             r.className = 'msg sys';
-            document.getElementById('chat-feed').appendChild(r);
+            document.getElementById('chat-feed').appendChild(d);
             document.getElementById('chat-feed').scrollTop = document.getElementById('chat-feed').scrollHeight;
             
             if (displayProcessing) {
@@ -1356,7 +1455,10 @@
 
             aiResponsePromise.then(reply => {
                 r.innerHTML = reply;
-                speak(reply.replace(/<[^>]*>/g, '')); 
+                // FIX: Ensure 'Operational Agent EVE4' is spoken clearly using the defined voice.
+                let spokenText = reply.includes("Operational Agent EVE4") ? reply : "Operational Agent EVE4: " + reply;
+                spokenText = spokenText.replace(/<[^>]*>/g, ''); // Remove HTML tags
+                speak(spokenText); 
             });
         }
 
