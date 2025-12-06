@@ -233,7 +233,7 @@
 
         /* --- UI STYLING --- */
         #ui-layer {
-            display: none; 
+            display: none; /* Hidden until fully initialized */
             flex-direction: column; 
             width: 95%; 
             height: 95%; 
@@ -1306,7 +1306,7 @@
                 sctx.fillStyle = mapMode === 'SOLAR' ? 'var(--cyan)' : 'var(--magenta)';
                 sctx.beginPath(); sctx.arc(cx, cy, 5, 0, 6.28); sctx.fill();
                 
-                animationFrameId = requestAnimationFrame(drawMap);
+                window.animationFrameId = requestAnimationFrame(drawMap);
             }
             window.stopMap = function() { if (window.animationFrameId) { cancelAnimationFrame(window.animationFrameId); window.animationFrameId = null; } }
 
