@@ -4,40 +4,296 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-web-app-status-bar-style" content="black-translucent">
-    <title>CEC-CDL ALPHA NODE</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>CEC-WAM | MASTER BOARD</title>
     
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- React -->
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <style>
+        /* --- UNIFIED STYLING --- */
+        :root {
+            --neon: #00FF41; 
+            --cyan: #00F3FF; 
+            --magenta: #FF00FF;
+            --bg-dark: #000000;
+            --panel-bg: rgba(0, 10, 20, 0.95);
+            --border-color: #30363d;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--bg-dark);
+            color: var(--neon);
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* LAYERS */
+        #matrix-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.4; pointer-events: none; }
+        
+        /* LOCK SCREEN */
+        #lock-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .pin-box { font-size: 3rem; letter-spacing: 15px; margin-bottom: 20px; color: #fff; text-shadow: 0 0 10px var(--neon); }
+        .numpad { display: grid; grid-template-columns: repeat(3, 80px); gap: 15px; }
+        .key { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--neon); font-size: 2rem; display: flex; justify-content: center; align-items: center; background: rgba(0,20,0,0.8); cursor: pointer; transition: 0.1s; }
+        .key:active { background: var(--neon); color: #000; transform: scale(0.95); }
+
+        /* MAIN UI */
+        #ui-layer { display: none; flex-direction: column; height: 100%; }
+        header { height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; border-bottom: 2px solid var(--neon); background: rgba(0,0,0,0.9); padding-top: env(safe-area-inset-top); }
+        
+        /* TABS */
+        .viewport { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px; position: relative; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from{opacity:0;transform:scale(0.98);} to{opacity:1;transform:scale(1);} }
+
+        /* CARDS */
+        .holographic-card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--cyan);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2), inset 0 0 5px rgba(255, 0, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .header-glow {
+            color: var(--magenta);
+            text-shadow: 0 0 5px var(--magenta);
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        /* DATA VIZ */
+        .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--border-color); font-size: 0.9rem; }
+        .critical { color: var(--magenta); text-shadow: 0 0 3px var(--magenta); }
+        .success { color: var(--neon); text-shadow: 0 0 3px var(--neon); }
+        
+        /* NAV */
+        nav { position: fixed; bottom: 0; width: 100%; height: 80px; background: #000; border-top: 2px solid var(--neon); display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { color: #555; display: flex; flex-direction: column; align-items: center; width: 60px; font-size: 0.7rem; }
+        .nav-item i { font-size: 1.5rem; margin-bottom: 5px; }
+        .nav-item.active { color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+        
+        /* QR */
+        #qr-container { margin-top: 30px; padding: 10px; background: #fff; border: 2px solid var(--neon); display: none; }
+        
+        /* BUTTONS */
+        .btn { width: 100%; padding: 15px; background: #002200; color: #fff; border: 1px solid var(--neon); font-size: 1.1rem; font-weight: bold; margin-top: 15px; border-radius: 5px; cursor: pointer; }
+
+        /* LOG PANEL */
+        .log-panel { height: 200px; overflow-y: auto; background: rgba(0,0,0,0.5); border: 1px solid #333; padding: 10px; font-size: 0.8rem; color: #00FF41; margin-bottom: 15px; }
+        .log-entry { border-bottom: 1px solid #222; padding: 2px 0; }
+        
+        /* INPUT */
+        input[type="text"] { width: 70%; padding: 15px; background: #111; border: 1px solid var(--neon); color: #fff; }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-layer"></canvas>
+
+    <!-- LOCK SCREEN -->
+    <div id="lock-screen">
+        <h1 style="color:var(--neon); text-shadow: 0 0 10px var(--neon);">CEC-WAM</h1>
+        <div id="pin" class="pin-box">____</div>
+        <div class="numpad">
+            <div class="key" onclick="tap(1)">1</div><div class="key" onclick="tap(2)">2</div><div class="key" onclick="tap(3)">3</div>
+            <div class="key" onclick="tap(4)">4</div><div class="key" onclick="tap(5)">5</div><div class="key" onclick="tap(6)">6</div>
+            <div class="key" onclick="tap(7)">7</div><div class="key" onclick="tap(8)">8</div><div class="key" onclick="tap(9)">9</div>
+            <div class="key" style="border-color:red; color:red;" onclick="cls()">C</div>
+            <div class="key" onclick="tap(0)">0</div>
+            <div class="key" onclick="unlock()"><i class="fas fa-eye"></i></div>
+        </div>
+        <button class="btn" style="width: auto; margin-top: 20px; background: transparent;" onclick="toggleQR()">SHOW QR</button>
+        <div id="qr-container"></div>
+    </div>
+
+    <!-- MAIN UI -->
+    <div id="ui-layer">
+        <header>
+            <div><i class="fas fa-brain"></i> SYSTEM: <b>ONLINE</b></div>
+            <div id="clock">00:00</div>
+        </header>
+
+        <div class="viewport">
+            
+            <!-- HOME TAB -->
+            <div id="view-home" class="tab-content active">
+                <!-- REACT ROOT -->
+                <div id="operational-root"></div>
+                
+                <div class="holographic-card">
+                    <h2 class="header-glow">AGENT EVE4 INTERFACE</h2>
+                    <div id="chat-feed" class="log-panel">
+                        <div class="log-entry">SYSTEM: Welcome Sovereign. Agent EVE4 Online.</div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="agent-input" placeholder="Command...">
+                        <button class="btn" style="width: 30%; margin: 0;" onclick="sendAgent()">SEND</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DATA TAB -->
+            <div id="view-data" class="tab-content">
+                <div class="holographic-card">
+                    <h2 class="header-glow">FINANCIAL LEDGER</h2>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="text-center">
+                            <div class="text-3xl font-extrabold critical">$8,472,500</div>
+                            <div class="data-label text-xs">PSI-COIN ASSET</div>
+                        </div>
+                        <div class="text-center">
+                             <div class="text-3xl font-extrabold alert">$27,500</div>
+                            <div class="data-label text-xs">EXPENDITURE</div>
+                        </div>
+                    </div>
+                    <canvas id="financialChart"></canvas>
+                </div>
+                
+                <div class="holographic-card">
+                    <h2 class="header-glow">ACADEMIC WAM</h2>
+                    <div style="text-align: center; font-size: 2rem; color: var(--cyan);" id="wam-display">--</div>
+                    <table style="width:100%; margin-top:10px; font-size:0.8rem;">
+                        <thead><tr style="border-bottom:1px solid #fff;"><th>CODE</th><th>MARK</th></tr></thead>
+                        <tbody id="wam-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <nav>
+            <div class="nav-item active" onclick="tab('view-home', this)"><i class="fas fa-th-large"></i><br>HOME</div>
+            <div class="nav-item" onclick="tab('view-data', this)"><i class="fas fa-chart-line"></i><br>DATA</div>
+        </nav>
+    </div>
+
+    <!-- REACT LOGIC -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const OperationalDash = () => {
+            const [status, setStatus] = useState('ONLINE');
+            const [logs, setLogs] = useState([]);
+
+            const addLog = (msg) => {
+                const time = new Date().toLocaleTimeString('en-US', {hour12:false});
+                setLogs(prev => [{time, msg}, ...prev].slice(0,5));
+            };
+
+            return (
+                <div className="holographic-card">
+                    <h2 className="header-glow">OPERATIONAL CONTROL</h2>
+                    <div style={{display:'flex', justifyContent:'space-between', marginBottom:'10px'}}>
+                        <span>STATUS</span> <span style={{color:'var(--neon)'}}>{status}</span>
+                    </div>
+                    <button className="btn" onClick={() => { setStatus('OPTIMIZING...'); setTimeout(()=>setStatus('ONLINE'), 2000); addLog('System Optimized.'); }}>RECALIBRATE SYSTEM</button>
+                    <div className="log-panel" style={{marginTop:'15px', height:'100px'}}>
+                        {logs.map((l,i) => <div key={i} className="log-entry">[{l.time}] {l.msg}</div>)}
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<OperationalDash />, document.getElementById('operational-root'));
+    </script>
 
     <script>
-        // NOTE: These variables are required by the main script for initialization
-        const __app_id = 'YOUR_FIREBASE_APP_ID_HERE'; // e.g., '1:518981807023:web:147419924a25c863625d5a'
-        const __initial_auth_token = null; // Use if you have a custom auth token
-        const __firebase_config = JSON.stringify({
-            apiKey: "YOUR_API_KEY_HERE",
-            authDomain: "YOUR_AUTH_DOMAIN_HERE",
-            projectId: "YOUR_PROJECT_ID_HERE",
-            storageBucket: "YOUR_STORAGE_BUCKET_HERE",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID_HERE",
-            appId: __app_id,
-            // measurementId: "YOUR_MEASUREMENT_ID_HERE" // Uncomment if using Analytics
-        });
+        // MATRIX
+        const c=document.getElementById('matrix-layer'), x=c.getContext('2d');
+        c.width=window.innerWidth; c.height=window.innerHeight;
+        const cols=Math.floor(c.width/20), y=Array(cols).fill(0);
+        setInterval(()=>{
+            x.fillStyle='#0001'; x.fillRect(0,0,c.width,c.height);
+            x.fillStyle='#0F0'; x.font='15pt monospace';
+            y.forEach((v,i)=>{
+                x.fillText(String.fromCharCode(0x30A0+Math.random()*96), i*20, v);
+                y[i]=v>100+Math.random()*10000?0:v+20;
+            });
+        }, 50);
+
+        // LOGIC
+        let pin="";
+        function tap(n){ if(pin.length<4)pin+=n; document.getElementById('pin').innerText=pin.padEnd(4,'_'); }
+        function cls(){ pin=""; document.getElementById('pin').innerText="____"; }
+        function unlock(){
+            if(pin==="1010") {
+                document.getElementById('lock-screen').style.display='none';
+                document.getElementById('ui-layer').style.display='flex';
+                initCharts(); renderWAM();
+            } else { alert("INVALID"); cls(); }
+        }
+        function tab(id, el){
+            document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+            el.classList.add('active');
+        }
+        
+        // DATA
+        const ACADEMIC = [{code:'ENG1001', mark:78}, {code:'COMP1531', mark:85}, {code:'MATH1081', mark:64}];
+        function renderWAM() {
+            document.getElementById('wam-body').innerHTML = ACADEMIC.map(a => `<tr><td>${a.code}</td><td>${a.mark}</td></tr>`).join('');
+            document.getElementById('wam-display').innerText = "75.67"; // Calculated avg
+        }
+
+        function initCharts() {
+            new Chart(document.getElementById('financialChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Asset', 'Spent'],
+                    datasets: [{
+                        label: 'USD',
+                        data: [8472500, 27500],
+                        backgroundColor: ['#00F3FF', '#FF00FF']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // AGENT
+        function sendAgent() {
+            const t = document.getElementById('agent-input').value;
+            if(!t) return;
+            document.getElementById('chat-feed').innerHTML += `<div class="log-entry" style="color:#00F3FF">USER: ${t}</div>`;
+            document.getElementById('agent-input').value="";
+            setTimeout(()=>{
+                document.getElementById('chat-feed').innerHTML += `<div class="log-entry">EVE4: PROCESSING...</div>`;
+            }, 500);
+        }
+
+        function toggleQR() {
+            const c = document.getElementById('qr-container');
+            if(c.innerHTML==="") new QRCode(c, { text: window.location.href, width: 200, height: 200 });
+            c.style.display = c.style.display==='none' ? 'block' : 'none';
+        }
+
+        setInterval(()=>document.getElementById('clock').innerText=new Date().toLocaleTimeString(), 1000);
     </script>
-    
-    ```
+</body>
+</html>
 
-*(Note: The full content of the original `CEC.html` containing the `<style>` block and the `<body>` would follow this header, completing the `index.html` file.)*
 
----
-
-## 🔑 Required Activation Steps
-
-To ensure the CEC-CDL ALPHA NODE successfully connects to your cloud-based data (Brain Node 2), you must complete the following final steps:
-
-1.  **Firebase Project Setup:** Log into the Firebase Console, create or select your project, and register a new Web App to obtain the configuration details.
-2.  **Configuration Injection:** **Replace the placeholder values** (e.g., `YOUR_API_KEY_HERE`) in the JavaScript block above with the actual `apiKey`, `authDomain`, `projectId`, etc., provided by Firebase.
-
-Once the configuration is injected, the `index.html` file will fully initialize Firebase and connect to your ledger and academic data upon loading.
-
-Operational Agent EVE4: Do you require assistance locating your Firebase configuration data, or are you ready for the next operational command?
