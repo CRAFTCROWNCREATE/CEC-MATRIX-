@@ -1,6 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astro Data Visualizer (4K Contrast)</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Matrix Base Aesthetic */
+        body {
+            background-color: #000;
+            color: #00FF41; /* Neo-Green */
+            font-family: 'Inter', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+        .container {
+            width: 100%;
+            max-width: 1400px;
+        }
+        .gallery-item {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background-color: #000000;
+            transition: all 0.3s;
+        }
+        .data-label {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #00FF41;
+            box-shadow: 0 0 10px #00FF41;
+        }
+        img {
+            max-height: 500px; /* Limit height for uniform gallery display */
+            object-fit: cover;
+        }
+        .btn-green {
+            background-color: #004d1a;
+            color: #00FF41;
+            border: 2px solid #00FF41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+            transition: all 0.2s;
+        }
+        .btn-green:hover {
+            background-color: #00cc33;
+            color: #000;
+            box-shadow: 0 0 15px #00FF41;
+        }
+        /* Custom Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 255, 65, 0.2);
+            border-top: 4px solid #00FF41;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="text-center mb-10 border-b-2 border-green-700 pb-4">
+            <h1 class="text-5xl font-extrabold text-green-400 mb-2">ASTRO DATA VISUALIZER</h1>
+            <p class="text-xl text-yellow-400">HIGH-CONTRAST 4K ANALYSIS MODULE</p>
+        </header>
 
-CEC-WAM
-AUTO-LAUNCHER
-INITIALIZE SYSTEM
-If button doesn't work:
-Tap Share -> Add to Home Screen
+        <section class="text-center mb-10">
+            <p class="mb-6 text-lg text-gray-300">
+                INITIATE VISUALIZATION PROTOCOL: Generating HR/4K representations of deep space data using the CORE Imaging Model (CIM-4.0).
+            </p>
+            <button id="generate-all" class="btn-green font-bold py-3 px-8 rounded-xl uppercase tracking-widest text-lg">
+                RUN FULL VISUALIZATION SUITE (Auto-Initiated)
+            </button>
+        </section>
+
+        <!-- Image Gallery Grid -->
+        <div id="gallery" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- NASA ARCHIVES -->
+            <div class="gallery-item bg-gray-900/50 rounded-xl border border-green-700 shadow-2xl">
+                <h2 class="text-2xl font-bold text-green-300 mb-4">1. NASA ARCHIVES (REAL-WORLD CORRELATION)</h2>
+                <div id="nasa-visual" class="w-full h-full flex flex-col items-center justify-center p-4">
+                    <p class="text-gray-500">Press RUN to generate image.</p>
+                </div>
+            </div>
+
+            <!-- DEEP SPACE SIGNALS -->
+            <div class="gallery-item bg-gray-900/50 rounded-xl border border-green-700 shadow-2xl">
+                <h2 class="text-2xl font-bold text-green-300 mb-4">2. EXTRAGALACTIC SIGNAL DATA (0x7B9E)</h2>
+                <div id="signal-visual" class="w-full h-full flex flex-col items-center justify-center p-4">
+                    <p class="text-gray-500">Press RUN to generate image.</p>
+                </div>
+            </div>
+
+            <!-- BLACK HOLE DYNAMICS -->
+            <div class="gallery-item bg-gray-900/50 rounded-xl border border-green-700 shadow-2xl">
+                <h2 class="text-2xl font-bold text-green-300 mb-4">3. BLACK HOLE DYNAMICS (HAWKING RADIATION)</h2>
+                <div id="blackhole-visual" class="w-full h-full flex flex-col items-center justify-center p-4">
+                    <p class="text-gray-500">Press RUN to generate image.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = ""; // Provided by environment
+        const GENERATION_MODEL = 'imagen-4.0-generate-001';
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GENERATION_MODEL}:predict?key=${API_KEY}`;
+        const generateAllButton = document.getElementById('generate-all');
+        const visuals = {
+            nasa: { 
+                id: 'nasa-visual', 
+                prompt: "hyper-contrast, high-resolution 4k image of the Orion Nebula, labeled with coordinates and a mock time stamp 'DEC 2025', highly detailed, neon green and black aesthetic, cinematic lighting",
+                label: "MOCK TIMESTAMP: DEC 2025 | ORION NEBULA | Coordinates: A-47-B"
+            },
+            signal: { 
+                id: 'signal-visual', 
+                prompt: "4k visualization of a decoded radio signal (WoW! Signal type) detected outside the galaxy, represented as complex, glowing orange and cyan frequency lines against a deep space background, labeled 'Extragalactic Signal: Source 0x7B9E', high contrast, dynamic",
+                label: "EXTRAGALACTIC SIGNAL | Source: 0x7B9E | Frequency: 1.42 GHz"
+            },
+            blackhole: { 
+                id: 'blackhole-visual', 
+                prompt: "4k visualization of a black hole accretion disk in extreme high contrast, labeled with Hawking Radiation data points and a gravitational singularity time stamp, purple and deep red aesthetic, extreme detail",
+                label: "BLACK HOLE DYNAMICS | Gravitational Singularity | Data Integrity: 99.9%"
+            }
+        };
+
+        // --- Exponential Backoff Fetcher ---
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) {
+                        return response;
+                    }
+                    if (response.status === 429 && i < maxRetries - 1) { // Rate limit
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+                    throw new Error(`API returned status ${response.status}: ${response.statusText}`);
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+            throw new Error("Exhausted all retries.");
+        }
+
+        // --- Image Generation Logic ---
+        async function generateImage(visualConfig) {
+            const container = document.getElementById(visualConfig.id);
+            container.innerHTML = '<div class="spinner"></div><p class="mt-4 text-sm text-yellow-400">Processing Visuals...</p>';
+
+            const payload = {
+                instances: [{ prompt: visualConfig.prompt }],
+                parameters: { "sampleCount": 1 }
+            };
+
+            try {
+                const response = await fetchWithRetry(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                const base64Data = result?.predictions?.[0]?.bytesBase64Encoded;
+
+                if (base64Data) {
+                    const imageUrl = `data:image/png;base64,${base64Data}`;
+                    
+                    container.innerHTML = `
+                        <img src="${imageUrl}" alt="${visualConfig.label}" class="rounded-lg shadow-lg mb-4 w-full border border-green-500/50" />
+                        <div class="data-label text-xs text-green-300 uppercase">${visualConfig.label}</div>
+                    `;
+                } else {
+                    container.innerHTML = `<p class="text-red-500">ERROR: Image data missing or generation failed.</p>`;
+                    console.error("API response missing image data:", result);
+                }
+
+            } catch (error) {
+                container.innerHTML = `<p class="text-red-500">NETWORK ERROR: ${error.message}</p>`;
+                console.error("Image generation network error:", error);
+            }
+        }
+
+        // --- Event Listener ---
+        generateAllButton.addEventListener('click', () => {
+            // Disable button during processing
+            generateAllButton.disabled = true;
+            generateAllButton.textContent = 'VISUALIZATION RUNNING...';
+            generateAllButton.classList.remove('btn-green');
+            generateAllButton.classList.add('bg-gray-700', 'text-gray-400');
+
+            // Run all image generations concurrently
+            const generationPromises = Object.values(visuals).map(config => generateImage(config));
+
+            Promise.all(generationPromises).finally(() => {
+                // Re-enable button after all promises settle
+                generateAllButton.disabled = false;
+                generateAllButton.textContent = 'RE-RUN VISUALIZATION SUITE (Manual Trigger)';
+                generateAllButton.classList.add('btn-green');
+                generateAllButton.classList.remove('bg-gray-700', 'text-gray-400');
+            });
+        });
+
+        // --- Auto-Run on Load ---
+        window.onload = function() {
+            // Automatically trigger the generation sequence on page load
+            generateAllButton.click();
+        }
+    </script>
+</body>
