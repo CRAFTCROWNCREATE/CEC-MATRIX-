@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC WAM SYSTEM CORE: 1.2.9</title>
+    <title>CEC WAM SYSTEM CORE: 1.3.0 (INVESTOR READY)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* BASE SYSTEM STYLES */
@@ -22,6 +22,9 @@
         #system-log {
             max-height: 60vh !important;
             font-size: 1.1em !important;
+            /* Ensures log starts from the bottom */
+            display: flex;
+            flex-direction: column-reverse;
         }
         .system-title, 
         .data-label,
@@ -55,7 +58,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.9); /* Semi-transparent black overlay */
+            background-color: rgba(0, 0, 0, 0.9);
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -123,7 +126,7 @@
 
     <script>
         // --- CONFIGURATION & DATA INJECTION ---
-        const ACCESS_KEY = "CECWAMCORE"; // Set your password here
+        const ACCESS_KEY = "1010"; // CORRECTED PASSWORD
         const logContainer = document.getElementById('system-log');
         const lockScreen = document.getElementById('lock-screen');
         const dashboard = document.getElementById('dashboard');
@@ -131,7 +134,7 @@
         // Data from your previous session (Last Night's Data)
         const LAST_NIGHT_DATA = {
             CLOSING_VALUE: 1250321,
-            TARGET_METRIC: "300% ROI Model",
+            TARGET_METRIC: "300% ROI Model (Investor Target)",
             NEXT_ACTION: "FINAL PRESENTATION DRAFT (T-72hrs)"
         };
 
@@ -142,21 +145,21 @@
             // Timestamp format: [HH:MM:SS]
             const timestamp = new Date().toTimeString().split(' ')[0];
             entry.innerHTML = `<span class="text-green-500">[${timestamp}]</span> ${message}`;
-            logContainer.prepend(entry);
+            logContainer.prepend(entry); // Prepend so new messages appear at the bottom of the visible scroll area
         }
 
         function attemptUnlock() {
             const input = document.getElementById('access-input').value;
             if (input === ACCESS_KEY) {
                 addLog("[AUTH] ACCESS GRANTED. Initializing Dashboard.");
-                lockScreen.classList.add('hidden');
+                lockScreen.style.display = 'none'; // Use style to hide
                 dashboard.classList.remove('hidden');
                 initMatrix(document.getElementById('matrix-canvas')); // Start main matrix effect
-                // Inject last night's data immediately
                 injectInvestorData();
+                startSystemLoop(); // Start the system update loop
             } else {
-                addLog("[AUTH] ACCESS DENIED. Retrying.");
-                document.getElementById('access-input').value = ''; // Clear input
+                addLog("[AUTH] ACCESS DENIED (1010 Required). Retrying.");
+                document.getElementById('access-input').value = '';
             }
         }
 
@@ -164,76 +167,87 @@
             document.getElementById('target-metric').innerText = LAST_NIGHT_DATA.TARGET_METRIC;
             document.getElementById('closing-val').innerText = LAST_NIGHT_DATA.CLOSING_VALUE.toLocaleString() + "M";
             document.getElementById('next-action').innerText = LAST_NIGHT_DATA.NEXT_ACTION;
-            addLog(`[DATA INJECT] Investor Metrics from last session loaded successfully.`);
+            addLog(`[DATA INJECT] Investor Metrics from last session loaded.`);
         }
 
         // --- MATRIX EFFECT LOGIC (Applied to both Lock and Main Screens) ---
+        // Includes custom characters for formulas/emojis
+        const MATRIX_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+=-[]{}\\|:;\"'<,>.?/📈📉📊✨🔑";
 
         function initMatrix(canvas) {
             const ctx = canvas.getContext('2d');
             let width = canvas.width = window.innerWidth;
             let height = canvas.height = window.innerHeight;
-            const letters = Array(256).join(1).split('');
-            const font_size = 10;
-            const columns = width / font_size;
+            const columns = width / 10;
+            const drops = Array(Math.floor(columns)).fill(0);
 
             window.onresize = () => {
                 width = canvas.width = window.innerWidth;
                 height = canvas.height = window.innerHeight;
+                drops.length = Math.floor(width / 10); // Adjust drops array size on resize
             };
 
             const draw = () => {
+                // Dim the screen slightly
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
                 ctx.fillRect(0, 0, width, height);
+
                 ctx.fillStyle = '#0F0';
-                ctx.font = font_size + 'px monospace';
+                ctx.font = '10px monospace';
                 
-                for (let i = 0; i < letters.length; i++) {
-                    const text = String.fromCharCode(48 + Math.random() * 33);
-                    const x = i * font_size;
-                    const y = letters[i] * font_size;
+                for (let i = 0; i < drops.length; i++) {
+                    // Pick a random character from the custom set
+                    const text = MATRIX_CHARS.charAt(Math.floor(Math.random() * MATRIX_CHARS.length));
+                    const x = i * 10;
+                    const y = drops[i] * 10;
+                    
                     ctx.fillText(text, x, y);
 
+                    // Reset drop when it reaches the bottom
                     if (y > height && Math.random() > 0.975) {
-                        letters[i] = 0;
+                        drops[i] = 0;
                     }
-                    letters[i]++;
+                    drops[i]++;
                 }
             };
-            return setInterval(draw, 33); // Animation speed
+            // Clear any existing interval to prevent multiple running
+            if (canvas.matrixInterval) {
+                clearInterval(canvas.matrixInterval);
+            }
+            canvas.matrixInterval = setInterval(draw, 33);
         }
 
-        // --- SYSTEM LOOP (Only runs after unlock) ---
+        // --- SYSTEM LOOP (Only runs after successful unlock) ---
         let systemLoop;
+        function startSystemLoop() {
+            if (systemLoop) clearInterval(systemLoop); // Prevent duplicates
 
-        document.getElementById('unlock-button').addEventListener('click', () => {
-            // Only start the loop once unlocked
-            if (document.getElementById('access-input').value === ACCESS_KEY && !systemLoop) {
-                // Initial log entry
-                addLog("[SYS] CORE CODE DEPLOYED. SYSTEM LIVE.");
-                
-                systemLoop = setInterval(() => {
-                    // Auto Log
-                    if (Math.random() > 0.8) {
-                        const messages = [
-                            "Checking integrity...",
-                            "Syncing with local timeline...",
-                            "Updating liquid value cache...",
-                            "Scanning for off-grid signals..."
-                        ];
-                        addLog(`[AUTO] ${messages[Math.floor(Math.random() * messages.length)]}`);
-                    }
-                    // Value Ticker (Keeps existing logic)
-                    const baseVal = 1250000;
-                    const randomAdd = Math.floor(Math.random() * 500);
-                    document.getElementById('val-disp').innerText = (baseVal + randomAdd).toLocaleString() + "M";
-                }, 5000); // Updates every 5 seconds
-            }
-        });
+            addLog("[SYS] CORE CODE DEPLOYED. SYSTEM LIVE.");
+            
+            systemLoop = setInterval(() => {
+                // Auto Log
+                if (Math.random() > 0.8) {
+                    const messages = [
+                        "Checking integrity...",
+                        "Syncing with local timeline...",
+                        "Updating liquid value cache...",
+                        "Scanning for off-grid signals..."
+                    ];
+                    addLog(`[AUTO] ${messages[Math.floor(Math.random() * messages.length)]}`);
+                }
+                // Value Ticker (Keeps existing logic)
+                const baseVal = 1250000;
+                // Add a slightly larger fluctuation for a better "live" feel
+                const randomAdd = Math.floor(Math.random() * 5000) - 2500; 
+                document.getElementById('val-disp').innerText = (baseVal + randomAdd).toLocaleString() + "M";
+            }, 5000); // Updates every 5 seconds
+        }
+
 
         // --- INITIALIZATION ---
         // Start lock screen matrix immediately
         initMatrix(document.getElementById('lock-canvas'));
+        addLog("[SYS] Code initialization complete. Awaiting ACCESS KEY.");
 
     </script>
 
