@@ -3,356 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC-WAM/CDL Mobile Command Board v6.0.0</title>
+    <title>CEC WAM SYSTEM CORE: 1.2.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Base Dark, Futuristic Theme for Mobile */
+        /* BASE SYSTEM STYLES */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0d0d1a; /* Very deep purple-dark blue */
-            min-height: 100vh;
-            color: #E0FFFF; /* Neon Cyan/Aqua */
-            overflow-x: hidden;
+            background-color: #000;
+            color: #00FF00;
+            font-family: 'Courier New', monospace;
+            overflow: hidden; /* Important for Matrix effect */
+        }
+
+        /* --- 1. VISIBILITY FIX (FOR MOBILE) --- */
+        body {
+            font-size: 130% !important; 
+            line-height: 1.6;
+        }
+        #system-log {
+            max-height: 60vh !important;
+            font-size: 1.1em !important;
+        }
+        .system-title, 
+        .data-label,
+        #val-disp,
+        #entropy-disp,
+        .investor-data-point { 
+            font-size: 2.5em !important; 
+            text-shadow: 0 0 15px #00FFFF;
+            color: #00FFFF !important;
+        }
+
+        /* --- 2. MATRIX CODE EFFECT STYLES --- */
+        #matrix-canvas, #lock-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -10; /* Ensures it is always in the background */
+            width: 100%;
+            height: 100%;
+            opacity: 0.7; /* Semi-transparent */
+        }
+        .core-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Lock Screen Styling */
+        #lock-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); /* Semi-transparent black overlay */
+            z-index: 1000;
             display: flex;
             flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
-        .neon-glow {
-            text-shadow: 0 0 4px #0ff, 0 0 8px #0ff, 0 0 16px #0ff;
-            color: #E0FFFF;
+        .lock-text {
+            color: #00FF00;
+            text-shadow: 0 0 15px #00FF00;
+            font-size: 1.5em;
+            margin-bottom: 20px;
         }
-        .holographic-card {
-            background-color: rgba(22, 27, 34, 0.6); /* Semi-transparent background */
-            backdrop-filter: blur(8px);
-            border: 1px solid #0ff3ff80;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-            transition: all 0.3s ease;
-        }
-        .matrix-symbol {
-            font-size: 3rem; 
-            color: #00FF41; 
-            opacity: 0.1;
-            position: absolute;
-            animation: matrix-fall linear infinite;
-        }
-        #matrix-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 60;
-            pointer-events: none; display: none; overflow: hidden;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 100%);
-        }
-        @keyframes matrix-fall {
-            0% { transform: translateY(-100vh); opacity: 0.05; }
-            100% { transform: translateY(100vh); opacity: 0.15; }
-        }
-        #lock-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000000;
-            z-index: 70; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s;
-        }
-        .log-box {
-            min-height: 150px; max-height: 250px; overflow-y: scroll; font-size: 0.75rem; line-height: 1.4;
-            scrollbar-width: thin; /* Firefox */
-        }
-        .spin { animation: spin 1.5s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* Custom Tabs for Mobile */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .tab-button.active {
-            border-bottom: 3px solid #0ff; /* Neon highlight */
-            color: #0ff;
-            text-shadow: 0 0 5px #0ff;
+        .lock-input {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00FF00;
+            padding: 10px;
+            color: #00FF00;
+            font-size: 1em;
+            text-align: center;
         }
     </style>
 </head>
-<body>
+<body class="p-4 core-content">
 
-<div id="matrix-overlay"></div>
+    <canvas id="matrix-canvas"></canvas>
 
-<div id="lock-screen">
-    <button onclick="toggleMatrix()" class="text-white text-xl p-3 bg-gray-900/70 border border-green-500 rounded-lg mb-8 neon-glow transform transition duration-300 hover:scale-[1.05]">
-        <span id="matrix-status-text">ACTIVATE MATRIX WALL</span> ⛓️
-    </button>
-    
-    <div class="text-center p-6 rounded-xl holographic-card w-11/12 max-w-sm">
-        <h1 class="text-4xl font-bold mb-4 neon-glow text-red-500">
-            SECURE ACCESS
-        </h1>
-        <p class="text-2xl mb-6 text-gray-400">EVE VOICE LOCK 🎤</p>
-        <div id="voice-lock-status" class="text-lg p-4 bg-gray-900 rounded-lg mb-6 text-yellow-400">
-            STATUS: Awaiting Vocal Key...
-        </div>
-        <button onclick="unlockSystem()" class="w-full p-4 rounded-xl text-2xl font-bold bg-purple-700 hover:bg-purple-500 text-white shadow-lg neon-glow">
-            SIMULATE VOICE MATCH
-        </button>
-    </div>
-</div>
-
-<div class="p-4 sm:p-6 flex-grow z-10" id="main-dashboard" style="display: none;">
-    <header class="text-center mb-6 border-b-2 border-indigo-500 pb-3">
-        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight neon-glow">
-            CEC-WAM/CDL MOBILE
-        </h1>
-        <p class="text-xl sm:text-2xl font-light mt-1 text-gray-400">COMMAND BOARD v6.0.0</p>
-        <button onclick="toggleMatrix()" class="mt-3 text-white text-lg p-2 bg-gray-900/70 border border-green-500 rounded-lg neon-glow">
-            <span id="matrix-status-text-main">MATRIX OFFLINE</span> ⛓️
-        </button>
-    </header>
-
-    <div class="flex justify-between border-b border-gray-700 mb-6 sticky top-0 bg-[#0d0d1a] z-50 pt-2">
-        <button class="tab-button p-3 text-lg font-semibold flex-1 text-center active" data-tab="status">SYSTEM</button>
-        <button class="tab-button p-3 text-lg font-semibold flex-1 text-center" data-tab="crypto">CRYPTO / WAM</button>
-        <button class="tab-button p-3 text-lg font-semibold flex-1 text-center" data-tab="control">CONTROL</button>
+    <div id="lock-screen">
+        <canvas id="lock-canvas"></canvas>
+        <div class="lock-text mb-8">INITIATING CORE SEQUENCE...</div>
+        <input type="password" id="access-input" class="lock-input" placeholder="ACCESS KEY">
+        <button id="unlock-button" class="mt-8 px-6 py-3 bg-green-800 hover:bg-green-700 text-white font-bold" onclick="attemptUnlock()">UNLOCK</button>
     </div>
 
-    <div id="status" class="tab-content active space-y-6">
-        <div class="holographic-card p-4 rounded-xl">
-            <h2 class="text-xl font-bold mb-3 border-b pb-1 text-indigo-400 flex items-center">
-                CORE HOOD CONTROL <span class="text-2xl ml-2 spin">&#9883;</span>
-            </h2>
-            
-            <div id="system-state-display" class="text-center p-6 mb-4 rounded-lg border-2 font-black text-4xl neon-glow bg-green-900/50 text-green-400">
-                ACTIVE
-            </div>
-            
-            <button id="toggle-button" onclick="toggleSystem()" class="w-full p-3 rounded-lg text-xl font-bold transform hover:scale-[1.02] bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg">
-                TOGGLE HOOD (TO STANDBY)
-            </button>
-            <p class="text-xs text-center mt-2 text-gray-500">Hood V6.0.0: Controls primary Resource-Allocation Model.</p>
+    <div id="dashboard" class="hidden">
+        <div class="system-title text-center mb-6">
+            CEC WAM SYSTEM CORE (ACTIVE)
         </div>
 
-        <div class="grid grid-cols-1 gap-4">
-            <div class="holographic-card p-4 rounded-xl border-l-4 border-cyan-500">
-                <p class="text-lg font-medium text-gray-400">MISSION FOCUS: SON 👑</p>
-                <p id="metric-son-status" class="text-4xl font-extrabold mt-1 text-cyan-400 neon-glow">SECURE</p>
-                <p class="text-xs text-gray-500">Geo-Lock: Primary Zone. Protocol: GHOST 2.0 (Verified).</p>
+        <div class="flex flex-wrap justify-center mb-8">
+            <div class="p-4 border border-green-700 m-2 flex-grow">
+                <div class="data-label text-sm text-green-500">LIQUID VALUE (M)</div>
+                <div id="val-disp" class="text-3xl font-bold text-center mt-2">1,250,000M</div>
             </div>
-            
-            <div class="holographic-card p-4 rounded-xl border-l-4 border-purple-500">
-                <p class="text-lg font-medium text-gray-400">PLATFORM INTEGRITY 🔗</p>
-                <p id="metric-platform" class="text-4xl font-extrabold mt-1 text-purple-400 neon-glow">SYNC (17ms)</p>
-                <p class="text-xs text-gray-500">CDL Latency: Optimal. Global Nodes: 1,844,201.</p>
+
+            <div class="p-4 border border-green-700 m-2 flex-grow">
+                <div class="data-label text-sm text-green-500">SYSTEM ENTROPY</div>
+                <div id="entropy-disp" class="text-3xl font-bold text-center mt-2">0.0012</div>
             </div>
         </div>
 
-        <div class="holographic-card p-4 rounded-xl bg-gray-900/60">
-            <h2 class="text-xl font-bold mb-3 border-b pb-1 text-lime-400">SYSTEM CONSOLE LOG 💬</h2>
-            <div id="system-log" class="log-box p-3 rounded-lg text-lime-300 border border-lime-400/50">
-                <p>[2225-12-07 04:52:00] INIT: Mobile Command Board v6.0.0 Active.</p>
-                <p>[2225-12-07 04:52:05] H-PAM: Hyper-Predictive AI Module Running on 8 Cores.</p>
-                <p>[2225-12-07 04:52:15] USER: Access Granted. Welcome, Architect. Status: SECURED.</p>
+        <div class="p-4 border border-red-500 mb-8 bg-black/50">
+            <div class="text-xl text-red-400 mb-4">INVESTOR READINESS TRACKER (3-DAY PLAN)</div>
+            <div id="investor-module">
+                <div class="investor-data-point text-lg">TARGET METRIC: <span id="target-metric" class="float-right text-yellow-400">300% ROI Model</span></div>
+                <div class="investor-data-point text-lg">CLOSING VALUE (LAST NIGHT): <span id="closing-val" class="float-right text-green-500">1,250,321M</span></div>
+                <div class="investor-data-point text-lg">NEXT ACTION: <span id="next-action" class="float-right text-red-500">FINAL PRESENTATION DRAFT (T-72hrs)</span></div>
             </div>
-        </div>
-    </div>
-
-    <div id="crypto" class="tab-content space-y-6">
-        <h2 class="text-3xl font-bold text-center neon-glow text-green-500">WAM/CDL FINANCIAL SNAPSHOT</h2>
-        <div class="holographic-card p-4 rounded-xl border-l-4 border-green-500">
-            <p class="text-lg font-medium text-gray-400">DIGITAL WEALTH INDEX (DWI) 💸</p>
-            <p id="metric-dwi" class="text-5xl font-extrabold mt-1 text-green-400 neon-glow">$8.4T</p>
-            <p class="text-sm text-gray-500 mt-2">+5.2% Q/Q. WAM Protocol Status: Predictive Allocation (P-7).</p>
         </div>
         
-        <div class="holographic-card p-4 rounded-xl border-l-4 border-yellow-500">
-            <p class="text-lg font-medium text-gray-400">CRYPTO AI AUTONOMY ₿</p>
-            <p id="metric-ai" class="text-5xl font-extrabold mt-1 text-yellow-400 neon-glow">99.998%</p>
-            <p class="text-sm text-gray-500 mt-2">Human Oversight: 0.002%. Transaction Volume: Optimal.</p>
-        </div>
-        
-        <div class="holographic-card p-4 rounded-xl border-l-4 border-red-500">
-            <p class="text-lg font-medium text-gray-400">WAM CORE BUDGET ALARM 🚨</p>
-            <p class="text-5xl font-extrabold mt-1 text-red-400 neon-glow">STATUS: GREEN</p>
-            <p class="text-sm text-gray-500 mt-2">No critical overruns detected. Contingency funds: 15%.</p>
-        </div>
+        <div class="system-title mb-4">SYSTEM LOG</div>
+        <div id="system-log" class="p-4 border border-green-700 h-64 overflow-y-scroll bg-black/30">
+            </div>
+
     </div>
 
-    <div id="control" class="tab-content space-y-6 pb-8">
-        <h2 class="text-3xl font-bold text-center neon-glow text-red-500">OPERATIONAL COMMAND MATRIX</h2>
-        <div class="holographic-card p-4 rounded-xl bg-gray-900/60 space-y-3">
-            <button onclick="simulateAction('Resource Reallocation Initiated (WAM P-7).')" class="w-full p-3 rounded-lg text-lg font-semibold bg-red-600 hover:bg-red-500 text-white transition duration-200">
-                EXECUTE WAM PROTOCOL 7 (REALLOCATION)
-            </button>
-            <button onclick="simulateAction('CDL Data Push Completed. Integrity Verified.')" class="w-full p-3 rounded-lg text-lg font-semibold bg-green-600 hover:bg-green-500 text-white transition duration-200">
-                CDL DATA REPLICATION (SYNC ALL)
-            </button>
-            <button onclick="simulateAction('Crypto Portfolio Rebalanced. AI Signal 4.2 Activated.')" class="w-full p-3 rounded-lg text-lg font-semibold bg-yellow-600 hover:bg-yellow-500 text-gray-900 transition duration-200">
-                CRYPTO AUTONOMY OVERRIDE (AI SIGNAL 4.2)
-            </button>
-             <button onclick="simulateAction('H-PAM Integration Simulation Started. Quantum Latency Mitigation In Progress.')" class="w-full p-3 rounded-lg text-lg font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition duration-200">
-                SIMULATE NEXT UPGRADE (H-PAM LOGIC)
-            </button>
-        </div>
+    <script>
+        // --- CONFIGURATION & DATA INJECTION ---
+        const ACCESS_KEY = "CECWAMCORE"; // Set your password here
+        const logContainer = document.getElementById('system-log');
+        const lockScreen = document.getElementById('lock-screen');
+        const dashboard = document.getElementById('dashboard');
 
-        <div class="holographic-card p-4 rounded-xl border-l-4 border-gray-400">
-             <h2 class="text-xl font-bold mb-3 border-b pb-1 text-gray-400">SYSTEM LOCKDOWN</h2>
-             <button onclick="lockSystem()" class="w-full p-3 rounded-lg text-lg font-semibold bg-gray-700 hover:bg-gray-500 text-white transition duration-200">
-                INITIATE CORE LOCK (LOGOUT)
-            </button>
-             <p class="text-xs text-center mt-2 text-red-500">Caution: Requires EVE Voice Match to re-authenticate.</p>
-        </div>
-    </div>
-</div>
+        // Data from your previous session (Last Night's Data)
+        const LAST_NIGHT_DATA = {
+            CLOSING_VALUE: 1250321,
+            TARGET_METRIC: "300% ROI Model",
+            NEXT_ACTION: "FINAL PRESENTATION DRAFT (T-72hrs)"
+        };
 
-<script>
-    const systemStateDisplay = document.getElementById('system-state-display');
-    const toggleButton = document.getElementById('toggle-button');
-    const systemLog = document.getElementById('system-log');
-    const lockScreen = document.getElementById('lock-screen');
-    const mainDashboard = document.getElementById('main-dashboard');
-    const matrixOverlay = document.getElementById('matrix-overlay');
-    const matrixStatusText = document.getElementById('matrix-status-text');
-    const matrixStatusTextMain = document.getElementById('matrix-status-text-main');
-    
-    let isSystemActive = true;
-    let isMatrixActive = false;
-    let matrixIntervals = [];
+        // --- CORE FUNCTIONS ---
 
-    // System Symbols for Matrix Wall
-    const matrixSymbols = ['0', '1', 'A', 'N', 'W', 'T', '₿', '💸', '👑', '⚙️', '🔗', '⚡', '∑', 'Δ'];
-
-    // ------------------ CORE FUNCTIONALITY ------------------
-    
-    function toggleSystem() {
-        isSystemActive = !isSystemActive;
-        const timestamp = new Date().toLocaleTimeString('en-US', {hour12: false});
-        
-        if (isSystemActive) {
-            systemStateDisplay.textContent = "ACTIVE";
-            toggleButton.textContent = "TOGGLE HOOD (TO STANDBY)";
-            systemStateDisplay.classList.remove('bg-blue-900/50', 'text-blue-400');
-            systemStateDisplay.classList.add('bg-green-900/50', 'text-green-400');
-            simulateLog(`[${timestamp}] HOOD: System Active - Max Efficiency.`);
-        } else {
-            systemStateDisplay.textContent = "STANDBY";
-            toggleButton.textContent = "TOGGLE HOOD (TO ACTIVE)";
-            systemStateDisplay.classList.remove('bg-green-900/50', 'text-green-400');
-            systemStateDisplay.classList.add('bg-blue-900/50', 'text-blue-400');
-            simulateLog(`[${timestamp}] HOOD: System Standby - Low Power Mode.`);
+        function addLog(message) {
+            const entry = document.createElement('div');
+            // Timestamp format: [HH:MM:SS]
+            const timestamp = new Date().toTimeString().split(' ')[0];
+            entry.innerHTML = `<span class="text-green-500">[${timestamp}]</span> ${message}`;
+            logContainer.prepend(entry);
         }
-    }
 
-    function simulateAction(message) {
-        const timestamp = new Date().toLocaleTimeString('en-US', {hour12: false});
-        simulateLog(`[${timestamp}] ACTION: ${message}`);
-    }
-
-    function simulateLog(logMessage) {
-        const newLogEntry = document.createElement('p');
-        newLogEntry.textContent = logMessage;
-        systemLog.prepend(newLogEntry);
-        // Limit log size
-        while (systemLog.children.length > 50) {
-            systemLog.removeChild(systemLog.lastChild);
+        function attemptUnlock() {
+            const input = document.getElementById('access-input').value;
+            if (input === ACCESS_KEY) {
+                addLog("[AUTH] ACCESS GRANTED. Initializing Dashboard.");
+                lockScreen.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                initMatrix(document.getElementById('matrix-canvas')); // Start main matrix effect
+                // Inject last night's data immediately
+                injectInvestorData();
+            } else {
+                addLog("[AUTH] ACCESS DENIED. Retrying.");
+                document.getElementById('access-input').value = ''; // Clear input
+            }
         }
-    }
 
-    // ------------------ MATRIX/LOCK FUNCTIONS ------------------
-
-    function createMatrixSymbol() {
-        const symbol = document.createElement('span');
-        symbol.classList.add('matrix-symbol');
-        symbol.textContent = matrixSymbols[Math.floor(Math.random() * matrixSymbols.length)];
-        symbol.style.left = `${Math.random() * 100}vw`;
-        symbol.style.animationDuration = `${Math.random() * 3 + 2}s`;
-        symbol.style.animationDelay = `-${Math.random() * 5}s`;
-        matrixOverlay.appendChild(symbol);
-        setTimeout(() => { symbol.remove(); }, 5000);
-    }
-
-    function toggleMatrix() {
-        isMatrixActive = !isMatrixActive;
-        if (isMatrixActive) {
-            matrixOverlay.style.display = 'block';
-            if (matrixStatusText) matrixStatusText.textContent = "MATRIX ONLINE";
-            if (matrixStatusTextMain) matrixStatusTextMain.textContent = "MATRIX ONLINE";
-            matrixIntervals.push(setInterval(createMatrixSymbol, 100));
-            for(let i = 0; i < 50; i++) { createMatrixSymbol(); }
-        } else {
-            matrixOverlay.style.display = 'none';
-            if (matrixStatusText) matrixStatusText.textContent = "ACTIVATE MATRIX WALL";
-            if (matrixStatusTextMain) matrixStatusTextMain.textContent = "MATRIX OFFLINE";
-            matrixIntervals.forEach(clearInterval);
-            matrixIntervals = [];
-            matrixOverlay.innerHTML = '';
+        function injectInvestorData() {
+            document.getElementById('target-metric').innerText = LAST_NIGHT_DATA.TARGET_METRIC;
+            document.getElementById('closing-val').innerText = LAST_NIGHT_DATA.CLOSING_VALUE.toLocaleString() + "M";
+            document.getElementById('next-action').innerText = LAST_NIGHT_DATA.NEXT_ACTION;
+            addLog(`[DATA INJECT] Investor Metrics from last session loaded successfully.`);
         }
-    }
 
-    function lockSystem() {
-        // Reset voice lock status on relock
-        const voiceStatus = document.getElementById('voice-lock-status');
-        voiceStatus.textContent = 'STATUS: Awaiting Vocal Key...';
-        voiceStatus.classList.remove('neon-glow', 'text-green-500');
-        voiceStatus.classList.add('text-yellow-400');
+        // --- MATRIX EFFECT LOGIC (Applied to both Lock and Main Screens) ---
 
-        mainDashboard.style.display = 'none';
-        lockScreen.style.opacity = 0;
-        lockScreen.style.display = 'flex';
-        setTimeout(() => {
-            lockScreen.style.opacity = 1;
-            simulateLog(`[${new Date().toLocaleTimeString('en-US', {hour12: false})}] SECURITY: Core Lock Initiated. Access Secured.`);
-        }, 10);
-    }
+        function initMatrix(canvas) {
+            const ctx = canvas.getContext('2d');
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+            const letters = Array(256).join(1).split('');
+            const font_size = 10;
+            const columns = width / font_size;
 
-    function unlockSystem() {
-        const voiceStatus = document.getElementById('voice-lock-status');
-        voiceStatus.textContent = 'STATUS: Voice Print Matching...';
-        
-        setTimeout(() => {
-            voiceStatus.textContent = 'STATUS: MATCH CONFIRMED (Level Omega)';
-            voiceStatus.classList.remove('text-yellow-400');
-            voiceStatus.classList.add('neon-glow', 'text-green-500');
-            
-            setTimeout(() => {
-                lockScreen.style.opacity = 0;
-                setTimeout(() => {
-                    lockScreen.style.display = 'none';
-                    mainDashboard.style.display = 'flex';
-                    // Ensure matrix status carries over if active
-                    if (isMatrixActive && matrixStatusTextMain) {
-                        matrixStatusTextMain.textContent = "MATRIX ONLINE";
+            window.onresize = () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            };
+
+            const draw = () => {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = '#0F0';
+                ctx.font = font_size + 'px monospace';
+                
+                for (let i = 0; i < letters.length; i++) {
+                    const text = String.fromCharCode(48 + Math.random() * 33);
+                    const x = i * font_size;
+                    const y = letters[i] * font_size;
+                    ctx.fillText(text, x, y);
+
+                    if (y > height && Math.random() > 0.975) {
+                        letters[i] = 0;
                     }
-                }, 500); 
-            }, 1000); 
-        }, 1500); 
-    }
-
-    // ------------------ TAB CONTROL ------------------
-
-    function setupTabs() {
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetTabId = button.getAttribute('data-tab');
-
-                // Deactivate all buttons and contents
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-
-                // Activate the clicked button and corresponding content
-                button.classList.add('active');
-                document.getElementById(targetTabId).classList.add('active');
-            });
-        });
-    }
-
-    // ------------------ INITIALIZATION ------------------
-
-    document.addEventListener('DOMContentLoaded', () => {
-        setupTabs();
-        // Initial setup for the ACTIVE status display
-        if (isSystemActive) {
-            systemStateDisplay.classList.add('bg-green-900/50', 'text-green-400');
+                    letters[i]++;
+                }
+            };
+            return setInterval(draw, 33); // Animation speed
         }
-        // Initially show the lock screen
-        mainDashboard.style.display = 'none';
-        lockScreen.style.display = 'flex';
-    });
 
-</script>
+        // --- SYSTEM LOOP (Only runs after unlock) ---
+        let systemLoop;
+
+        document.getElementById('unlock-button').addEventListener('click', () => {
+            // Only start the loop once unlocked
+            if (document.getElementById('access-input').value === ACCESS_KEY && !systemLoop) {
+                // Initial log entry
+                addLog("[SYS] CORE CODE DEPLOYED. SYSTEM LIVE.");
+                
+                systemLoop = setInterval(() => {
+                    // Auto Log
+                    if (Math.random() > 0.8) {
+                        const messages = [
+                            "Checking integrity...",
+                            "Syncing with local timeline...",
+                            "Updating liquid value cache...",
+                            "Scanning for off-grid signals..."
+                        ];
+                        addLog(`[AUTO] ${messages[Math.floor(Math.random() * messages.length)]}`);
+                    }
+                    // Value Ticker (Keeps existing logic)
+                    const baseVal = 1250000;
+                    const randomAdd = Math.floor(Math.random() * 500);
+                    document.getElementById('val-disp').innerText = (baseVal + randomAdd).toLocaleString() + "M";
+                }, 5000); // Updates every 5 seconds
+            }
+        });
+
+        // --- INITIALIZATION ---
+        // Start lock screen matrix immediately
+        initMatrix(document.getElementById('lock-canvas'));
+
+    </script>
+
+
 </body>
 </html>
-```eof
-
-Your system is now deployed. What is the next command you would like to run on the CEC-WAM/CDL v6.0.0 Live Board?
