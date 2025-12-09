@@ -53,30 +53,18 @@ DOCTYPE html>
         }
 
         /* --- CONTROL PANEL GRID/FLEX LAYOUT FIX (Cleaner Interior) --- */
-        .control-panel {
-            display: flex;
-            flex-wrap: wrap; 
-            gap: 15px;      
-            padding: 15px 0;
-            margin-bottom: 20px;
-            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+        .cont: 1px solid rgba(0, 243, 255, 0.3);
         }
         .control-panel h3 {
             width: 100%; 
             color: var(--warning-red);
-            margin-bottom: 5px;
-        }
-        .control-panel button {
-            margin: 0 !important;
-            flex-grow: 1; 
-            min-width: 180px;
-            padding: 10px;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            border: none;
-            transition: background 0.2s;
-        }
+            margin-bottom: .control-panel {
+    display: flex;
+    flex-wrap: wrap; /* NEW LAYOUT CODE */
+    gap: 15px;      
+    /* ... more CSS ... */
+}
+
 
         /* Button Colors */
         .btn-dump { background: var(--warning-red); color: white; }
