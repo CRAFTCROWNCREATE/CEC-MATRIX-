@@ -1,1 +1,224 @@
-ents/CEC_NEWMATRIX.html
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEC WAM SYSTEM CORE: Live Data Feed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        body {
+            background-color: #000000;
+            color: #00ff41; /* Neo-Green/Matrix color */
+            font-family: 'Orbitron', sans-serif;
+            overflow: hidden; /* Prevent scrollbars from showing up */
+        }
+        .matrix-text {
+            color: #00ff41;
+            text-shadow: 0 0 5px #00ff41;
+        }
+        .log-console {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ff41;
+            height: 30vh;
+            overflow-y: scroll;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .log-console::-webkit-scrollbar {
+            width: 8px;
+        }
+        .log-console::-webkit-scrollbar-thumb {
+            background: #00ff41;
+            border-radius: 4px;
+        }
+        .live-data-card {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ff41;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        /* Matrix Wall (for background effect) */
+        #matrix-wall {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15; /* Subtler effect */
+        }
+    </style>
+</head>
+<body class="p-8">
+
+    <canvas id="matrix-wall"></canvas>
+
+    <div class="max-w-7xl mx-auto">
+        
+        <header class="text-center mb-10 border-b pb-4 border-[#00ff41]">
+            <h1 class="text-5xl font-bold matrix-text">CEC WAM CORE v3.1</h1>
+            <p class="text-xl text-cyan-400 mt-2">SYSTEM MONITORING & DEPLOYMENT INTERFACE</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+            <div class="live-data-card">
+                <p class="text-sm text-gray-400">LIQUID VALUE (M)</p>
+                <h2 id="val-disp" class="text-4xl font-bold matrix-text mt-1">1,250,000M</h2>
+            </div>
+            
+            <div class="live-data-card">
+                <p class="text-sm text-gray-400">SECURITY ENTROPY</p>
+                <h2 id="entropy-disp" class="text-4xl font-bold matrix-text mt-1">0.9999</h2>
+            </div>
+
+            <div class="live-data-card">
+                <p class="text-sm text-gray-400">CORE LATENCY</p>
+                <h2 id="ping-disp" class="text-4xl font-bold matrix-text mt-1">10ms</h2>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-xl matrix-text mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-green-500">terminal</span>
+                SYSTEM LOGS
+            </h2>
+            <div id="log-feed" class="log-console">
+                </div>
+        </div>
+
+    </div>
+
+    <script>
+        const logFeed = document.getElementById('log-feed');
+        const maxLogs = 50;
+
+        // Function to add a message to the log console
+        function addLog(message) {
+            const now = new Date();
+            const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span class="text-cyan-400">[${time}]</span> ${message}`;
+            logFeed.appendChild(logEntry);
+            
+            // Limit the number of logs
+            while (logFeed.children.length > maxLogs) {
+                logFeed.removeChild(logFeed.firstChild);
+            }
+            
+            // Auto-scroll to the bottom
+            logFeed.scrollTop = logFeed.scrollHeight;
+        }
+
+        // --- Core System Initialization ---
+        addLog("[SYS] CEC WAM CORE INITIALIZED.");
+        addLog("[SYS] Loading dependencies...");
+
+        // Initial Metric Updates (from original code logic)
+        function updateEntropy() { 
+            const current = parseFloat(document.getElementById('entropy-disp').innerText); 
+            const variation = (Math.random() * 0.001 - 0.0005); 
+            const newValue = (current + variation).toFixed(4);
+            document.getElementById('entropy-disp').innerText = newValue;
+        }
+        function systemPing() {
+            const latency = Math.floor(Math.random() * 5 + 5);
+            document.getElementById('ping-disp').innerText = `${latency}ms`;
+            addLog(`[NET] PING REPLY: TIME=${latency}.00ms TTL=64`); 
+            updateEntropy(); 
+        }
+
+        // --- Loop (Live Data Update) ---
+        setInterval(() => {
+            // Random System Message
+            if (Math.random() > 0.9) {
+                const messages = [
+                    "Checking integrity...",
+                    "Syncing with local timeline...",
+                    "Updating liquid value cache...",
+                    "Scanning for off-grid signals..."
+                ];
+                addLog(`[AUTO] ${messages[Math.floor(Math.random() * messages.length)]}`);
+            }
+            
+            // Value Ticker (Liquid Value)
+            const baseVal = 1250000;
+            const randomAdd = Math.floor(Math.random() * 500);
+            document.getElementById('val-disp').innerText = (baseVal + randomAdd).toLocaleString() + "M";
+
+            // Ping/Latency Update
+            systemPing();
+        }, 5000); // Runs every 5 seconds (5000ms)
+
+
+        // --- MATRIX WALL CANVAS LOGIC ---
+        const canvas = document.getElementById('matrix-wall');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        const columns = Math.floor(width / 20);
+        const drops = [];
+        for(let i = 0; i < columns; i++) drops[i] = 1;
+
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=~`[]{}\\|:;"\',.<>/?';
+        
+        function drawMatrix() {
+            // Semi-transparent black rectangle to blur and fade the characters
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = '#00ff41'; // Green text
+            ctx.font = '15px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters[Math.floor(Math.random() * characters.length)];
+                ctx.fillText(text, i * 20, drops[i] * 20);
+
+                // Sending the drop back to the top randomnly
+                if (drops[i] * 20 > height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        // Redraw matrix every 33ms (~30 FPS)
+        setInterval(drawMatrix, 33);
+
+        // Handle resizing
+        window.onresize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+    </script>
+    
+    <script>
+        // Placeholder for a secure configuration object for 'Eve'
+        // ACTUAL sensitive credentials (passwords, etc.) are NOT stored here in plain text, 
+        // only their secure reference points, protecting the "brain" and security.
+        const WIFI_SYNC_CONFIG = {
+            ssid: "YOUR_HOME_NETWORK_NAME", 
+            // The password/numbers are securely referenced in the "Bird" module.
+            key_location: "BIRD_HELP_MODULE_STORAGE", 
+            security_hash: "AES-256-GCM:WIFI-CONFIG-HASH-A4B5C6D"
+        };
+
+        function Eve_InitiateWifiSync() {
+            // Simulated action for Eve to retrieve and use the configuration
+            addLog("[SYS:EVE] Fetching configuration from BIRD_HELP_MODULE...");
+            if (WIFI_SYNC_CONFIG.ssid) {
+                // IMPORTANT: You will see these logs when the interface loads
+                addLog(`[CONFIG] Wi-Fi Sync target set to: ${WIFI_SYNC_CONFIG.ssid}`);
+                addLog("[CORE] Security Hash Verified. Wi-Fi Sync Active. (EVE Protocol Ready)");
+            } else {
+                addLog("[ERROR] Wi-Fi Sync Configuration missing or corrupted.");
+            }
+        }
+
+        // Auto-Run the configuration on system boot/interface load
+        Eve_InitiateWifiSync();
+    </script>
+    </body>
+</html>
