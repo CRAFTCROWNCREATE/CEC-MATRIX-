@@ -1,379 +1,56 @@
-<!<a href="Matrixboard.html" style="text-decoration: none;">
-    <button style="background: var(--warning-red); color: white; border: 2px solid var(--warning-red); padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; margin-left: 15px;">
-        <i class="fas fa-braille"></i> SWITCH TO MATRIX WALL
-    </button>
-</a>
-DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>CEC-WAM | UNIFIED CONTROL CORE V2</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        /* --- CORE PHYSICS & COLORS --- */
-        :root {
-            --neon: #00FF41; /* Core System Green */
-            --cyan: #00F3FF; /* Highlight Cyan */
-            --warning-red: #FF3366; /* Alert Red */
-            --bg-dark: #121212; /* Dark background */
-            --panel-bg: rgba(20, 20, 20, 0.8); /* Semi-transparent panel */
-        }
-        
-        body {
-            background-color: var(--bg-dark);
-            color: var(--neon);
-            font-family: 'Consolas', monospace;
-            padding: 20px;
-            margin: 0;
-            min-height: 100vh;
-            overflow-y: auto !important; /* SCROLLING FIX */
-            -webkit-overflow-scrolling: touch;
-        }
+// --- Core System Functions ---
+const logArea = document.getElementById('log-output');
 
-        /* --- LAYOUT FIX: UNIFIED PANELS --- */
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        @media (min-width: 900px) {
-            /* On wide screens, split the main area */
-            .dashboard-container {
-                grid-template-columns: 2fr 1fr;
-            }
-        }
-        .main-panel, .log-panel {
-            background: var(--panel-bg);
-            border: 1px solid var(--cyan);
-            border-radius: 8px;
-            padding: 20px;
-        }
+function addLog(message) {
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const logEntry = document.createElement('div');
+    logEntry.className = 'log-entry';
+    logEntry.innerText = `[${timestamp}] ${message}`;
+    
+    // Add to top of log list
+    if (logArea.firstChild) {
+        logArea.insertBefore(logEntry, logArea.firstChild);
+    } else {
+        logArea.appendChild(logEntry);
+    }
+    
+    // Auto-scroll to keep the latest message in view (optional, depending on display)
+    // logArea.scrollTop = 0; 
 
-        /* --- CONTROL PANEL GRID/FLEX LAYOUT FIX (Cleaner Interior) --- */
-        .cont: 1px solid rgba(0, 243, 255, 0.3);
-        }
-        .control-panel h3 {
-            width: 100%; 
-            color: var(--warning-red);
-            margin-bottom: .control-panel {
-    display: flex;
-    flex-wrap: wrap; /* NEW LAYOUT CODE */
-    gap: 15px;      
-    /* ... more CSS ... */
+    // Prune old logs to prevent memory overflow
+    while (logArea.children.length > 50) {
+        logArea.removeChild(logArea.lastChild);
+    }
 }
 
+// --- System Initialization ---
+window.onload = () => {
+    // Attempt to load the true CORE (for security/separation)
+    const coreUrl = document.getElementById('core-source').dataset.src;
+    if (coreUrl) {
+        // In a real environment, this would securely load or execute the binary core.
+        // For the HTML shell, we'll just log the attempt.
+        // fetch(coreUrl); 
+        addLog("[SYS] CORE SOURCE CODE DEPLOYED.");
+    }
 
-        /* Button Colors */
-        .btn-dump { background: var(--warning-red); color: white; }
-        .btn-sheet { background: var(--cyan); color: black; }
-        .btn-health { background: #FFD700; color: black; }
-        .btn-agi { background: #9900FF; color: white; }
-        .btn-dsp { background: var(--neon); color: black; }
-
-        /* STATUS DISPLAY */
-        .status-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--neon);
+    // --- Loop ---
+    setInterval(() => {
+        // Random Status Updates (Mimicking off-grid system checks)
+        if (Math.random() > 0.9) {
+            const messages = [
+                "Checking integrity...",
+                "Syncing with local timeline...",
+                "Updating liquid value cache...",
+                "Scanning for off-grid signals..."
+            ];
+            addLog(`[AUTO] ${messages[Math.floor(Math.random() * messages.length)]}`);
         }
-        .status-metric {
-            font-size: 1.1em;
-            color: var(--cyan);
-            background: rgba(0, 243, 255, 0.1);
-            padding: 5px 10px;
-            border-radius: 4px;
-        }
-
-        /* LOG FEED */
-        #status-feed {
-            height: 400px;
-            overflow-y: scroll;
-            border: 1px solid rgba(0, 255, 65, 0.2);
-            padding: 10px;
-        }
-        #status-feed .sys {
-            margin-bottom: 5px;
-            font-size: 0.9em;
-            line-height: 1.2;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="dashboard-container">
         
-        <div class="main-panel">
-            <div class="status-header">
-                <h2 style="color: var(--neon);"><i class="fas fa-microchip"></i> CEC-WAM CORE OPERATIONAL</h2>
-                <div>
-                    <span id="storage-status" class="status-metric">Storage: 78%</span>
-                    <span id="val-disp" class="status-metric" style="color: var(--warning-red);">Liquid Value: $1.25M</span>
-                    <span id="agi-score-disp" class="status-metric" style="color: #FF00FF;">AGI: 75.00%</span>
-                </div>
-            </div>
+        // Value Ticker Update (The 'Live Data')
+        const baseVal = 1250000;
+        const randomAdd = Math.floor(Math.random() * 500);
+        document.getElementById('val-disp').innerText = (baseVal + randomAdd).toLocaleString() + "M";
+    }, 5000); // Updates every 5 seconds
 
-            <div class="control-panel">
-                <h3>SYSTEM COMMANDS & AUTONOMY</h3>
-                <button onclick="initiateDataPurge()" class="btn-dump"><i class="fas fa-trash-alt"></i> SYSTEM DUMP (ARCHIVE)</button>
-                <button onclick="generateCSVReport('System_Data_Report_')" class="btn-sheet"><i class="fas fa-file-csv"></i> SHEET GO: GENERATE SPREADSHEET</button>
-                <button onclick="sendEmailReport()" class="btn-sheet"><i class="fas fa-envelope"></i> DIGITAL DUMP: SEND EMAIL</button>
-                <button onclick="runSystemHealthCheck()" class="btn-health"><i class="fas fa-heartbeat"></i> RUN SYSTEM HEALTH CHECK</button>
-                <button onclick="runAGIAnalysis()" class="btn-agi"><i class="fas fa-brain"></i> EVE: RUN AGI ANALYSIS</button>
-                <button onclick="runAGIStressTest()" class="btn-agi"><i class="fas fa-bolt"></i> SYSTEM TEST: AGI & EXECUTION</button>
-                <button onclick="runDataStructuring()" class="btn-dsp"><i class="fas fa-code-branch"></i> RUN DATA STRUCTURING (DSP)</button>
-            </div>
-
-            <div id="data-chart-panel" style="margin-top: 20px;">
-                <h3 style="color: var(--cyan);"><i class="fas fa-chart-area"></i> RESOURCE UTILIZATION (REAL-TIME)</h3>
-                <canvas id="realTimeChart" width="100%" height="200" style="background: rgba(0, 0, 0, 0.5); border: 1px dashed var(--neon);"></canvas>
-            </div>
-        </div>
-
-        <div class="log-panel">
-            <h2 style="color: var(--neon);"><i class="fas fa-list-ul"></i> SYSTEM LOG FEED</h2>
-            <div id="status-feed">
-                </div>
-            <p style="text-align: right; color: var(--warning-red); margin-top: 10px;">[EVE Console Activated]</p>
-        </div>
-    </div>
-
-
-    <script>
-        // --- GLOBAL VARIABLES ---
-        let agiConfidence = 75.0; 
-        const maxDataPoints = 25;
-        const chartData = [];
-
-        // --- CORE UTILITIES ---
-        function addLog(msg, source = 'CEC-WAM') {
-            const statusFeed = document.getElementById('status-feed');
-            const div = document.createElement('div');
-            
-            let color = '';
-            if (source === 'EVE') {
-                color = 'style="color: var(--warning-red); font-weight: bold;"'; 
-            } else {
-                color = 'style="color: var(--neon);"'; 
-            }
-
-            div.innerHTML = `<span ${color}>[${source}]</span> ${msg}`;
-            div.className = 'sys';
-            
-            if (statusFeed.children.length > 30) { 
-                statusFeed.removeChild(statusFeed.lastChild); 
-            }
-            statusFeed.prepend(div);
-        }
-
-        function initiateDataPurge() {
-            addLog("[PURGE] Initiating Data Archive and Purge...", 'CEC-WAM');
-            // Simulate storage drop
-            setTimeout(() => {
-                const storageElement = document.getElementById('storage-status');
-                storageElement.innerText = "Storage: 45%";
-                storageElement.style.color = 'var(--neon)';
-                addLog("[PURGE SUCCESS] Storage reduced to 45%. System integrity restored.", 'EVE');
-            }, 1500);
-        }
-
-        // --- DATA EXPORT PROTOCOLS (SHEET GO / EMAIL) ---
-        function generateCSVReport(filenamePrefix) {
-            addLog("[SHEET GO] COMPILING SYSTEM DATA FOR SPREADSHEET...", 'CEC-WAM');
-            const logEntries = Array.from(document.querySelectorAll('#status-feed .sys')).slice(0, 10).map(div => div.innerText.replace(/>\s*/g, ''));
-            const storageStatusText = document.getElementById('storage-status').innerText;
-            const valueTicker = document.getElementById('val-disp').innerText;
-
-            let csvContent = "sep=,\nMetric,Value\n";
-            csvContent += `Storage Status,${storageStatusText}\nLiquid Value,${valueTicker}\n`;
-            logEntries.forEach((log, index) => {
-                csvContent += `\nLog Entry ${index + 1},"${log.trim()}"`;
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.setAttribute("href", URL.createObjectURL(blob));
-            link.setAttribute("download", filenamePrefix + new Date().toISOString().slice(0, 10) + ".csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            addLog("[SHEET GO SUCCESS] Spreadsheet file saved to device. Ready for Canon print.", 'EVE');
-        }
-
-        function sendEmailReport() {
-            addLog("[EMAIL DUMP] COMPILING SYSTEM LOGS FOR EMAIL DELIVERY...", 'EVE');
-            const logEntries = Array.from(document.querySelectorAll('#status-feed .sys')).slice(0, 15).map(div => div.innerText.replace(/>\s*/g, ''));
-            const storageStatusText = document.getElementById('storage-status').innerText;
-            const valueTicker = document.getElementById('val-disp').innerText;
-            
-            let emailBody = `\n\n--- CEC-WAM SYSTEM DUMP REPORT ---\nTime of Dump: ${new Date().toLocaleString()}\n`;
-            emailBody += `\nStorage Status: ${storageStatusText}`;
-            emailBody += `\nLiquid Value Ticker: ${valueTicker}\n\n--- LAST 15 LOG ENTRIES ---\n`;
-            logEntries.forEach((log) => { emailBody += `\n${log}`; });
-            
-            const subject = "CEC-WAM | DIGITAL SYSTEM DUMP: " + new Date().toISOString().slice(0, 10);
-            const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
-            window.location.href = mailtoLink;
-            
-            addLog("[EMAIL DUMP SUCCESS] Local email client opened with report attached.", 'EVE');
-        }
-
-        // --- HEALTH CHECK MODULE (Audit) ---
-        function runSystemHealthCheck() {
-            addLog("--- SYSTEM HEALTH CHECK INITIATED ---", 'CEC-WAM');
-            
-            setTimeout(() => { addLog(`[AUDIT 1/4] Storage Status Check: ${document.getElementById('storage-status').innerText}. PASS.`, 'CEC-WAM'); }, 1000);
-            setTimeout(() => { addLog(`[AUDIT 2/4] Data Export Test: Live Value Check (${document.getElementById('val-disp').innerText}). PASS.`, 'CEC-WAM'); }, 2500);
-            setTimeout(() => { addLog("[AUDIT 3/4] Network Protocol Check: Pinging local subnet. PASS.", 'CEC-WAM'); }, 4000);
-            setTimeout(() => { addLog("[AUDIT 4/4] Visualization Module Check: Real-Time Chart active. PASS.", 'CEC-WAM'); }, 5500);
-            setTimeout(() => { addLog("--- HEALTH CHECK COMPLETE: SYSTEM AUDIT SUCCESSFUL (100% OPERATIONAL) ---", 'CEC-WAM'); }, 7000);
-        }
-
-        // --- AGI CORE MODULE (Learning) ---
-        function runAGIAnalysis() {
-            addLog("--- AGI CORE ANALYSIS INITIATED ---", 'EVE');
-            const storageText = document.getElementById('storage-status').innerText;
-            const storagePercent = parseFloat(storageText.split(':')[1].trim().replace('%', '')); 
-            const systemLoad = chartData[chartData.length - 1]; // Use last chart value
-
-            let recommendation = "";
-            let confidenceDelta = 0;
-
-            if (storagePercent >= 90 && systemLoad > 70) {
-                recommendation = "CRITICAL: Storage/Load breach imminent. Recommend IMMEDIATE DIGITAL DUMP and PURGE.";
-                confidenceDelta = 1.5;
-            } else if (storagePercent >= 90) {
-                recommendation = "ALERT: Storage is critical. Recommend SHEET GO (Print) or ARCHIVE DUMP to free space.";
-                confidenceDelta = 1.0;
-            } else {
-                recommendation = "STATUS: System is optimal. No immediate actions required. Continue data collection.";
-                confidenceDelta = -0.2;
-            }
-
-            agiConfidence = Math.min(100, Math.max(0, agiConfidence + confidenceDelta));
-            
-            addLog(`[DECISION] AGI Recommendation: ${recommendation}`, 'EVE');
-            addLog(`[AGI SCORE] Confidence Level Updated: ${agiConfidence.toFixed(2)}%`, 'CEC-WAM');
-            document.getElementById('agi-score-disp').innerText = `AGI: ${agiConfidence.toFixed(2)}%`;
-        }
-        setInterval(runAGIAnalysis, 25000); // Auto-run AGI analysis
-
-        // --- SYSTEM STRESS TEST (AGI to Execution) ---
-        function runAGIStressTest() {
-            addLog("--- STRESS TEST INITIATED: AGI-to-VCP-to-EXECUTION ---", 'EVE');
-            runAGIAnalysis(); 
-            
-            setTimeout(() => {
-                const logs = Array.from(document.querySelectorAll('#status-feed .sys'));
-                const lastLog = logs.find(log => log.innerText.includes('[DECISION] AGI Recommendation:'));
-                
-                if (lastLog && lastLog.innerText.includes('DUMP') || lastLog.innerText.includes('PURGE')) {
-                    addLog("VCP: Translating AGI decision to DUMP/PURGE command...", 'CEC-WAM');
-                    initiateDataPurge(); 
-                    addLog("EVE: DUMP command executed based on AGI recommendation.", 'EVE');
-                } else {
-                    addLog("VCP: AGI status is stable. No functional command execution required.", 'CEC-WAM');
-                }
-            }, 2500);
-
-            setTimeout(() => {
-                addLog("AUDIT: Verifying System State after AGI Execution...", 'CEC-WAM');
-                runSystemHealthCheck();
-            }, 5000);
-        }
-
-        // --- DATA STRUCTURING PROTOCOL (DSP) ---
-        function runDataStructuring() {
-            addLog("[DSP] Initiating Data Structuring Protocol...", 'CEC-WAM');
-            
-            const coreMetrics = {
-                timestamp: new Date().toISOString(),
-                storageStatus: document.getElementById('storage-status').innerText,
-                liquidValue: document.getElementById('val-disp').innerText,
-                agiConfidence: agiConfidence.toFixed(2),
-                systemLoad: chartData.length > 0 ? chartData[chartData.length - 1].toFixed(1) : 'N/A'
-            };
-
-            const logEntries = Array.from(document.querySelectorAll('#status-feed .sys')).slice(0, 10).map(div => div.innerText.trim());
-            const structuredData = { Metrics: coreMetrics, Logs: logEntries };
-            const structuredJSON = JSON.stringify(structuredData, null, 2); 
-
-            addLog("[DSP SUCCESS] Structured Data Object (JSON) created. Ready for Cloud Sync.", 'EVE');
-            const lines = structuredJSON.split('\n');
-            addLog(`[DSP PREVIEW] ${lines[0]} ${lines[1]}...`, 'CEC-WAM');
-            
-            setTimeout(runDataStructuring, 60000 * 5); // Rerun every 5 minutes
-        }
-        setTimeout(runDataStructuring, 10000); // Initial run 
-
-        // --- REAL-TIME CHART MODULE ---
-        const chartCanvas = document.getElementById('realTimeChart');
-        const ctx = chartCanvas.getContext('2d');
-        for (let i = 0; i < maxDataPoints; i++) { chartData.push(Math.floor(Math.random() * 50) + 20); }
-
-        function updateChart() {
-            const lastValue = chartData[chartData.length - 1];
-            const newValue = Math.max(20, Math.min(80, lastValue + (Math.random() * 10 - 5)));
-            
-            if (chartData.length >= maxDataPoints) { chartData.shift(); }
-            chartData.push(newValue); 
-
-            ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
-            
-            // Grid
-            ctx.strokeStyle = 'rgba(0, 255, 65, 0.2)'; 
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(0, chartCanvas.height * 0.9); 
-            ctx.lineTo(chartCanvas.width, chartCanvas.height * 0.9);
-            ctx.moveTo(0, chartCanvas.height * 0.4); 
-            ctx.lineTo(chartCanvas.width, chartCanvas.height * 0.4);
-            ctx.stroke();
-
-            // Line
-            const xStep = chartCanvas.width / (maxDataPoints - 1);
-            const yScale = chartCanvas.height / 100;
-
-            ctx.beginPath();
-            ctx.strokeStyle = 'var(--neon)';
-            ctx.lineWidth = 2;
-            ctx.moveTo(0, chartCanvas.height - (chartData[0] * yScale));
-
-            chartData.forEach((value, index) => {
-                const x = index * xStep;
-                const y = chartCanvas.height - (value * yScale); 
-                ctx.lineTo(x, y);
-                ctx.fillStyle = 'var(--cyan)';
-                ctx.fillRect(x - 1, y - 1, 3, 3);
-            });
-            
-            ctx.stroke();
-            
-            // Text
-            ctx.fillStyle = 'var(--cyan)';
-            ctx.font = '12px monospace';
-            ctx.fillText(`LOAD: ${newValue.toFixed(1)}%`, chartCanvas.width - 90, 15);
-        }
-
-        setInterval(updateChart, 1500); 
-        updateChart();
-        
-        // --- INITIAL SYSTEM BOOT ---
-        window.onload = function() {
-            addLog("CORE SYSTEM BOOT SEQUENCE INITIATED...", 'CEC-WAM');
-            setTimeout(() => {
-                addLog("NETWORK CONNECTION: SECURE (Auto-Ping successful).", 'EVE');
-                addLog("AGI Core online and monitoring resources.", 'CEC-WAM');
-                addLog("System is now awaiting operator commands.", 'EVE');
-            }, 1000);
-        };
-    </script>
-
-</body>
-</html>
+};
