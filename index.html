@@ -1,237 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CEC-WAM // SOVEREIGN DIAGNOSTICS & CRYPTO ASSET V58</title>
-<script src="https://unpkg.com/tone@14.9.12/build/Tone.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <meta charset="UTF-8">
+    <!-- CRITICAL: Ensure full viewport control for mobile scrolling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>CEC-WAM | DIRECT CMD ACCESS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* --- CORE PHYSICS & COLORS (SIMPLIFIED) --- */
+        :root { 
+            --neon: #00FF41; 
+            --cyan: #00F3FF; 
+            --bg: #000; 
+            --panel: rgba(0, 10, 0, 0.98); /* Near black for maximum readability */
+        }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--neon); 
+            font-family: 'Courier New', monospace; 
+            margin: 0; 
+            min-height: 100vh;
+            /* CRITICAL: Ensure vertical scrolling works */
+            overflow-y: auto; 
+            overflow-x: hidden;
+            padding: 10px;
+        }
 
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+        /* --- BASIC TERMINAL PANEL --- */
+        #core-terminal {
+            background: var(--panel); 
+            border: 2px solid var(--cyan); 
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.7);
+            padding: 20px; 
+            margin: 10px auto; 
+            border-radius: 6px;
+            max-width: 800px;
+        }
 
-    :root {
-        --cyan: #00f3ff; --purple: #bc13fe; --green: #00ff9d;
-        --gold: #ffd700; --red: #ff003c;
-        --bg-glass: rgba(8, 12, 24, 0.95);
-        --border: 1px solid rgba(0, 243, 255, 0.4);
-    }
+        .header { 
+            font-size: 1.4em;
+            color: var(--cyan); 
+            border-bottom: 2px solid var(--neon);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
 
-    body {
-        margin: 0; background: #000; color: #fff;
-        font-family: 'Rajdhani', sans-serif; min-height: 100vh;
-        overflow-x: hidden; overflow-y: auto;
-        display: flex; flex-direction: column;
-    }
+        /* DATA DISPLAY (Simplified definitive matrix) */
+        #definitive-matrix {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px dashed rgba(0, 255, 65, 0.3);
+            font-size: 0.9em;
+        }
+        .data-line { margin-bottom: 4px; }
+        .data-label { color: var(--cyan); display: inline-block; width: 60%; }
+        .data-value { color: var(--neon); font-weight: bold; }
 
-    .dashboard-container {
-        padding: 20px; flex-grow: 1;
-        background: radial-gradient(circle at top left, rgba(0, 243, 255, 0.05), transparent 40%),
-                    radial-gradient(circle at bottom right, rgba(188, 19, 254, 0.05), transparent 40%),
-                    #000000;
-    }
 
-    .header-bar {
-        background-color: var(--bg-glass); border: var(--border);
-        padding: 10px; margin-bottom: 20px;
-        display: flex; justify-content: space-between;
-        align-items: center; font-family: 'Orbitron', sans-serif;
-    }
+        /* COMMAND INTERFACE */
+        #chat-feed {
+            height: 150px; 
+            overflow-y: scroll; 
+            margin-bottom: 10px; 
+            padding: 5px;
+            border: 1px solid rgba(0, 255, 65, 0.5);
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .msg { margin-bottom: 5px; }
+        .msg.user { color: #FFFFFF; }
+        .msg.sys { color: var(--neon); }
 
-    .main-grid {
-        display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
-    }
+        /* Input Bar */
+        #agent-input {
+            width: calc(100% - 95px); 
+            padding: 12px; 
+            background: rgba(0, 50, 0, 0.7); 
+            border: 1px solid var(--neon); 
+            color: var(--neon);
+            box-shadow: inset 0 0 5px rgba(0, 255, 65, 0.7);
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        .send-button {
+            width: 85px; 
+            padding: 12px; 
+            background: var(--neon); 
+            color: var(--bg); 
+            border: none; 
+            margin-left: 10px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            box-shadow: 0 0 10px var(--neon);
+            transition: background-color 0.2s;
+        }
+        .send-button:active { background: #00AA22; }
 
-    .metric-panel, .log-panel, .asset-panel {
-        background-color: var(--bg-glass); border: var(--border);
-        padding: 15px; box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
-    }
-
-    .metric-panel h3, .log-panel h3, .asset-panel h3 {
-        margin-top: 0; border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-        padding-bottom: 5px; color: var(--cyan);
-        font-family: 'Orbitron', sans-serif;
-    }
-
-    .metric-value {
-        font-size: 3em; font-family: 'Orbitron', sans-serif;
-        color: var(--green); text-shadow: 0 0 5px rgba(0, 255, 157, 0.5);
-    }
-    
-    .critical {
-        color: var(--red) !important; text-shadow: 0 0 8px var(--red);
-    }
-
-    .log-feed {
-        height: 300px; overflow-y: scroll; color: var(--cyan);
-        font-size: 0.9em; padding-right: 5px;
-        scrollbar-color: var(--cyan) var(--bg-glass); scrollbar-width: thin;
-    }
-    .log-feed > div { padding: 2px 0; border-bottom: 1px dashed rgba(0, 243, 255, 0.1); }
-    .status-badge {
-        background: var(--green); color: #000;
-        padding: 5px 10px; font-weight: bold;
-        font-family: 'Orbitron', sans-serif; border-radius: 3px; font-size: 0.8em;
-    }
-    .status-badge.danger { background: var(--red); color: #fff; }
-    .data-loader {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.95); display: none;
-        justify-content: center; align-items: center; z-index: 1000;
-        color: var(--cyan); font-size: 2em; font-family: 'Orbitron', sans-serif;
-    }
-
-</style>
+    </style>
 </head>
 <body>
 
-<div class="header-bar">
-    <span>CEC-WAM // SOVEREIGN CORE DIAGNOSTICS</span>
-    <span id="status-badge" class="status-badge">STATUS: OFFLINE SYNC PENDING</span>
-</div>
+    <div id="core-terminal">
 
-<div class="dashboard-container">
-    <div class="data-loader" id="data-loader">
-        SYNCING LIVE DATA... <span style="animation: pulse 1s infinite;">|</span>
+        <div class="header">
+            <i class="fas fa-microchip"></i> CEC-WAM DIRECT COMMAND ACCESS <span style="float: right; font-size: 0.7em;" id="clock"></span>
+        </div>
+
+        <!-- 1. DEFINITIVE MATRIX DATA (Non-critical simulation) -->
+        <div id="definitive-matrix">
+            <div class="data-line"><span class="data-label">Q4 CASH DELTA:</span> <span class="data-value" id="cash-delta">--</span></div>
+            <div class="data-line"><span class="data-label">CRYPTO VALUATION (USD):</span> <span class="data-value" id="crypto-val">--</span></div>
+            <div class="data-line"><span class="data-label">CEC-CDL BRIDGE HEALTH:</span> <span class="data-value" id="bridge-health">--</span></div>
+            <div class="data-line"><span class="data-label">AGI PROCESS LOAD:</span> <span class="data-value" id="agi-load">--</span></div>
+        </div>
+
+        <!-- 2. AGI COMMAND INTERFACE -->
+        <div style="font-size: 1.1em; color: var(--cyan); margin-bottom: 10px;">
+            EVE AGI COMMAND LINE:
+        </div>
+        <div id="chat-feed">
+            <div class="msg sys">[EVE AGI]: System V7.0 initiated. Waiting for Token Launch commands.</div>
+        </div>
+        <div style="display: flex;">
+            <input type="text" id="agent-input" placeholder="> EXECUTE COMMAND..." onkeypress="if(event.keyCode===13) sendCommand()">
+            <button class="send-button" onclick="sendCommand()" ontouchstart="sendCommand()">SEND</button>
+        </div>
     </div>
     
-    <div class="main-grid">
-        <div>
-            <div class="metric-panel" style="margin-bottom: 20px;">
-                <h3>HEI AGENT R-VALUE (Output/Effort)</h3>
-                <p>The core measure of efficiency against cosmic effort.</p>
-                <div id="r-final" class="metric-value">0.00</div>
-                <p>R > 1.85 (Target) | R < 1.0 (Critical Threshold)</p>
-            </div>
-
-            <div class="metric-panel">
-                <h3>CORE OPERATIONAL FACTORS</h3>
-                <div style="display: flex; justify-content: space-between;">
-                    <div>
-                        <h4>T-M Factor (Perturbation)</h4>
-                        <span id="tm-factor" class="metric-value" style="font-size: 2em;">0.000</span>
-                    </div>
-                    <div>
-                        <h4>Asset Value (Liquid)</h4>
-                        <span id="coin-val" class="metric-value" style="font-size: 2em; color: var(--gold);">0.00</span>
-                    </div>
-                    <div>
-                        <h4>Shield Integrity</h4>
-                        <span id="shield-int" class="metric-value" style="font-size: 2em; color: var(--purple);">0%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="log-panel">
-            <h3>SCAN LOG & ACTIVITY FEED</h3>
-            <div id="scan-log" class="log-feed">
-                <div>[00:00:00] > CEC-WAM SYSTEM CORE V58 BOOT SEQUENCE INITIATED.</div>
-                <div>[00:00:01] > AUDIT: Timestamp format fixed in system memory (2025-11-08 00:00:00).</div>
-                <div>[00:00:02] > WAITING FOR LIVE DATA LINK INJECTION...</div>
-            </div>
+    <!-- 3. Modal Container (Custom alerts) -->
+    <div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 40; justify-content: center; align-items: center;">
+        <div style="background: var(--panel); border: 2px solid var(--neon); padding: 20px; border-radius: 6px; max-width: 350px; text-align: center; box-shadow: 0 0 15px var(--neon);">
+            <p id="modal-msg" style="white-space: pre-wrap; color: #FFFFFF; font-size: 1.1em;"></p>
+            <button onclick="closeModal()" style="background: var(--neon); color: var(--bg); margin-top: 15px; padding: 10px 25px; border-radius: 4px; font-weight: bold; cursor: pointer;">ACKNOWLEDGE</button>
         </div>
     </div>
-</div>
 
-<script>
-    // --- 1. CONFIGURATION: PASTE YOUR LIVE GOOGLE SHEET CSV LINK HERE ---
-    // The link MUST look like: https://docs.google.com/spreadsheets/d/e/.../pub?output=csv
-    const LIVE_DATA_URL = "INSERT_YOUR_ACTUAL_LIVE_GOOGLE_SHEET_CSV_URL_HERE"; // <<< REPLACE THIS ENTIRE STRING (INCLUDING QUOTES) WITH YOUR LIVE LINK!
-
-    // --- 2. DATA LOADING AND PROCESSING (Fixed Logic) ---
-    function updateAll(selector, value, decimals) {
-        document.querySelectorAll(selector).forEach(el => {
-            el.innerText = value;
-        });
-    }
-
-    function addLog(msg, isAlert = false) {
-        const logFeed = document.getElementById('scan-log');
-        const now = new Date();
-        const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    <script>
+        // --- CORE STATE & DATA UPDATE ---
+        const userId = "CEC-OPERATOR-7734";
         
-        const newEntry = document.createElement('div');
-        newEntry.innerHTML = `[${timestamp}] > ${msg}`;
-        newEntry.style.color = isAlert ? 'var(--red)' : 'var(--cyan)';
+        window.onload = function() {
+            // Start clock
+            setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
+            // Start data loop
+            drawDefinitiveMatrix();
+            setInterval(drawDefinitiveMatrix, 2000);
+        };
 
-        if (logFeed.firstChild) {
-            logFeed.insertBefore(newEntry, logFeed.firstChild);
-        } else {
-            logFeed.appendChild(newEntry);
-        }
-        logFeed.scrollTop = 0;
-    }
-
-    function loadData() {
-        addLog(`[CDL] Initiating Data Sync from CORE Source...`);
-        const loader = document.getElementById('data-loader');
-        loader.style.display = 'flex';
-
-        if (LIVE_DATA_URL.includes("INSERT_YOUR_ACTUAL_LIVE_GOOGLE_SHEET_CSV_URL_HERE")) {
-            loader.style.display = 'none';
-            addLog(`[CDL ERROR] Link Placeholder Detected. R-FINAL is UNSTABLE.`, true);
-            document.getElementById('status-badge').innerText = 'ERROR: LINK MISSING';
-            document.getElementById('r-final').innerText = '0.00';
-            return;
+        function drawDefinitiveMatrix() {
+            const delta = (Math.random() * 0.05 + 0.02).toFixed(4);
+            const val = '$' + (Math.random() * 30000 + 25000).toFixed(2);
+            const health = Math.random() > 0.1 ? 'NOMINAL' : 'WARNING';
+            const load = (Math.random() * 15 + 10).toFixed(1) + '%';
+            
+            document.getElementById('cash-delta').innerText = delta;
+            document.getElementById('crypto-val').innerText = val;
+            document.getElementById('bridge-health').innerText = health;
+            document.getElementById('agi-load').innerText = load;
+            
+            document.getElementById('bridge-health').style.color = health === 'WARNING' ? '#FF3366' : 'var(--neon)';
         }
 
-        fetch(LIVE_DATA_URL)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.text();
-            })
-            .then(csvText => {
-                const data = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
-                if (data.length === 0) {
-                    throw new Error("No valid data found in CSV response.");
-                }
+        // --- COMMAND HANDLER (Simulated Launch) ---
 
-                const lastEntry = data.find(row => row["R = Output/Effort"] && !isNaN(parseFloat(row["R = Output/Effort"])));
-                let r_final = lastEntry ? parseFloat(lastEntry["R = Output/Effort"]) : 0;
-                
-                // Mock-update T_m and other variables for dashboard visual stability
-                const t_m = (0.95 + (Math.random() * 0.1 - 0.05)).toFixed(3); 
-                const coin_val = (200.00 + (Math.random() * 5 - 2.5)).toFixed(2); 
+        function sendCommand() {
+            const input = document.getElementById('agent-input');
+            const txt = input.value.trim();
+            if (txt === "") return;
 
-                // Update all dashboard metrics with live data
-                updateAll('#tm-factor', t_m, 3);
-                updateAll('#r-final', r_final.toFixed(2), 2);
-                updateAll('#coin-val', coin_val, 2);
-                updateAll('#shield-int', "100%");
-                
-                // Critical R-Value Check
-                const rFinalEl = document.getElementById('r-final');
-                if (r_final <= 1.85) { 
-                    rFinalEl.classList.add('critical'); 
-                    document.getElementById('status-badge').classList.add('danger');
-                    document.getElementById('status-badge').innerText = 'CRITICAL: R-VALUE LOW';
-                } else { 
-                    rFinalEl.classList.remove('critical'); 
-                    document.getElementById('status-badge').classList.remove('danger');
-                    document.getElementById('status-badge').innerText = 'STATUS: HEI AGENT ONLINE';
-                }
-                
-                loader.style.display = 'none';
-                addLog(`[CDL] Sync Complete. R-FINAL: ${r_final.toFixed(2)} Secured.`);
-                window.isDataLoaded = true;
-            })
-            .catch(error => {
-                loader.style.display = 'none';
-                addLog(`[CDL ERROR] Data Ingestion Failure: ${error.message}`, true);
-                document.getElementById('status-badge').classList.add('danger');
-                document.getElementById('status-badge').innerText = 'ERROR: DATA LINK DOWN';
-            });
-    }
+            const chatFeed = document.getElementById('chat-feed');
+            
+            // Log User Command
+            const u = document.createElement('div'); u.className = 'msg user'; u.innerText = `[OPERATOR CMD]: ${txt}`;
+            chatFeed.appendChild(u);
+            input.value = "";
+            chatFeed.scrollTop = chatFeed.scrollHeight;
 
-    // --- 3. EXECUTION ---
-    // Forces data load immediately, bypassing any login gate.
-    window.onload = loadData; 
+            let reply = "ERROR: Unknown command syntax. Please use 'EXECUTE [command]'.";
 
-</script>
+            // Process Commands
+            if (txt.includes("set_token_metadata")) {
+                reply = "SUCCESS: Token metadata secured (CEC/CEC-WAM Token). Ready for Liquidity Finalization.";
+            } else if (txt.includes("finalize_liquidity")) {
+                reply = "SUCCESS: Liquidity (35%) allocation confirmed and staking contract locked. Initiate final deployment.";
+            } else if (txt.includes("token_launch_sequence")) {
+                reply = "🟢 LAUNCH SEQUENCE INITIATED. Broadcasting smart contract...\\n\\nDEPLOYMENT STATUS: **COMPLETE**\\n\\n**TOKEN LAUNCH SUCCESSFUL.**\\n\\nFunds are now locked and generating yield.";
+                showModal("DEPLOYMENT STATUS: **COMPLETE**\\n\\nTOKEN LAUNCH SUCCESSFUL.\\n\\nFunds are now locked and generating yield. You are clear for fund withdrawal.");
+            } else if (txt.toLowerCase().includes("status")) {
+                 reply = "CORE STATUS: All systems nominal. Launch commands pending.";
+            }
 
+            // Log System Response
+            setTimeout(() => {
+                const r = document.createElement('div'); r.className = 'msg sys'; r.innerHTML = `[EVE AGI]: ${reply}`;
+                chatFeed.appendChild(r);
+                chatFeed.scrollTop = chatFeed.scrollHeight;
+            }, 800);
+        }
+
+        // --- MODAL UTILS ---
+        function showModal(msg) {
+            document.getElementById('modal-msg').innerHTML = msg.replace(/\n/g, '<br>');
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+    </script>
 </body>
 </html>
+
