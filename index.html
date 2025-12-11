@@ -1,248 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC WAM SYSTEM CORE (V 2.1)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <style>
-        /* Base styles for the dark, neon interface */
-        body {
-            background-color: #0d1117; 
-            color: #00FFFF; 
-            font-family: 'Share Tech Mono', monospace;
-            padding: 20px;
-            /* CRITICAL FIX for scrolling: adds space for the command console */
-            padding-bottom: 75px; 
-            margin: 0;
-            overflow-y: scroll;
-        }
-        .text-cyan-400 { color: #00FFFF; }
-        .text-gray-300 { color: #D1D5DB; }
-        .text-gray-600 { color: #4B5563; }
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
-        .log-entry { 
-            border-left: 2px solid transparent; 
-            padding-left: 10px;
-            transition: all 0.1s;
-        }
-        .log-entry:hover { 
-            border-left-color: #00FFFF; 
-            cursor: default;
-        }
-        /* Status Card Styling: Protects the brain (core data) visually */
-        .status-card {
-            border: 2px solid #00FFFF;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        /* Command Console Styling */
-        #command-console {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #000000;
-            border-top: 2px solid #00FFFF;
-            padding: 10px 20px;
-            box-sizing: border-box;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        #command-input {
-            flex-grow: 1;
-            background: #0d1117;
-            border: 1px solid #008080;
-            color: #FFFFFF;
-            font-family: 'Share Tech Mono', monospace;
-            padding: 5px;
-            font-size: 16px;
-        }
-        #execute-btn {
-            background: #008080;
-            color: #FFFFFF;
-            border: none;
-            padding: 8px 15px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 14px;
-        }
-        .meter {
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #00FFFF;
-        }
-        .fill {
-            background: linear-gradient(to top, #00FFFF, #008080);
-            transition: height 0.5s;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEC-WAM // SOVEREIGN DIAGNOSTICS & CRYPTO ASSET V58</title>
+<script src="https://unpkg.com/tone@14.9.12/build/Tone.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+    :root {
+        --cyan: #00f3ff; --purple: #bc13fe; --green: #00ff9d;
+        --gold: #ffd700; --red: #ff003c;
+        --bg-glass: rgba(8, 12, 24, 0.95);
+        --border: 1px solid rgba(0, 243, 255, 0.4);
+    }
+
+    body {
+        margin: 0; background: #000; color: #fff;
+        font-family: 'Rajdhani', sans-serif; min-height: 100vh;
+        overflow-x: hidden; overflow-y: auto;
+        display: flex; flex-direction: column;
+    }
+
+    .dashboard-container {
+        padding: 20px; flex-grow: 1;
+        background: radial-gradient(circle at top left, rgba(0, 243, 255, 0.05), transparent 40%),
+                    radial-gradient(circle at bottom right, rgba(188, 19, 254, 0.05), transparent 40%),
+                    #000000;
+    }
+
+    .header-bar {
+        background-color: var(--bg-glass); border: var(--border);
+        padding: 10px; margin-bottom: 20px;
+        display: flex; justify-content: space-between;
+        align-items: center; font-family: 'Orbitron', sans-serif;
+    }
+
+    .main-grid {
+        display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
+    }
+
+    .metric-panel, .log-panel, .asset-panel {
+        background-color: var(--bg-glass); border: var(--border);
+        padding: 15px; box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+    }
+
+    .metric-panel h3, .log-panel h3, .asset-panel h3 {
+        margin-top: 0; border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+        padding-bottom: 5px; color: var(--cyan);
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    .metric-value {
+        font-size: 3em; font-family: 'Orbitron', sans-serif;
+        color: var(--green); text-shadow: 0 0 5px rgba(0, 255, 157, 0.5);
+    }
+    
+    .critical {
+        color: var(--red) !important; text-shadow: 0 0 8px var(--red);
+    }
+
+    .log-feed {
+        height: 300px; overflow-y: scroll; color: var(--cyan);
+        font-size: 0.9em; padding-right: 5px;
+        scrollbar-color: var(--cyan) var(--bg-glass); scrollbar-width: thin;
+    }
+    .log-feed > div { padding: 2px 0; border-bottom: 1px dashed rgba(0, 243, 255, 0.1); }
+    .status-badge {
+        background: var(--green); color: #000;
+        padding: 5px 10px; font-weight: bold;
+        font-family: 'Orbitron', sans-serif; border-radius: 3px; font-size: 0.8em;
+    }
+    .status-badge.danger { background: var(--red); color: #fff; }
+    .data-loader {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.95); display: none;
+        justify-content: center; align-items: center; z-index: 1000;
+        color: var(--cyan); font-size: 2em; font-family: 'Orbitron', sans-serif;
+    }
+
+</style>
 </head>
 <body>
 
-    <div class="header">
-        <h1 class="font-orbitron text-4xl text-cyan-400">CEC WAM SYSTEM CORE <span style="font-size: 0.5em;">(V 2.1)</span></h1>
-        <p class="text-gray-300">CORE SYSTEM TRACKING & SECURITY MONITOR: **ACTIVE**</p>
-    </div>
+<div class="header-bar">
+    <span>CEC-WAM // SOVEREIGN CORE DIAGNOSTICS</span>
+    <span id="status-badge" class="status-badge">STATUS: OFFLINE SYNC PENDING</span>
+</div>
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 30px;">
-        
+<div class="dashboard-container">
+    <div class="data-loader" id="data-loader">
+        SYNCING LIVE DATA... <span style="animation: pulse 1s infinite;">|</span>
+    </div>
+    
+    <div class="main-grid">
         <div>
-            <div class="status-card">
-                <h2 class="font-orbitron text-2xl mb-4 flex items-center gap-2">
-                    <span class="material-symbols-outlined">shield_lock</span> SECURITY & LIVE DATA FEED
-                </h2>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <p>QUANTUM LIQUID VALUE:</p>
-                    <p id="val-disp" class="text-cyan-400 font-bold">1,250,000M</p>
-                </div>
+            <div class="metric-panel" style="margin-bottom: 20px;">
+                <h3>HEI AGENT R-VALUE (Output/Effort)</h3>
+                <p>The core measure of efficiency against cosmic effort.</p>
+                <div id="r-final" class="metric-value">0.00</div>
+                <p>R > 1.85 (Target) | R < 1.0 (Critical Threshold)</p>
+            </div>
+
+            <div class="metric-panel">
+                <h3>CORE OPERATIONAL FACTORS</h3>
                 <div style="display: flex; justify-content: space-between;">
-                    <p>SYSTEM ENTROPY:</p>
-                    <p id="entropy-disp" class="text-cyan-400 font-bold">0.5000</p>
-                </div>
-            </div>
-
-            <div class="status-card" style="min-height: 300px; height: 50vh; overflow-y: scroll; background: rgba(0, 0, 0, 0.6); margin-top: 20px;">
-                <h2 class="font-orbitron text-xl mb-3">SYSTEM ACTIVITY LOG</h2>
-                <div id="log-disp" style="max-height: calc(100% - 30px);">
-                    <div class="log-entry"><span class="text-gray-600 font-bold">[INIT]</span> [CORE] Initializing CEC WAM System Core...</div>
-                    <div class="log-entry"><span class="text-gray-600 font-bold">[INIT]</span> [V 2.1] Command Console Activated.</div>
-                    <div class="log-entry animate-pulse" style="color: #FF0000;">[CRIT] BRAIN/SECURITY MONITORING: **NOMINAL**</div>
+                    <div>
+                        <h4>T-M Factor (Perturbation)</h4>
+                        <span id="tm-factor" class="metric-value" style="font-size: 2em;">0.000</span>
+                    </div>
+                    <div>
+                        <h4>Asset Value (Liquid)</h4>
+                        <span id="coin-val" class="metric-value" style="font-size: 2em; color: var(--gold);">0.00</span>
+                    </div>
+                    <div>
+                        <h4>Shield Integrity</h4>
+                        <span id="shield-int" class="metric-value" style="font-size: 2em; color: var(--purple);">0%</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="status-card">
-            <h2 class="font-orbitron text-2xl mb-4 flex items-center gap-2">
-                <span class="material-symbols-outlined">data_usage</span> POWER LEVEL METER
-            </h2>
-            <div style="height: 300px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 10px;">
-                <div class="meter" style="width: 50px; height: 90%;">
-                    <div id="meter-fill" class="fill" style="height: 75%;"></div>
-                </div>
+        <div class="log-panel">
+            <h3>SCAN LOG & ACTIVITY FEED</h3>
+            <div id="scan-log" class="log-feed">
+                <div>[00:00:00] > CEC-WAM SYSTEM CORE V58 BOOT SEQUENCE INITIATED.</div>
+                <div>[00:00:01] > AUDIT: Timestamp format fixed in system memory (2025-11-08 00:00:00).</div>
+                <div>[00:00:02] > WAITING FOR LIVE DATA LINK INJECTION...</div>
             </div>
-            <p style="text-align: center; margin-top: 10px;">STATUS: 75% CAPACITY</p>
         </div>
     </div>
-    
-    <div id="command-console">
-        <label for="command-input" class="text-cyan-400 font-orbitron">CEC_WAM&gt;</label>
-        <input type="text" id="command-input" placeholder="Type command (e.g., STATUS, HELP)..." onkeyup="if(event.key === 'Enter') executeCommand();">
-        <button id="execute-btn" onclick="executeCommand()">EXECUTE</button>
-    </div>
-    
-    <script>
-        const logs = [];
+</div>
 
-        function addLog(message) {
-            const logDisp = document.getElementById('log-disp');
-            const timestamp = new Date().toLocaleTimeString('en-GB', { hour12: false });
-            const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
-            logEntry.innerHTML = `<span class="text-gray-600 font-bold">[${timestamp}]</span> ${message}`;
-            logDisp.appendChild(logEntry);
-            logs.push(logEntry.innerText);
-            // Auto-scroll to the bottom of the log
-            logDisp.scrollTop = logDisp.scrollHeight;
-        }
+<script>
+    // --- 1. CONFIGURATION: PASTE YOUR LIVE GOOGLE SHEET CSV LINK HERE ---
+    // The link MUST look like: https://docs.google.com/spreadsheets/d/e/.../pub?output=csv
+    const LIVE_DATA_URL = "INSERT_YOUR_ACTUAL_LIVE_GOOGLE_SHEET_CSV_URL_HERE"; // <<< REPLACE THIS ENTIRE STRING (INCLUDING QUOTES) WITH YOUR LIVE LINK!
 
-        // --- COMMAND EXECUTION (V 2.1) ---
-        function executeCommand() {
-            const input = document.getElementById('command-input');
-            const command = input.value.trim().toUpperCase();
-            input.value = ''; // Clear input
+    // --- 2. DATA LOADING AND PROCESSING (Fixed Logic) ---
+    function updateAll(selector, value, decimals) {
+        document.querySelectorAll(selector).forEach(el => {
+            el.innerText = value;
+        });
+    }
 
-            if (!command) {
-                return;
-            }
-
-            addLog(`[CMD] Executing: ${command}`);
-
-            switch(command) {
-                case 'STATUS':
-                    addLog("[SYS] Core Status: **OPTIMAL**");
-                    addLog("[SYS] Quantum Liquid: Active");
-                    addLog("[SEC] Threat Level: Low (Watch Mode)");
-                    break;
-                case 'REBOOT':
-                    addLog("[CRIT] Initiating System Reboot Sequence...");
-                    setTimeout(() => {
-                        addLog("[SYS] Reboot Complete. All modules online.");
-                    }, 1500);
-                    break;
-                case 'HELP':
-                    addLog("[HELP] Available Commands: STATUS, REBOOT, PING, SAVE_LOGS");
-                    break;
-                case 'PING':
-                    pingTest();
-                    break;
-                case 'SAVE_LOGS':
-                    downloadLogs();
-                    addLog("[SYS] Logs downloaded to device.");
-                    break;
-                default:
-                    addLog(`[WARN] Unknown Command: ${command}`);
-            }
-        }
-
-        // --- DATA & MONITORING FUNCTIONS ---
-        function pingTest() {
-            addLog("[NET] PINGING CORE NETWORK...");
-            setTimeout(() => {
-                addLog("[NET] PING REPLY: TIME=0.00ms TTL=64"); updateEntropy(); 
-            }, 200); 
-        } 
+    function addLog(msg, isAlert = false) {
+        const logFeed = document.getElementById('scan-log');
+        const now = new Date();
+        const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
         
-        function updateEntropy() { 
-            const current = parseFloat(document.getElementById('entropy-disp').innerText); 
-            const variation = (Math.random() * 0.001 - 0.0005); 
-            const newValue = (current + variation).toFixed(4); 
-            document.getElementById('entropy-disp').innerText = newValue; 
-        } 
+        const newEntry = document.createElement('div');
+        newEntry.innerHTML = `[${timestamp}] > ${msg}`;
+        newEntry.style.color = isAlert ? 'var(--red)' : 'var(--cyan)';
 
-        function downloadLogs() { 
-            const logContent = logs.join('\n'); 
-            const blob = new Blob([logContent], { type: 'text/plain' }); 
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'CEC_WAM_SYSTEM_LOGS.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        if (logFeed.firstChild) {
+            logFeed.insertBefore(newEntry, logFeed.firstChild);
+        } else {
+            logFeed.appendChild(newEntry);
+        }
+        logFeed.scrollTop = 0;
+    }
+
+    function loadData() {
+        addLog(`[CDL] Initiating Data Sync from CORE Source...`);
+        const loader = document.getElementById('data-loader');
+        loader.style.display = 'flex';
+
+        if (LIVE_DATA_URL.includes("INSERT_YOUR_ACTUAL_LIVE_GOOGLE_SHEET_CSV_URL_HERE")) {
+            loader.style.display = 'none';
+            addLog(`[CDL ERROR] Link Placeholder Detected. R-FINAL is UNSTABLE.`, true);
+            document.getElementById('status-badge').innerText = 'ERROR: LINK MISSING';
+            document.getElementById('r-final').innerText = '0.00';
+            return;
         }
 
-        // --- SYSTEM LOOP (LIVE DATA & MONITORING) ---
-        setInterval(() => {
-            // Log Simulation (Monitor)
-            if (Math.random() > 0.9) {
-                const messages = [
-                    "Checking integrity...",
-                    "Syncing with local timeline...",
-                    "Updating liquid value cache...",
-                    "Scanning for off-grid signals..."
-                ];
-                addLog(`[AUTO] ${messages[Math.floor(Math.random() * messages.length)]}`);
-            }
-            
-            // Value Ticker (Live Data Simulation)
-            const baseVal = 1250000;
-            const randomAdd = Math.floor(Math.random() * 500);
-            document.getElementById('val-disp').innerText = (baseVal + randomAdd).toLocaleString() + "M";
+        fetch(LIVE_DATA_URL)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(csvText => {
+                const data = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
+                if (data.length === 0) {
+                    throw new Error("No valid data found in CSV response.");
+                }
 
-            // Entropy Update (Monitor)
-            updateEntropy();
+                const lastEntry = data.find(row => row["R = Output/Effort"] && !isNaN(parseFloat(row["R = Output/Effort"])));
+                let r_final = lastEntry ? parseFloat(lastEntry["R = Output/Effort"]) : 0;
+                
+                // Mock-update T_m and other variables for dashboard visual stability
+                const t_m = (0.95 + (Math.random() * 0.1 - 0.05)).toFixed(3); 
+                const coin_val = (200.00 + (Math.random() * 5 - 2.5)).toFixed(2); 
 
-            // Power Meter Update (Whole System Track)
-            const powerLevel = 65 + Math.floor(Math.random() * 20); // Between 65% and 84%
-            document.getElementById('meter-fill').style.height = `${powerLevel}%`;
-            
-        }, 5000); // Runs every 5 seconds (5000ms)
+                // Update all dashboard metrics with live data
+                updateAll('#tm-factor', t_m, 3);
+                updateAll('#r-final', r_final.toFixed(2), 2);
+                updateAll('#coin-val', coin_val, 2);
+                updateAll('#shield-int', "100%");
+                
+                // Critical R-Value Check
+                const rFinalEl = document.getElementById('r-final');
+                if (r_final <= 1.85) { 
+                    rFinalEl.classList.add('critical'); 
+                    document.getElementById('status-badge').classList.add('danger');
+                    document.getElementById('status-badge').innerText = 'CRITICAL: R-VALUE LOW';
+                } else { 
+                    rFinalEl.classList.remove('critical'); 
+                    document.getElementById('status-badge').classList.remove('danger');
+                    document.getElementById('status-badge').innerText = 'STATUS: HEI AGENT ONLINE';
+                }
+                
+                loader.style.display = 'none';
+                addLog(`[CDL] Sync Complete. R-FINAL: ${r_final.toFixed(2)} Secured.`);
+                window.isDataLoaded = true;
+            })
+            .catch(error => {
+                loader.style.display = 'none';
+                addLog(`[CDL ERROR] Data Ingestion Failure: ${error.message}`, true);
+                document.getElementById('status-badge').classList.add('danger');
+                document.getElementById('status-badge').innerText = 'ERROR: DATA LINK DOWN';
+            });
+    }
 
-        // Initial setup
-        pingTest();
-    </script>
+    // --- 3. EXECUTION ---
+    // Forces data load immediately, bypassing any login gate.
+    window.onload = loadData; 
+
+</script>
+
 </body>
 </html>
