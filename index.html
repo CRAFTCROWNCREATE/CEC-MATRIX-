@@ -1,32 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEC-WAM // MASTER SYSTEM</title>
 
-CEC-WAM | SOVEREIGN SERVER
-12:00:00 AM
-USER ID: initializing...
-BANKING
-AGENT/CHAT
-SECURITY
-FINANCIAL OVERVIEW (H/Q SYNC)
-USERS ONLINE: 0
-LAST SYNC TIME (H/Q): Awaiting Data...
-SYSTEM STATUS: CHECKING...
-CURRENT CASH BALANCE
-$54,821.55
-+4.2% MTD
-CRYPTO PORTFOLIO VALUE
-2.14 BTC (~$147,380)
--1.1% 24H
-PENDING TRANSACTIONS
-	•	PLATFORM FEES (CEC-CDL) -$2,100.00
-	•	SONS TRUST FUND TRANSFER (MONTHLY) -$500.00
-	•	PROJECT: C3 CATALOG REVENUE +$1,580.00
-AI AGENT: COMMAND & CONTROL
-SOVEREIGN AGENT v7.1. Ready for command. User ID **initializing...**.
-SEND COMMAND SIMULATE ADMIN/SERVER UPDATE
-SYSTEM SECURITY & LOGS
-User: initializing... | Security Level: High (Active Shield)
-	•	[20:15:33] - [INFO] - Firebase connection established.
-	•	[20:15:40] - [WARN] - High latency detected on Cryptosource API.
-	•	[20:15:45] - [INFO] - Public system status listener active.
-	•	[20:15:51] - [ALERT] - **FORCED LOGOUT** attempted from unauthorized IP. Blocked.
-TOGGLE QR GENERATOR
+  <!-- Self-Heal Module -->
+  <script src="https://craftcrowncreate.github.io/CEC-MATRIX-/selfheal.js"></script>
 
+  <!-- Core Logic (your 600+ line file) -->
+  <script src="CEC_WAM_SYSTEM_CORE (1).html"></script>
+
+  <!-- Other Interfaces -->
+  <script src="agent.html"></script>
+  <script src="dashboard.html"></script>
+  <script src="Sovereign.html"></script>
+  <script src="New Node.html"></script>
+
+  <style>
+    body {
+      background: #000;
+      color: #00FF41;
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 0;
+    }
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background: #111;
+      padding: 10px;
+      border-bottom: 2px solid #00FF41;
+    }
+    nav button {
+      background: #000;
+      color: #00FF41;
+      border: 1px solid #00FF41;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    nav button.active {
+      background: #00FF41;
+      color: #000;
+    }
+    .tab {
+      display: none;
+      padding: 20px;
+    }
+    .tab.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <button onclick="showTab('dash')" class="active">DASHBOARD</button>
+    <button onclick="showTab('agent')">AGENT</button>
+    <button onclick="showTab('sovereign')">DIAGNOSTICS</button>
+    <button onclick="showTab('node')">NODE</button>
+  </nav>
+
+  <!-- Tabs -->
+  <div id="dash" class="tab active">
+    <h1>DASHBOARD</h1>
+    <p>Main system metrics and visuals load here.</p>
+  </div>
+
+  <div id="agent" class="tab">
+    <h1>AGENT</h1>
+    <p>Brain interface (agent.html).</p>
+  </div>
+
+  <div id="sovereign" class="tab">
+    <h1>SOVEREIGN DIAGNOSTICS</h1>
+    <p>Security + discovery systems (Sovereign.html).</p>
+  </div>
+
+  <div id="node" class="tab">
+    <h1>ALPHA NODE</h1>
+    <p>Operational node interface (New Node.html).</p>
+  </div>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
