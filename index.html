@@ -7,6 +7,7 @@
 
 		<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 		<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+		
 		<style>
 			:root {
 				--neon-blue: #00f3ff;
@@ -55,6 +56,21 @@
 				font-weight: bold;
 				border-radius: 3px;
 			}
+			/* --- Security Visual Fix --- */
+			.status-badge.secure {
+                background: #00ff00; /* Bright Green */
+                color: #000;
+                box-shadow: 0 0 10px #00ff00;
+                animation: pulse 1.5s infinite alternate;
+            }
+            @keyframes pulse {
+                from { opacity: 1; }
+                to { opacity: 0.7; }
+            }
+            .lock-icon::before {
+                content: "🔒 ";
+            }
+			/* --- End Security Visual Fix --- */
 
 			/* --- Main Layout --- */
 			main {
@@ -170,7 +186,7 @@
 	<body>
 		<header>
 			<div class="logo">CEC WAM // SOVEREIGN CORE</div>
-			<div class="status-badge">SECURE // EVE LINKED</div>
+			<div class="status-badge secure lock-icon">SECURE // EVE LINKED</div>
 		</header>
 
 		<main>
@@ -236,7 +252,6 @@
 			};
 
 			// Initialize Firebase and set up the main data reference
-			// This check ensures the Firebase scripts loaded correctly in the head.
 			if (typeof firebase !== 'undefined') {
 				firebase.initializeApp(firebaseConfig);
 				const database = firebase.database();
@@ -333,7 +348,6 @@
 						this.y += this.vy;
 						if (this.x < 0 || this.x > width) this.vx *= -1;
 						if (this.y < 0 || this.y > height) this.vy *= -1;
-						// Boundary check, but removed for cleaner look
 					}
 					draw() {
 						ctx.fillStyle = "#00f3ff";
@@ -412,11 +426,9 @@
 					addLog("NETWORK ISOLATED. EXTERNAL PORTS CLOSED.", "crit");
 				}
 			} else {
-				// Fallback if the SDK failed to load
-				// This should never happen with the fix above, but serves as a failsafe
-				document.body.style.backgroundColor = 'white'; // Make sure the error is visible
-				document.body.style.color = 'black';
-				document.body.innerText = "CRITICAL ERROR: Firebase SDK not loaded. Check network connection or script paths.";
+				document.body.style.backgroundColor = 'red';
+				document.body.style.color = 'white';
+				document.body.innerHTML = "<h1>CRITICAL SYSTEM FAILURE</h1><p>Firebase SDK not loaded. Check network and ensure GitHub is serving files correctly.</p>";
 			}
 		</script>
 	</body>
