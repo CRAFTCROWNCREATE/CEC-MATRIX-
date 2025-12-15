@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CEC WAM :: EVE CORE</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00FF41">
+
+<style>
+    /* SYSTEM VISUALS */
+    html, body {
+        margin: 0; padding: 0; background: #000; color: #00FF41;
+        font-family: 'Courier New', monospace; height: 100%; overflow: hidden;
+    }
+    canvas {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+        opacity: 0.8;
+    }
+    
+    /* INTERFACE LAYOUT */
+    .interface-layer {
+        position: relative; z-index: 10; padding: 20px;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px; height: 100vh; overflow-y: auto;
+    }
+
+    .card {
+        border: 1px solid #00FF41; border-radius: 4px;
+        padding: 16px; background: rgba(0, 15, 0, 0.92);
+        box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        backdrop-filter: blur(4px);
+    }
+
+    h2, h3 { 
+        margin: 0 0 12px 0; border-bottom: 1px solid #004411; padding-bottom: 8px;
+        text-transform: uppercase; letter-spacing: 2px;
+    }
+
+    .status-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .blink { animation: blinker 1.5s linear infinite; }
+    
+    /* CONTROLS */
+    input, button {
+        width: 100%; padding: 14px; margin-top: 10px;
+        background: #000; border: 1px solid #00FF41; color: #00FF41;
+        font-family: monospace; font-size: 14px; box-sizing: border-box;
+    }
+    button:hover { background: #00FF41; color: #000; cursor: pointer; }
+    
+    /* LOGGING */
+    #log {
+        height: 150px; overflow-y: auto; border-top: 1px dashed #00FF41;
+        padding-top: 10px; font-size: 12px; color: #88FFAA;
+        white-space: pre-wrap;
+    }
+
+    /* ALERTS */
+    .alert { color: #FF0000; border-color: #FF0000; }
+    
+    @keyframes blinker { 50% { opacity: 0; } }
+</style>
+</head>
+
+<body>
+<canvas id="matrix"></canvas>
+
+<div class="interface-layer">
+    
+    <div class="card">
+        <h2>🧠 SYSTEM INTEGRITY</h2>
+        <div class="status-row">
+            <span>OPERATOR:</span> <b style="color:white">SOVEREIGN</b>
+        </div>
+        <div class="status-row">
+            <span>CORE STATUS:</span> <b id="core-status" class="blink">ONLINE</b>
+        </div>
+        <div class="status-row">
+            <span>BRAIN SHIELD:</span> <b id="brain-shield">ACTIVE</b>
+        </div>
+        <div class="status-row">
+            <span>LIVE DATA:</span> <b id="data-stream">SYNCING...</b>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🔐 SECURITY OVERRIDE</h3>
+        <p style="font-size:12px; opacity:0.7">TOKEN REQUIRED: 1010</p>
+        <input type="password" id="code" placeholder="ENTER TOKEN" />
+        <button onclick="executeOverride()">AUTHORIZE</button>
+    </div>
+
+    <div class="card">
+        <h3>📡 COMMAND RELAY</h3>
+        <input id="cmd" placeholder="Try: status, protect, sync" />
+        <button onclick="sendCommand()">TRANSMIT</button>
+    </div>
+
+    <div class="card" style="grid-column: 1 / -1;">
+        <h3>🧾 AUDIT TRAIL</h3>
+        <div id="log">Initializing CEC WAM protocols...</div>
+    </div>
+</div>
+
+<script>
+// ==========================================
+// 1. MATRIX RAIN VISUAL ENGINE
+// ==========================================
+const c = document.getElementById("matrix");
+const ctx = c.getContext("2d");
+
+function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
+window.addEventListener("resize", resize);
+resize();
+
+const chars = "EVE1010CEC_WAM_SYSTEM_CORE_PROTECT_BRAIN_01";
+const fontSize = 14;
+const columns = c.width / fontSize;
+const drops = Array(Math.floor(columns)).fill(1);
+
+function drawMatrix() {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    ctx.fillRect(0, 0, c.width, c.height);
+    
+    ctx.fillStyle = "#00FF41";
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        
+        if (drops[i] * fontSize > c.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+setInterval(drawMatrix, 50);
+
+// ==========================================
+// 2. EVE LOGIC CORE
+// ==========================================
+function log(msg) {
+    const el = document.getElementById("log");
+    const ts = new Date().toLocaleTimeString();
+    el.innerHTML += `\n[${ts}] ${msg}`;
+    el.scrollTop = el.scrollHeight;
+}
+
+window.EVE = {
+    operator: "SOVEREIGN",
+    authorized: false,
+    
+    // Live Data Simulation
+    startDataStream: function() {
+        setInterval(() => {
+            const val = Math.floor(Math.random() * 900000) + 100000;
+            document.getElementById("data-stream").innerText = `PACKET: ${val}`;
+            // Random monitoring event
+            if(Math.random() > 0.8) {
+                log("🔄 LIVE DATA: Syncing neural weights...");
+            }
+        }, 3000);
+    },
+
+    execute: function(command) {
+        const pkt = {
+            from: this.operator,
+            cmd: command,
+            auth: this.authorized,
+            ts: new Date().toISOString()
+        };
+        
+        log(`📡 SENT: ${command.toUpperCase()}`);
+        
+        // Command Router
+        switch(command.toLowerCase()) {
+            case "status":
+                log("✅ SYSTEM OPTIMAL. Brain Shield holding.");
+                break;
+            case "sync":
+                log("⏳ FORCING GLOBAL SYNC...");
+                setTimeout(() => log("✅ SYNC COMPLETE."), 1000);
+                break;
+            case "protect":
+                document.getElementById("brain-shield").innerText = "REINFORCED";
+                document.getElementById("brain-shield").style.color = "#00FF41";
+                log("🛡️ SECURITY LEVEL INCREASED TO MAX.");
+                break;
+            default:
+                // Optional External Hook/Relay
+                if(window.relay) { 
+                    relay(pkt); 
+                } else {
+                     log("💬 COMMAND EXECUTED: " + command.toUpperCase());
+                }
+        }
+        
+        // Save to local storage as persistence
+        localStorage.setItem("EVE_LAST_CMD", JSON.stringify(pkt));
+    },
+
+    unlock: function(token) {
+        if (token === "1010") {
+            this.authorized = true;
+            document.getElementById("core-status").innerText = "UNLOCKED";
+            document.getElementById("core-status").style.color = "#00FF41";
+            document.getElementById("code").disabled = true;
+            return true;
+        }
+        return false;
+    }
+};
+
+// ==========================================
+// 3. USER INTERFACE BINDINGS AND INIT
+// ==========================================
+function executeOverride() {
+    const code = document.getElementById("code").value;
+    if (EVE.unlock(code)) {
+        log("🟢 ACCESS GRANTED. Welcome, Sovereign.");
+        EVE.startDataStream();
+    } else {
+        log("🔴 ACCESS DENIED. Invalid Token.");
+        document.body.style.background = "#110000";
+        setTimeout(() => document.body.style.background = "#000", 200);
+    }
+}
+
+function sendCommand() {
+    const input = document.getElementById("cmd");
+    const val = input.value.trim();
+    if (val) {
+        EVE.execute(val);
+        input.value = "";
+    }
+}
+
+// ==========================================
+// 4. OFFLINE ENGINE (Service Worker) - INLINE
+// ==========================================
+if("serviceWorker" in navigator) {
+    // Note: To truly enable offline mode, you still need manifest.json 
+    // and a separate service-worker.js file, but this registers the concept.
+    
+    // We will register a mock file to keep the code simpler.
+    // Replace 'service-worker.js' with the actual path if you create it later.
+    navigator.serviceWorker.register("service-worker-dummy.js").then(registration => {
+        log("✅ SYSTEM OFFLINE ENGINE REGISTERED.");
+    }).catch(error => {
+        log("⚠️ WARNING: Offline Engine failed registration. (Ignore if running locally)");
+    });
+}
+
+
+// Initialization Log
+log("SYSTEM: EVE CORE Loaded.");
+log("SYSTEM: Waiting for Override 1010...");
+
+// Optional: Placeholder for Live Relay (Firebase)
+window.relay = function(packet) {
+    // This is the hook for real live data (e.g., Firebase, WebSocket)
+    log("🔗 EXTERNAL RELAY: Packet sent (Needs firebase-config.js for live stream)");
+};
+
+</script>
+</body>
+</html>
