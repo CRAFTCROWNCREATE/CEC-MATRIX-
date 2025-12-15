@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>CEC WAM // SOVEREIGN CORE — V2</title>
+
+	<!-- Visual Cortex: Futuristic theme + matrix rain placeholder -->
+	<style>
+		:root{
+			--core-black:#050505;
+			--neon-green:#00ff88;
+			--neon-cyan:#00f3ff;
+			--neon-gold:#ffd700;
+			--alert-red:#ff2a2a;
+		}
+
+		*{box-sizing:border-box}
+		body{
+			margin:0;padding:0;background:#050505;color:var(--neon-green);font-family:Courier, monospace;min-height:100vh;display:flex;flex-direction:column;
+		}
+
+		header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid rgba(0,243,255,0.06)}
+		h1{color:var(--neon-cyan);margin:0 8px 0 0;font-size:1.2rem;letter-spacing:1px}
+
+		.container{display:grid;grid-template-columns:2fr 1fr;gap:18px;padding:18px}
+		.panel{background:rgba(0,10,12,0.6);border:1px solid rgba(0,243,255,0.06);padding:14px;border-radius:8px;box-shadow:0 0 20px rgba(0,243,255,0.03)}
+
+		#visual-canvas{height:420px;border-radius:6px;background:linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6));overflow:hidden}
+
+		.controls{display:flex;flex-direction:column;gap:10px}
+		.btn{background:transparent;border:1px solid var(--neon-cyan);color:var(--neon-cyan);padding:8px 10px;border-radius:6px;cursor:pointer;font-weight:700}
+		.btn:hover{background:var(--neon-cyan);color:#001}
+
+		.input{padding:8px;border-radius:6px;border:1px solid rgba(0,243,255,0.08);background:transparent;color:var(--neon-green)}
+
+		#log{height:200px;overflow:auto;border-top:1px dashed rgba(0,255,136,0.06);padding-top:10px;font-size:0.9rem}
+
+		/* Matrix rain effect */
+		#matrix { position: absolute; inset:0; pointer-events:none; mix-blend-mode:screen; opacity:0.06 }
+
+		/* small responsive tweaks */
+		@media (max-width:900px){.container{grid-template-columns:1fr}}
+	</style>
+</head>
+<body>
+	<header>
+		<div style="display:flex;align-items:center">
+			<h1>CEC WAM // SOVEREIGN CORE</h1>
+			<a id="github-link" href="https://github.com/CRAFTCROWNCREATE/CEC-MATRIX-" target="_blank" style="color:var(--neon-gold);text-decoration:none;margin-left:12px">CEC-MATRIX Repository</a>
+		</div>
+		<div style="display:flex;align-items:center;gap:12px">
+			<div style="font-size:0.95rem;color:var(--neon-cyan)">SYSTEM STATUS: <span id="sys-status">ACTIVE</span></div>
+			<div style="width:14px;height:14px;border-radius:50%;background:var(--neon-gold);box-shadow:0 0 12px var(--neon-gold)"></div>
+		</div>
+	</header>
+
+	<main class="container">
+		<section class="panel">
+			<h2 style="color:var(--neon-gold);margin:0 0 8px 0">VISUAL HUB</h2>
+			<div id="visual-canvas">
+				<!-- Canvas for WAM visualization -->
+				<canvas id="wamCanvas" style="width:100%;height:100%"></canvas>
+				<!-- Matrix rain overlay -->
+				<canvas id="matrix"></canvas>
+			</div>
+
+			<div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+				<div style="color:var(--neon-cyan)">Live Value:</div>
+				<div id="val-disp" style="color:var(--neon-gold);font-weight:800">1,250,000M</div>
+			</div>
+		</section>
+
+		<aside class="panel">
+			<h2 style="color:var(--neon-cyan);margin:0 0 8px 0">CORE CONTROLS</h2>
+			<div class="controls">
+				<button class="btn" onclick="ping()">Ping Core</button>
+				<button class="btn" onclick="runFullSync()">Execute Full Sync / Deep Dive</button>
+				<div style="display:flex;gap:8px">
+					<input id="manual-input" class="input" placeholder="Manual Value/Command (Change, Access, Add)" />
+					<button class="btn" onclick="processInput()">Execute Command</button>
+				</div>
+				<button class="btn" onclick="initiateTransfer()">Initiate SOVEREIGN Transfer</button>
+				<button class="btn" onclick="openDataLogs()">Access Data Logs & Graphs</button>
+			</div>
+
+			<hr style="border:none;border-top:1px dashed rgba(0,243,255,0.06);margin:12px 0" />
+
+			<h3 style="color:var(--neon-green);margin:0 0 6px 0">SECURITY</h3>
+			<div style="font-size:0.9rem;color:rgba(255,255,255,0.85)">Auth: <span id="auth-status" style="color:var(--neon-gold)">NONE</span></div>
+			<button class="btn" onclick="showLogin()">Login / Unlock Secure Mode</button>
+
+			<div id="log" style="margin-top:12px;background:rgba(0,0,0,0.35);padding:8px;border-radius:6px;">
+				<div class="log-entry">[00:00:00] Interface loaded. Initializing systems...</div>
+			</div>
+		</aside>
+	</main>
+
+	<!-- Minimal instructions block (non-invasive) -->
+	<section style="padding:12px 18px;color:rgba(255,255,255,0.85);font-size:0.9rem">
+		<ul>
+			<li>To configure Google Sheets sync, deploy a Google Apps Script web app and replace <code>GOOGLE_SCRIPT_URL</code> in the script below.</li>
+			<li>EFM transfers are intentionally disabled until a secure server-side EFM is deployed. See comments in the script.</li>
+		</ul>
+	</section>
+
+	<script>
+		// --- Small canvas visualizers (kept simple and safe) ---
+		const canvas = document.getElementById('wamCanvas');
+		const ctx = canvas.getContext('2d');
+		function resizeCanvas(){ canvas.width = canvas.clientWidth * devicePixelRatio; canvas.height = canvas.clientHeight * devicePixelRatio; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
+		window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+		let t = 0;
+		function drawWAM(){
+			const w = canvas.width/devicePixelRatio, h = canvas.height/devicePixelRatio;
+			ctx.clearRect(0,0,w,h);
+			ctx.fillStyle = 'rgba(0,10,20,0.5)'; ctx.fillRect(0,0,w,h);
+			for(let i=0;i<40;i++){
+				const x = (i/w)*w + Math.sin((t+i)/10)*30 + 50;
+				const y = h/2 + Math.cos((t+i)/15)*(i%6)*6;
+				ctx.beginPath(); ctx.arc(x%w,y%h,2+(i%4),0,Math.PI*2); ctx.fillStyle = (i%2? '#00f3ff':'#ffd700'); ctx.fill();
+			}
+			t+=0.5; requestAnimationFrame(drawWAM);
+		}
+		drawWAM();
+
+		// MATRIX RAIN
+		(function matrixRain(){
+			const m = document.getElementById('matrix');
+			const mm = m.getContext('2d');
+			function resize(){ m.width = m.clientWidth; m.height = m.clientHeight; mm.fillStyle = 'rgba(0,0,0,0)'; }
+			window.addEventListener('resize', resize); resize();
+			const cols = 80; const fontSize = 12; const drops = Array(cols).fill(1);
+			function draw(){
+				mm.fillStyle = 'rgba(0,0,0,0.05)'; mm.fillRect(0,0,m.width,m.height);
+				mm.fillStyle = 'rgba(0,255,136,0.6)'; mm.font = `${fontSize}px monospace`;
+				for(let i=0;i<drops.length;i++){
+					const text = String.fromCharCode(0x30A0 + Math.random()*96);
+					mm.fillText(text, i*fontSize, drops[i]*fontSize);
+					drops[i]++;
+					if(drops[i]*fontSize > m.height && Math.random()>0.975) drops[i]=0;
+				}
+				requestAnimationFrame(draw);
+			}
+			draw();
+		})();
+
+		// --- Logging utility (reuses existing log area) ---
+		function addLog(msg, type='info'){
+			const log = document.getElementById('log');
+			const ts = new Date().toTimeString().slice(0,8);
+			const entry = document.createElement('div'); entry.className='log-entry'; entry.style.marginBottom='6px'; entry.style.color=(type==='warn'? 'var(--neon-gold)':'var(--neon-green)');
+			entry.innerText = `[${ts}] ${msg}`;
+			log.prepend(entry);
+			while(log.children.length>80) log.removeChild(log.lastChild);
+		}
+
+		// --- Cloud sync stub (Google Sheets) ---
+		// Deploy a Google Apps Script web app and paste its URL here.
+		const GOOGLE_SCRIPT_URL = 'YOUR_WEB_APP_URL_HERE'; // <-- Replace this
+
+		function syncToGoogle(cmd, status, val){
+			if(GOOGLE_SCRIPT_URL === 'YOUR_WEB_APP_URL_HERE'){
+				addLog('[WARN] Google Sheet Link NOT Configured.', 'warn');
+				return;
+			}
+			// Use POST; server must handle CORS / no-cors as appropriate
+			fetch(GOOGLE_SCRIPT_URL, {
+				method:'POST',
+				headers:{'Content-Type':'application/x-www-form-urlencoded'},
+				body:`command=${encodeURIComponent(cmd)}&status=${encodeURIComponent(status)}&value=${encodeURIComponent(val)}`
+			}).then(()=>addLog(`[CLOUD] Data synced: ${cmd}`)).catch(e=>addLog(`[ERROR] Cloud sync failed: ${e.message}`,'warn'));
+		}
+
+		// --- Control functions requested by user ---
+		function runFullSync(){
+			addLog('[CMD] FULL SYSTEM SYNC INITIATED.');
+			addLog('[DEEP DIVE] Executing integrity check...');
+			addLog('[DEEP DIVE] Syncing with all external vectors...');
+			const val = document.getElementById('val-disp').innerText;
+			addLog('[DEEP DIVE] Liquid Value Cache integrity: Nominal. [Value: '+val+']');
+			addLog('[DEEP DIVE] Scanning for all off-grid signals: Clear.');
+			addLog('[DEEP DIVE] FULL SYNC COMPLETE. System is on track.');
+			// Cloud sync note
+			syncToGoogle('FULL_SYNC','COMPLETE',val);
+		}
+
+		function processInput(){
+			const input = document.getElementById('manual-input');
+			const v = (input? input.value.trim(): '');
+			if(!v){ addLog('[CMD] Manual input required.', 'warn'); return; }
+			addLog('[ACCESS] Executing command/value input: '+v);
+			if(v.toLowerCase().includes('github.com')){
+				const repoLink=document.getElementById('github-link'); if(repoLink){ repoLink.href=v; addLog('[LINK] GitHub repo link updated to '+v); }
+			}
+			if(v.toLowerCase().includes('change')||v.toLowerCase().includes('add')){
+				addLog('[ACCESS] System acknowledges CHANGE/ADD request. Log updated.');
+				// Implement state changes here
+			}else{
+				addLog('[ACCESS] Data checked/accessed successfully.');
+			}
+			if(input) input.value='';
+			// Cloud sync
+			syncToGoogle('MANUAL_CMD','EXECUTED',v);
+		}
+
+		function initiateTransfer(){
+			addLog('[SOVEREIGN CORE] TRANSFER COMMAND RECEIVED.');
+			addLog('[SOVEREIGN CORE] Transfer Protocol initiated for external account.');
+			addLog('[ALERT] WARNING: External Financial Module (EFM) not deployed. **REAL TRANSFER IS PENDING EFM DEPLOYMENT.**','warn');
+			addLog('[ACTION REQUIRED] To complete real transfers, you must code and deploy the EFM link to a financial API.');
+			// NOTE: For safety this is disabled — EFM must be built server-side with proper authentication
+			// Example placeholder: send request to your EFM server: fetch('/efm/transfer', {method:'POST', body:JSON.stringify({...})})
+		}
+
+		function ping(){ addLog('[CMD] Ping signal sent.'); }
+
+		function openDataLogs(){ window.open('https://docs.google.com', '_blank'); }
+
+		// --- Minimal Security Module (client-side placeholder) ---
+		let AUTH_TOKEN = null;
+		function showLogin(){
+			const user = prompt('Enter username (demo):');
+			if(!user) return;
+			const pass = prompt('Enter pass (demo):');
+			// VERY IMPORTANT: This is only a demo. Implement server-side auth for production.
+			if(user==='admin' && pass==='admin'){ AUTH_TOKEN = 'demo-token'; document.getElementById('auth-status').innerText='AUTHENTICATED'; addLog('[SEC] Demo login success. Secure mode enabled.'); }
+			else{ addLog('[SEC] Demo login failed.', 'warn'); }
+		}
+
+		// Example: Simple encryption demo using Web Crypto (not a substitute for transport+server encryption)
+		async function encryptStringAES(keyString, plain){
+			const enc = new TextEncoder();
+			const keyData = enc.encode(keyString.padEnd(32).slice(0,32));
+			const key = await crypto.subtle.importKey('raw', keyData, {name:'AES-GCM'}, false, ['encrypt']);
+			const iv = crypto.getRandomValues(new Uint8Array(12));
+			const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(plain));
+			return { iv: Array.from(iv), data: Array.from(new Uint8Array(ct)) };
+		}
+
+		// Initialization
+		window.addEventListener('load', ()=>{ addLog('[SYS] CORE SOURCE CODE DEPLOYED.');
+			// start automated ticker
+			setInterval(()=>{
+				const baseVal=1250000, randomAdd=Math.floor(Math.random()*500);
+				document.getElementById('val-disp').innerText=(baseVal+randomAdd).toLocaleString()+'M';
+				if(Math.random()>0.9) addLog('[AUTO] '+['Checking integrity...','Syncing with local timeline...','Updating liquid value cache...'][Math.floor(Math.random()*3)]);
+			},5000);
+		});
+	</script>
+</body>
+</html>

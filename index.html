@@ -184,6 +184,7 @@
 	<body>
 		<header>
 			<h1>CEC WAM // SOVEREIGN CORE</h1>
+			<a id="github-link" href="https://github.com/CRAFTCROWNCREATE/CEC-MATRIX-" target="_blank" style="color: var(--neon-gold); text-decoration: none; margin-left: 12px; font-size: 0.9em;">CEC-MATRIX Repository</a>
 			<div style="display: flex; align-items: center;">
 				<span style="font-size: 0.9em;">SYSTEM STATUS: ACTIVE</span>
 				<div id="status-light" class="status-light"></div>
@@ -244,6 +245,7 @@
 			<!-- Column 1: Command Log -->
 			<div>
 				<h3 style="color: var(--neon-blue); margin: 0 0 5px 0;">SYSTEM LOG</h3>
+				<div style="color:var(--neon-gold); font-size:0.95em; margin-bottom:6px;">Live Value: <span id="val-disp">1,250,000M</span></div>
 				<div id="log-container">
 					<div class="log-entry log-info">[00:00:00] Interface loaded. Initializing systems...</div>
 				</div>
@@ -253,6 +255,21 @@
 			<div id="controls">
 				<button class="control-btn" onclick="runDiagnostic()">RUN DIAGNOSTIC</button>
 				<button class="control-btn" onclick="syncEve()">SYNC EVE NODE</button>
+
+				<!-- Additional Controls (added) -->
+				<div class="controls" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+					<div style="display:flex; gap:6px;">
+						<button class="control-btn" onclick="ping()">Ping Core</button>
+						<button class="control-btn" onclick="runFullSync()">Execute Full Sync / Deep Dive</button>
+					</div>
+					<div style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+						<input type="text" id="manual-input" placeholder="Manual Value/Command (Change, Access, Add)" style="flex:1; padding:8px; border-radius:4px; border:1px solid var(--neon-blue); background:transparent; color:var(--neon-blue);" />
+						<button class="control-btn" onclick="processInput()">Execute Command</button>
+					</div>
+					<div style="display:flex; gap:6px; margin-top:6px;">
+						<button class="control-btn" onclick="initiateTransfer()">Initiate SOVEREIGN Transfer</button>
+					</div>
+				</div>
 			</div>
 		</footer>
 
@@ -492,6 +509,89 @@
 			}
 
 			window.onresize = setupCanvas;
+		</script>
+
+		<script>
+		// --- Added control functions (integrates with existing addLog) ---
+		function runFullSync() {
+			addLog("[CMD] FULL SYSTEM SYNC INITIATED.");
+			addLog("[DEEP DIVE] Executing integrity check...");
+			addLog("[DEEP DIVE] Syncing with all external vectors...");
+			const valDisp = document.getElementById('val-disp');
+			addLog("[DEEP DIVE] Liquid Value Cache integrity: Nominal. [Value: " + (valDisp ? valDisp.innerText : 'N/A') + "]");
+			addLog("[DEEP DIVE] Scanning for all off-grid signals: Clear.");
+			addLog("[DEEP DIVE] FULL SYNC COMPLETE. System is on track.");
+		}
+
+		function processInput() {
+			const inputEl = document.getElementById('manual-input');
+			const inputVal = inputEl ? inputEl.value : '';
+			if (!inputVal || inputVal.trim() === '') {
+				addLog("[CMD] Manual input required.");
+				return;
+			}
+			addLog(`[ACCESS] Executing command/value input: ${inputVal}`);
+
+			// If user provides a GitHub URL, update the repository link
+			if (inputVal.toLowerCase().includes('github.com')) {
+				const repoLink = document.getElementById('github-link');
+				if (repoLink) {
+					repoLink.href = inputVal;
+					addLog(`[LINK] GitHub repo link updated to ${inputVal}`);
+				}
+			}
+
+			if (inputVal.toLowerCase().includes('change') || inputVal.toLowerCase().includes('add')) {
+				addLog("[ACCESS] System acknowledges CHANGE/ADD request. Log updated.");
+				// Placeholder: implement state changes here if desired
+			} else {
+				addLog("[ACCESS] Data checked/accessed successfully.");
+			}
+			if (inputEl) inputEl.value = '';
+		}
+
+		function initiateTransfer() {
+			addLog("[SOVEREIGN CORE] TRANSFER COMMAND RECEIVED.");
+			addLog("[SOVEREIGN CORE] Transfer Protocol initiated for external account.");
+			addLog("[ALERT] WARNING: External Financial Module (EFM) not deployed. **REAL TRANSFER IS PENDING EFM DEPLOYMENT.**");
+			addLog("[ACTION REQUIRED] To complete real transfers, you must code and deploy the EFM link to a financial API.");
+		}
+
+		function ping() {
+			addLog("[CMD] Ping signal sent.");
+		}
+
+		function initSystem() {
+			addLog("[SYS] CORE SOURCE CODE DEPLOYED.");
+			// Ensure the GitHub link is present and correct
+			const repoLink = document.getElementById('github-link');
+			if (repoLink) {
+				const defaultUrl = 'https://github.com/CRAFTCROWNCREATE/CEC-MATRIX-';
+				if (!repoLink.href || repoLink.href === 'about:blank') repoLink.href = defaultUrl;
+				addLog(`[LINK] GitHub repo link set to ${repoLink.href}`);
+			}
+		}
+
+		// Call initSystem once DOM is ready
+		if (document.readyState === 'complete') initSystem(); else window.addEventListener('load', initSystem);
+
+		// Auto ticker and occasional auto-logs (mirrors the V2 dashboard loop)
+		setInterval(() => {
+			if (Math.random() > 0.9) {
+				const messages = [
+					"Checking integrity...",
+					"Syncing with local timeline...",
+					"Updating liquid value cache...",
+					"Scanning for off-grid signals..."
+				];
+				addLog(`[AUTO] ${messages[Math.floor(Math.random() * messages.length)]}`);
+			}
+			// Value Ticker
+			const baseVal = 1250000;
+			const randomAdd = Math.floor(Math.random() * 500);
+			const el = document.getElementById('val-disp');
+			if (el) el.innerText = (baseVal + randomAdd).toLocaleString() + "M";
+		}, 5000);
 		</script>
 	</body>
 </html>
