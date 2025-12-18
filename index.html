@@ -196,6 +196,33 @@
             requestAnimationFrame(draw);
         }
         draw();
-    </script>
+    </script>/* --- SYSTEM UPGRADE OVERRIDE PROTOCOL --- */
+function initiateInterfaceJump() {
+    console.log("[SYS] FORCING INTERFACE UPGRADE...");
+    
+    // 1. Trigger Visual 'Jump' Effect
+    document.body.style.transition = "all 0.5s ease-in-out";
+    document.body.style.filter = "brightness(3) blur(10px)";
+    
+    setTimeout(() => {
+        // 2. Clear Legacy Core Data
+        const terminal = document.getElementById('terminal-output');
+        if(terminal) terminal.innerHTML = "<div class='log-sys'>[SYS] CORE UPGRADED. WELCOME TO INTERFACE v2.1</div>";
+        
+        // 3. Reset Visuals to New Theme
+        document.body.style.filter = "none";
+        document.body.style.backgroundColor = "#00050a"; // Deeper Void
+        
+        // 4. Update System IDs (Liquid Value Override)
+        const valDisp = document.getElementById('val-disp');
+        if(valDisp) valDisp.style.color = "#00ff41"; // Switch to Terminal Green for 'Active' status
+        
+        console.log("[SYS] JUMP COMPLETE. INTERFACE ACTIVE.");
+    }, 1000);
+}
+
+// EXECUTE IMMEDIATELY ON LOAD
+window.onload = initiateInterfaceJump;
+
 </body>
 </html>
