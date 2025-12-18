@@ -3,58 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC WAM SYSTEM CORE V2</title>
+    <title>CEC WAM SYSTEM CORE</title>
     <style>
-        body { background-color: #0d0d0d; color: #00ff41; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; }
-        .header { background: #1a1a1a; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ff41; }
-        .system-text { font-size: 12px; line-height: 1.2; }
-        .boot-btn { background: none; border: 1px solid #00ff41; color: #00ff41; padding: 10px 20px; cursor: pointer; font-weight: bold; }
-        .boot-btn:hover { background: #00ff41; color: #000; }
-        #terminal { padding: 20px; height: 70vh; overflow-y: auto; font-size: 14px; }
-        .stats-bar { position: fixed; bottom: 0; width: 100%; background: #1a1a1a; padding: 10px; display: flex; justify-content: space-around; font-size: 18px; border-top: 1px solid #00ff41; }
-        .highlight { color: #fff; text-shadow: 0 0 5px #00ff41; }
+        body { background-color: #0d0d0d; color: #00ff41; font-family: 'Courier New', monospace; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+        .header { background: #1a1a1a; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00ff41; }
+        .status-text { font-size: 11px; line-height: 1.2; color: #55ff55; }
+        .boot-btn { background: #000; border: 1px solid #00ff41; color: #00ff41; padding: 8px 15px; cursor: pointer; font-family: inherit; font-weight: bold; text-transform: uppercase; }
+        .boot-btn:active { background: #00ff41; color: #000; }
+        #terminal { flex-grow: 1; padding: 15px; overflow-y: auto; font-size: 13px; background: rgba(0,0,0,0.9); }
+        .stats { background: #1a1a1a; padding: 10px; display: flex; justify-content: space-around; border-top: 1px solid #00ff41; font-weight: bold; }
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="system-text">
+        <div class="status-text">
             index.html<br>
-            <span style="color: #55ff55;">Coustib:if.CS "UPY 0/ "/EC-WAM System()"</span><br>
-            iphitssu:fc.00:
+            Coustib:if.CS "UPY 0/ "/EC-WAM System()"<br>
+            <span class="blink">IPHITSSU:FC.00: ONLINE</span>
         </div>
-        <button class="boot-btn" onclick="activateSystem()">Bootn</button>
+        <button class="boot-btn" onclick="bootSystem()">Bootn</button>
     </div>
 
     <div id="terminal">
-        [SYS] INITIALIZING CEC_WAM_EVE_CORE...<br>
-        [SYS] SECURING BRAIN INTERFACE...<br>
-        [SYS] ONLINE DATA SYNC: ACTIVE<br>
+        [SYS] CEC_WAM_BRAIN_V2 READY...<br>
+        [SYS] WAITING FOR USER UPLINK...<br>
     </div>
 
-    <div class="stats-bar">
-        <div>LIQUID VALUE: <span id="val-disp" class="highlight">1,250,482M</span></div>
-        <div>INTEGRITY: <span class="highlight">99.98%</span></div>
+    <div class="stats">
+        <div>VALUE: <span id="val">1,250,482M</span></div>
+        <div>SEC: <span style="color:white">MAX</span></div>
     </div>
 
     <script>
         function addLog(msg) {
-            const term = document.getElementById('terminal');
-            term.innerHTML += `> ${msg}<br>`;
-            term.scrollTop = term.scrollHeight;
+            const t = document.getElementById('terminal');
+            t.innerHTML += `> ${msg}<br>`;
+            t.scrollTop = t.scrollHeight;
         }
 
-        function activateSystem() {
-            addLog("SYSTEM BOOT SEQUENCE INITIATED...");
-            addLog("SYNCING WITH GITHUB REPOSITORY...");
-            addLog("EVE COMMUNICATION LIVE PLATFORM: CONNECTED");
+        function bootSystem() {
+            addLog("INITIALIZING NEURAL LINK...");
+            addLog("DOWNLOADING VISUAL ASSETS...");
+            addLog("SYNCING WITH LIVE EVE DATA...");
+            addLog("STATUS: BRAIN SHIELDED.");
         }
 
-        // Live Value Ticker Simulation
         setInterval(() => {
-            const val = 1250000 + Math.floor(Math.random() * 1000);
-            document.getElementById('val-disp').innerText = val.toLocaleString() + "M";
-        }, 3000);
+            const v = 1250000 + Math.floor(Math.random() * 500);
+            document.getElementById('val').innerText = v.toLocaleString() + "M";
+        }, 4000);
     </script>
 </body>
 </html>
