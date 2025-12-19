@@ -1,268 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CEC WAM :: EVE CORE</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#00FF41">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEC WAM SYSTEM CORE</title>
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+            --gold: #ffcc00;
+            --deep-black: #050505;
+            --terminal-green: #00ff41;
+        }
 
-<style>
-    /* SYSTEM VISUALS */
-    html, body {
-        margin: 0; padding: 0; background: #000; color: #00FF41;
-        font-family: 'Courier New', monospace; height: 100%; overflow: hidden;
-    }
-    canvas {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-        opacity: 0.8;
-    }
-    
-    /* INTERFACE LAYOUT */
-    .interface-layer {
-        position: relative; z-index: 10; padding: 20px;
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px; height: 100vh; overflow-y: auto;
-    }
+        body {
+            background-color: var(--deep-black);
+            color: var(--neon-blue);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
 
-    .card {
-        border: 1px solid #00FF41; border-radius: 4px;
-        padding: 16px; background: rgba(0, 15, 0, 0.92);
-        box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
-        backdrop-filter: blur(4px);
-    }
+        #header {
+            border-bottom: 2px solid var(--gold);
+            padding: 10px;
+            text-align: center;
+            background: rgba(255, 204, 0, 0.1);
+        }
 
-    h2, h3 { 
-        margin: 0 0 12px 0; border-bottom: 1px solid #004411; padding-bottom: 8px;
-        text-transform: uppercase; letter-spacing: 2px;
-    }
+        #main-container {
+            display: flex;
+            flex: 1;
+            padding: 10px;
+            gap: 10px;
+        }
 
-    .status-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    .blink { animation: blinker 1.5s linear infinite; }
-    
-    /* CONTROLS */
-    input, button {
-        width: 100%; padding: 14px; margin-top: 10px;
-        background: #000; border: 1px solid #00FF41; color: #00FF41;
-        font-family: monospace; font-size: 14px; box-sizing: border-box;
-    }
-    button:hover { background: #00FF41; color: #000; cursor: pointer; }
-    
-    /* LOGGING */
-    #log {
-        height: 150px; overflow-y: auto; border-top: 1px dashed #00FF41;
-        padding-top: 10px; font-size: 12px; color: #88FFAA;
-        white-space: pre-wrap;
-    }
+        #visual-core {
+            flex: 2;
+            border: 1px solid var(--neon-blue);
+            position: relative;
+            background-image: url('https://lh3.googleusercontent.com/gg/AIJ2gl83PkYe8mNczRe6b7cthaEZr3hKrtvv3idiFp-Qd24n11lXPscAEG7OCb0G_6QYcNL-u1VfSafwV5bMEVZB-qVC8a5UZL18nmWvrBS9nJEPLnPvbnjJfTUG270SoqPuGN0mUQS-EnZbKwBSuWEfiH3K6ACSAHIzFJ2qPoab3qrjQG5KxnUovYbkcnfn8H3KCuAo0AU0uc6dFFLIrU45rEN7rBUtF7n6LEE_A0RohsssVcoEjwGQ_satQ5M_YPB3hZekkrfrTOvwtFaUfaYuzWf_L2gdqUnR23xdkBsY4ZXmOoXxNbvoPSmuC_atUtVVhPQVmDz0R3WfEwccH3elCLYl');
+            background-size: cover;
+            background-position: center;
+            box-shadow: inset 0 0 50px rgba(0, 242, 255, 0.2);
+        }
 
-    /* ALERTS */
-    .alert { color: #FF0000; border-color: #FF0000; }
-    
-    @keyframes blinker { 50% { opacity: 0; } }
-</style>
+        #terminal-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .panel {
+            border: 1px solid var(--neon-blue);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        #log-output {
+            height: 250px;
+            font-size: 0.8em;
+            color: var(--terminal-green);
+            margin-bottom: 5px;
+        }
+
+        #command-line {
+            background: #000;
+            border: 1px solid var(--terminal-green);
+            color: var(--terminal-green);
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        #value-ticker {
+            text-align: center;
+            font-size: 1.5em;
+            color: var(--gold);
+        }
+
+        .glitch {
+            animation: glitch-anim 2s infinite;
+        }
+
+        @keyframes glitch-anim {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+    </style>
 </head>
-
 <body>
-<canvas id="matrix"></canvas>
 
-<div class="interface-layer">
-    
-    <div class="card">
-        <h2>🧠 SYSTEM INTEGRITY</h2>
-        <div class="status-row">
-            <span>OPERATOR:</span> <b style="color:white">SOVEREIGN</b>
-        </div>
-        <div class="status-row">
-            <span>CORE STATUS:</span> <b id="core-status" class="blink">ONLINE</b>
-        </div>
-        <div class="status-row">
-            <span>BRAIN SHIELD:</span> <b id="brain-shield">ACTIVE</b>
-        </div>
-        <div class="status-row">
-            <span>LIVE DATA:</span> <b id="data-stream">SYNCING...</b>
+    <div id="header">
+        <h1 class="glitch">CEC WAM SYSTEM CORE - V1.0.4</h1>
+    </div>
+
+    <div id="main-container">
+        <div id="visual-core"></div>
+
+        <div id="terminal-side">
+            <div id="value-ticker" class="panel">
+                CORE VALUE: <span id="val-disp">1,250,000M</span>
+            </div>
+            
+            <div class="panel">
+                <div id="log-output">
+                    [SYS] INITIALIZING CORE...<br>
+                    [SYS] LOADING QUANTUM SUBSTRATE...<br>
+                    [SYS] SYNCING NEURAL NETWORKS...<br>
+                </div>
+                <input type="text" id="command-line" placeholder="ENTER COMMAND..." autofocus>
+            </div>
+
+            <div class="panel" style="flex:1;">
+                <img src="https://lh3.googleusercontent.com/gg/AIJ2gl9H78v2MQOhQMbs5HNGwT0A4G8gBSGbyAhxbLPIcN3zgk-2l9iSbYr-d3FbuKrpmh23riYYPry57-JU72V2wdnHZXNYCvvxlullTdxLYrGOrzcgRTQp-rsyRFxBgNBnsMs6mDx_cBHeVULbB74T4Exm4u9tHixUJEzbThgRY_QF4koZb5QAVNnrQ3zTkQ8IXeHLx0j4C1crvLxf6vs5C6GaegYs-3hzXrDTDFroQcc1i6-HY_2BwMqZWgNMLGfy8xEgjj0Gll3PFlvt2LRu5Ouna4HS3YKKVCAr1UyR1hKH3Wlmj_g0Y01emQ_4jhT8hHKbdpm-IiZ8fjt3lx3svjHI" alt="Drone Schematic" style="width:100%; filter: hue-rotate(180deg);">
+                <p style="font-size: 0.7em; margin-top: 5px;">SHIELD STATUS: 98%<br>DRONE SYNC: ACTIVE</p>
+            </div>
         </div>
     </div>
 
-    <div class="card">
-        <h3>🔐 SECURITY OVERRIDE</h3>
-        <p style="font-size:12px; opacity:0.7">TOKEN REQUIRED: 1010</p>
-        <input type="password" id="code" placeholder="ENTER TOKEN" />
-        <button onclick="executeOverride()">AUTHORIZE</button>
-    </div>
+    <script>
+        const log = document.getElementById('log-output');
+        const cmdInput = document.getElementById('command-line');
 
-    <div class="card">
-        <h3>📡 COMMAND RELAY</h3>
-        <input id="cmd" placeholder="Try: status, protect, sync" />
-        <button onclick="sendCommand()">TRANSMIT</button>
-    </div>
-
-    <div class="card" style="grid-column: 1 / -1;">
-        <h3>🧾 AUDIT TRAIL</h3>
-        <div id="log">Initializing CEC WAM protocols...</div>
-    </div>
-</div>
-
-<script>
-// ==========================================
-// 1. MATRIX RAIN VISUAL ENGINE
-// ==========================================
-const c = document.getElementById("matrix");
-const ctx = c.getContext("2d");
-
-function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
-window.addEventListener("resize", resize);
-resize();
-
-const chars = "EVE1010CEC_WAM_SYSTEM_CORE_PROTECT_BRAIN_01";
-const fontSize = 14;
-const columns = c.width / fontSize;
-const drops = Array(Math.floor(columns)).fill(1);
-
-function drawMatrix() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-    ctx.fillRect(0, 0, c.width, c.height);
-    
-    ctx.fillStyle = "#00FF41";
-    ctx.font = fontSize + "px monospace";
-
-    for (let i = 0; i < drops.length; i++) {
-        const text = chars.charAt(Math.floor(Math.random() * chars.length));
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-        
-        if (drops[i] * fontSize > c.height && Math.random() > 0.975) {
-            drops[i] = 0;
+        function addLog(msg) {
+            const entry = document.createElement('div');
+            entry.innerHTML = `> ${msg}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
         }
-        drops[i]++;
-    }
-}
-setInterval(drawMatrix, 50);
 
-// ==========================================
-// 2. EVE LOGIC CORE
-// ==========================================
-function log(msg) {
-    const el = document.getElementById("log");
-    const ts = new Date().toLocaleTimeString();
-    el.innerHTML += `\n[${ts}] ${msg}`;
-    el.scrollTop = el.scrollHeight;
-}
-
-window.EVE = {
-    operator: "SOVEREIGN",
-    authorized: false,
-    
-    // Live Data Simulation
-    startDataStream: function() {
-        setInterval(() => {
-            const val = Math.floor(Math.random() * 900000) + 100000;
-            document.getElementById("data-stream").innerText = `PACKET: ${val}`;
-            // Random monitoring event
-            if(Math.random() > 0.8) {
-                log("🔄 LIVE DATA: Syncing neural weights...");
-            }
-        }, 3000);
-    },
-
-    execute: function(command) {
-        const pkt = {
-            from: this.operator,
-            cmd: command,
-            auth: this.authorized,
-            ts: new Date().toISOString()
-        };
-        
-        log(`📡 SENT: ${command.toUpperCase()}`);
-        
-        // Command Router
-        switch(command.toLowerCase()) {
-            case "status":
-                log("✅ SYSTEM OPTIMAL. Brain Shield holding.");
-                break;
-            case "sync":
-                log("⏳ FORCING GLOBAL SYNC...");
-                setTimeout(() => log("✅ SYNC COMPLETE."), 1000);
-                break;
-            case "protect":
-                document.getElementById("brain-shield").innerText = "REINFORCED";
-                document.getElementById("brain-shield").style.color = "#00FF41";
-                log("🛡️ SECURITY LEVEL INCREASED TO MAX.");
-                break;
-            default:
-                // Optional External Hook/Relay
-                if(window.relay) { 
-                    relay(pkt); 
+        // Handle Commands
+        cmdInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = cmdInput.value.toLowerCase();
+                addLog(`<span style="color:white">USER: ${cmd}</span>`);
+                
+                if (cmd === 'status') {
+                    addLog("[SYS] ALL SYSTEMS NOMINAL. CORE STABLE.");
+                } else if (cmd === 'sync') {
+                    addLog("[SYS] INITIATING NEURAL SYNC... 100% COMPLETE.");
                 } else {
-                     log("💬 COMMAND EXECUTED: " + command.toUpperCase());
+                    addLog(`[ERR] COMMAND '${cmd}' NOT RECOGNIZED.`);
                 }
-        }
-        
-        // Save to local storage as persistence
-        localStorage.setItem("EVE_LAST_CMD", JSON.stringify(pkt));
-    },
+                
+                cmdInput.value = '';
+            }
+        });
 
-    unlock: function(token) {
-        if (token === "1010") {
-            this.authorized = true;
-            document.getElementById("core-status").innerText = "UNLOCKED";
-            document.getElementById("core-status").style.color = "#00FF41";
-            document.getElementById("code").disabled = true;
-            return true;
-        }
-        return false;
-    }
-};
+        window.onload = () => {
+            addLog("[SYS] CORE SOURCE CODE DEPLOYED.");
+        };
 
-// ==========================================
-// 3. USER INTERFACE BINDINGS AND INIT
-// ==========================================
-function executeOverride() {
-    const code = document.getElementById("code").value;
-    if (EVE.unlock(code)) {
-        log("🟢 ACCESS GRANTED. Welcome, Sovereign.");
-        EVE.startDataStream();
-    } else {
-        log("🔴 ACCESS DENIED. Invalid Token.");
-        document.body.style.background = "#110000";
-        setTimeout(() => document.body.style.background = "#000", 200);
-    }
-}
-
-function sendCommand() {
-    const input = document.getElementById("cmd");
-    const val = input.value.trim();
-    if (val) {
-        EVE.execute(val);
-        input.value = "";
-    }
-}
-
-// ==========================================
-// 4. OFFLINE ENGINE (Service Worker) - INLINE
-// ==========================================
-if("serviceWorker" in navigator) {
-    // Note: To truly enable offline mode, you still need manifest.json 
-    // and a separate service-worker.js file, but this registers the concept.
-    
-    // We will register a mock file to keep the code simpler.
-    // Replace 'service-worker.js' with the actual path if you create it later.
-    navigator.serviceWorker.register("service-worker-dummy.js").then(registration => {
-        log("✅ SYSTEM OFFLINE ENGINE REGISTERED.");
-    }).catch(error => {
-        log("⚠️ WARNING: Offline Engine failed registration. (Ignore if running locally)");
-    });
-}
-
-
-// Initialization Log
-log("SYSTEM: EVE CORE Loaded.");
-log("SYSTEM: Waiting for Override 1010...");
-
-// Optional: Placeholder for Live Relay (Firebase)
-window.relay = function(packet) {
-    // This is the hook for real live data (e.g., Firebase, WebSocket)
-    log("🔗 EXTERNAL RELAY: Packet sent (Needs firebase-config.js for live stream)");
-};
-
-</script>
+        // Automated System Updates
+        setInterval(() => {
+            if (Math.random() > 0.9) {
+                const messages = [
+                    "Checking integrity...",
+                    "Syncing with local timeline...",
+                    "Updating liquid value cache...",
+                    "Scanning for off-grid signals..."
+                ];
+                addLog(`[AUTO] ${messages[Math.floor(Math.random() * messages.length)]}`);
+            }
+            
+            const baseVal = 1250000;
+            const randomAdd = Math.floor(Math.random() * 500);
+            document.getElementById('val-disp').innerText = (baseVal + randomAdd).toLocaleString() + "M";
+        }, 5000);
+    </script>
 </body>
 </html>
