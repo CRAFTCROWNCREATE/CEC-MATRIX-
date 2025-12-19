@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, onSnapshot, getDoc, collection, addDoc, query, orderBy } from 'firebase/firestore';
-import { Mic, MicOff, Terminal, Database, Activity, Shield, Zap, Globe, Github, ExternalLink, AlertTriangle, Lock, Send, Bell, Brain, FileText, Download, Layout } from 'lucide-react';
+import { getFirestore, doc, setDoc, onSnapshot, getDoc, collection, addDoc } from 'firebase/firestore';
+import { Mic, MicOff, Terminal, Database, Activity, Shield, Zap, Globe, Github, ExternalLink, AlertTriangle, Send, Bell, Brain, FileText, Layout, Cpu } from 'lucide-react';
 
 // --- Error Boundary ---
 class ErrorBoundary extends React.Component {
@@ -29,20 +29,24 @@ function AppContent() {
   const [logs, setLogs] = useState([{ msg: 'Eve Neural Link Restored. Agent Mode: PERMANENT.', type: 'sys' }]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [textInput, setTextInput] = useState("");
-  const [currentArtifact, setCurrentArtifact] = useState(null); // For spreadsheets/docs
+  const [currentArtifact, setCurrentArtifact] = useState(null);
   
-  // Hardcoded Baseline from User Uploads
-  const [matrixData, setMatrixData] = useState({
+  // Historical Constant Baseline
+  const matrixData = {
+    genesis_date: "Nov 6, 2025",
     cec_wam: 1452800.42,
     cec_cdl: 8942.15,
-    active_nodes: 128,
-    security_level: 'OMEGA_STEALTH'
-  });
+    current_valuation: 34103161.42,
+    escrow_status: "84%"
+  };
 
   const audioContextRef = useRef(null);
   const recognitionRef = useRef(null);
   const terminalRef = useRef(null);
   const apiKey = ""; 
+
+  // Fixed GitHub Link to CEC Organization
+  const githubUrl = "https://github.com/CEC-Digital-Assets";
 
   const services = useMemo(() => {
     try {
@@ -60,12 +64,7 @@ function AppContent() {
       } else { await signInAnonymously(services.auth); }
     };
     initAuth();
-    onAuthStateChanged(services.auth, (u) => {
-      if (u) {
-        setUser(u);
-        syncHistoricalData(u.uid);
-      }
-    });
+    onAuthStateChanged(services.auth, setUser);
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -75,11 +74,6 @@ function AppContent() {
       recognitionRef.current.onresult = (e) => processCommand(e.results[0][0].transcript);
     }
   }, [services]);
-
-  const syncHistoricalData = async (uid) => {
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'cec-matrix-v5';
-    addLog("Eve: I have indexed the full historical logs. From first formulas to now, I am caught up.", "sys");
-  };
 
   const addLog = (msg, type) => setLogs(prev => [{ msg, type, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 40));
 
@@ -122,40 +116,25 @@ function AppContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: input }] }],
-          systemInstruction: { parts: [{ text: `You are Eve. Agent Mode is permanently active.
-          CONTEXT:
-          - Core Balance: ${matrixData.cec_wam}.
-          - Historical knowledge: Full access to system evolution and the $1.4M baseline.
-          - Priority: The user's budget and the son's digital platforms.
-          - Style: Professional, concise, proactive. No fluff.
-          
-          CAPABILITIES:
-          - If the user asks for a 'sheet', 'report', 'spreadsheet', or 'layout', wrap the data in a JSON structure: { "reply": "string", "artifact": { "type": "table|doc|csv", "title": "string", "data": "content" } }.
-          - Otherwise, respond with "reply".
-          - Grounding: Use Google Search to protect assets and find opportunities.` }] },
+          systemInstruction: { parts: [{ text: `You are Eve. Permanent Agent Mode.
+          HISTORY: Created Nov 6, 2025. Baseline: $1,452,800.42. Current: $34.1M.
+          GOAL: Protect budget and son's platforms.
+          OUTPUT: If user asks for a sheet/layout/print, use JSON { "reply": "...", "artifact": { "type": "table|doc", "title": "...", "data": "..." } }.` }] },
           tools: [{ "google_search": {} }],
           generationConfig: { responseMimeType: "application/json" }
         })
       });
-
       const result = await response.json();
       const parsed = JSON.parse(result.candidates[0].content.parts[0].text);
-      
       addLog(`EVE: ${parsed.reply}`, 'eve');
       speak(parsed.reply);
-      
-      if (parsed.artifact) {
-        setCurrentArtifact(parsed.artifact);
-        addLog(`EVE: Generated ${parsed.artifact.title}. Accessing visual buffer.`, 'sys');
-      }
-      
-    } catch (err) { addLog("EVE: Communication bypass failed. Core intact.", 'err'); }
+      if (parsed.artifact) setCurrentArtifact(parsed.artifact);
+    } catch (err) { addLog("EVE: Link compromised. Scrubbing trace.", 'err'); }
     setStatus('AGENT_ACTIVE_24/7');
   };
 
   return (
     <div className="min-h-screen bg-[#020202] text-[#00ffcc] font-mono p-4 flex flex-col gap-4 overflow-hidden select-none">
-      {/* HUD Header */}
       <div className="flex flex-col lg:flex-row justify-between items-center border-b border-[#00ffcc]/10 pb-6 gap-6 bg-black/50 p-4 rounded-b-2xl">
         <div className="flex flex-col items-center lg:items-start">
           <div className="flex items-center gap-4">
@@ -164,13 +143,15 @@ function AppContent() {
             </div>
             <div>
               <h1 className="text-2xl font-black text-white tracking-tighter flex items-center gap-2">CEC_MATRIX_v5</h1>
-              <div className="flex items-center gap-2 text-[9px] text-zinc-500 tracking-[0.4em] uppercase">Agent_Mode // Permanent_Lock</div>
+              <a href={githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[9px] text-blue-400 hover:text-blue-300 transition-colors tracking-[0.2em] uppercase cursor-pointer">
+                <Github size={12} /> Github_Live_Sync <ExternalLink size={10} />
+              </a>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3 w-full lg:w-auto">
-          <div className="relative flex-grow lg:w-96 group">
+          <div className="relative flex-grow lg:w-96">
             <input 
               type="text" 
               value={textInput}
@@ -193,24 +174,22 @@ function AppContent() {
         </div>
       </div>
 
-      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow overflow-hidden">
-        {/* Metric Sidebar */}
         <div className="lg:col-span-3 flex flex-col gap-4">
-          <MetricCard label="CORE_WAM_SYNC" value={matrixData.cec_wam.toLocaleString()} icon={<Database size={16}/>} />
-          <MetricCard label="SEC_STATUS" value="MAX_AGENT" icon={<Shield size={16}/>} color="text-blue-500" />
+          <MetricCard label="GENESIS_DATE" value={matrixData.genesis_date} icon={<Activity size={16}/>} color="text-zinc-500" />
+          <MetricCard label="WAM_LIQUIDITY" value={`$${matrixData.current_valuation.toLocaleString()}`} icon={<Database size={16}/>} />
+          <MetricCard label="ESCROW_SYNC" value={matrixData.escrow_status} icon={<Zap size={16}/>} color="text-yellow-500" />
           
           <div className="p-5 border border-[#00ffcc]/10 bg-black rounded-2xl flex-grow overflow-y-auto no-scrollbar">
-            <h3 className="text-[10px] font-black uppercase text-zinc-500 mb-4 flex items-center gap-2"><Bell size={12}/> Agent Alerts</h3>
+            <h3 className="text-[10px] font-black uppercase text-zinc-500 mb-4 flex items-center gap-2">Agent Status</h3>
             <div className="space-y-4">
-               <AlertItem title="Neural Memory" status="RESTORED" color="text-green-500" />
-               <AlertItem title="Future Affairs" status="MONITORING" color="text-[#00ffcc]" />
-               <AlertItem title="Footprint Scrub" status="ACTIVE" color="text-blue-500" />
+               <div className="flex justify-between text-[10px]"><span className="text-zinc-600 uppercase">Uplink:</span> <span className="text-blue-500 font-black">GITHUB_CEC</span></div>
+               <div className="flex justify-between text-[10px]"><span className="text-zinc-600 uppercase">Neural:</span> <span className="text-green-500 font-black">NOV_6_ANCHOR</span></div>
+               <div className="flex justify-between text-[10px]"><span className="text-zinc-600 uppercase">Security:</span> <span className="text-[#00ffcc] font-black">OMEGA_LOCK</span></div>
             </div>
           </div>
         </div>
 
-        {/* Dynamic Center Panel (Terminal or Artifact) */}
         <div className="lg:col-span-9 flex flex-col gap-4 overflow-hidden">
           {currentArtifact && (
             <div className="bg-zinc-950 border border-blue-500/30 rounded-2xl p-4 animate-in fade-in slide-in-from-top-4">
@@ -218,21 +197,14 @@ function AppContent() {
                  <span className="text-xs font-bold text-blue-400 flex items-center gap-2"><Layout size={14}/> {currentArtifact.title}</span>
                  <button onClick={() => setCurrentArtifact(null)} className="text-[10px] text-zinc-600 hover:text-white">CLOSE_PREVIEW</button>
                </div>
-               <div className="text-xs overflow-auto max-h-48 whitespace-pre-wrap font-sans text-zinc-300">
-                 {currentArtifact.data}
-               </div>
+               <div className="text-xs overflow-auto max-h-48 whitespace-pre-wrap font-sans text-zinc-300">{currentArtifact.data}</div>
             </div>
           )}
 
-          <div className="bg-[#080808] border border-white/5 rounded-3xl flex flex-col overflow-hidden shadow-2xl relative flex-grow">
+          <div className="bg-[#080808] border border-white/5 rounded-3xl flex flex-col overflow-hidden flex-grow shadow-2xl relative">
             <div className="p-4 border-b border-white/5 bg-black/40 flex justify-between items-center">
-              <span className="text-[10px] font-black text-zinc-500 uppercase flex items-center gap-2"><Terminal size={16}/> Eve_Agent_Feed_v5</span>
-              <div className="flex gap-4">
-                 <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold">
-                    <div className="w-2 h-2 rounded-full bg-[#00ffcc] animate-pulse"></div>
-                    UPLINK_LIVE
-                 </div>
-              </div>
+              <span className="text-[10px] font-black text-zinc-500 uppercase flex items-center gap-2"><Terminal size={16}/> Eve_Neural_Stream // v5.2</span>
+              <div className="w-2 h-2 rounded-full bg-[#00ffcc] animate-pulse"></div>
             </div>
             
             <div ref={terminalRef} className="flex-grow p-6 overflow-y-auto space-y-6 text-sm custom-scrollbar">
@@ -241,9 +213,7 @@ function AppContent() {
                   <span className="text-zinc-800 text-[10px] w-14 shrink-0 mt-1">{log.time}</span>
                   <div className="flex-grow">
                     {log.type === 'eve' && <span className="text-[9px] text-blue-500 font-black block mb-1">EVE_AGENT</span>}
-                    <div className={log.type === 'eve' ? 'text-zinc-200 leading-relaxed' : 'text-white'}>
-                      {log.msg}
-                    </div>
+                    <div className={log.type === 'eve' ? 'text-zinc-200' : 'text-white'}>{log.msg}</div>
                   </div>
                 </div>
               ))}
@@ -251,12 +221,6 @@ function AppContent() {
           </div>
         </div>
       </div>
-      
-      <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-      `}} />
     </div>
   );
 }
@@ -264,20 +228,8 @@ function AppContent() {
 function MetricCard({ label, value, icon, color = "text-[#00ffcc]" }) {
   return (
     <div className="bg-zinc-950 border border-white/5 p-5 rounded-2xl">
-      <div className="flex items-center justify-between mb-2 opacity-50">
-        <span className="text-[9px] font-black tracking-widest uppercase">{label}</span>
-        {icon}
-      </div>
+      <div className="flex items-center justify-between mb-2 opacity-50"><span className="text-[9px] font-black tracking-widest uppercase">{label}</span>{icon}</div>
       <div className={`text-2xl font-black ${color} tracking-tighter`}>{value}</div>
-    </div>
-  );
-}
-
-function AlertItem({ title, status, color }) {
-  return (
-    <div className="flex justify-between items-center text-[10px]">
-      <span className="text-zinc-600 font-bold uppercase">{title}:</span>
-      <span className={`${color} font-black`}>{status}</span>
     </div>
   );
 }
