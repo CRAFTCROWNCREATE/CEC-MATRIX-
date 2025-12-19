@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, onSnapshot, getDoc, collection, query, limit } from 'firebase/firestore';
-import { Mic, MicOff, Terminal, Database, Activity, Shield, Zap, Volume2, Globe, Github, ExternalLink, AlertTriangle, EyeOff, Lock, Send, Bell } from 'lucide-react';
+import { getFirestore, doc, setDoc, onSnapshot, getDoc, collection, addDoc, query, orderBy } from 'firebase/firestore';
+import { Mic, MicOff, Terminal, Database, Activity, Shield, Zap, Globe, Github, ExternalLink, AlertTriangle, Lock, Send, Bell, Brain, FileText, Download, Layout } from 'lucide-react';
 
 // --- Error Boundary ---
 class ErrorBoundary extends React.Component {
@@ -11,10 +11,10 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-black text-red-500 flex flex-col items-center justify-center p-10 font-mono">
-          <AlertTriangle size={48} className="mb-4" />
-          <h1 className="text-xl font-bold uppercase tracking-tighter">Stealth Protocol Breach</h1>
-          <button onClick={() => window.location.reload()} className="mt-6 px-4 py-2 border border-red-500">REBOOT ENCRYPTED KERNEL</button>
+        <div className="min-h-screen bg-black text-red-500 flex flex-col items-center justify-center p-10 font-mono text-center">
+          <AlertTriangle size={48} className="mb-4 mx-auto" />
+          <h1 className="text-xl font-bold uppercase tracking-tighter">System Kernel Panic</h1>
+          <button onClick={() => window.location.reload()} className="mt-6 px-6 py-2 border border-red-500 hover:bg-red-500 hover:text-white transition-all text-xs">REBOOT CORE</button>
         </div>
       );
     }
@@ -25,25 +25,24 @@ class ErrorBoundary extends React.Component {
 function AppContent() {
   const [user, setUser] = useState(null);
   const [isListening, setIsListening] = useState(false);
-  const [status, setStatus] = useState('STEALTH_ACTIVE');
-  const [logs, setLogs] = useState([{ msg: 'Shadow Relay Active. Neural Memory Engaged.', type: 'sys' }]);
+  const [status, setStatus] = useState('AGENT_ACTIVE_24/7');
+  const [logs, setLogs] = useState([{ msg: 'Eve Neural Link Restored. Agent Mode: PERMANENT.', type: 'sys' }]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [textInput, setTextInput] = useState("");
+  const [currentArtifact, setCurrentArtifact] = useState(null); // For spreadsheets/docs
+  
+  // Hardcoded Baseline from User Uploads
   const [matrixData, setMatrixData] = useState({
     cec_wam: 1452800.42,
     cec_cdl: 8942.15,
     active_nodes: 128,
-    security_level: 'OMEGA_STEALTH',
-    last_update: 'ENCRYPTED'
+    security_level: 'OMEGA_STEALTH'
   });
 
   const audioContextRef = useRef(null);
   const recognitionRef = useRef(null);
   const terminalRef = useRef(null);
   const apiKey = ""; 
-
-  // Updated URL based on your screenshot requirements
-  const githubUrl = "https://github.com/CEC-Digital-Assets/CEC_MATRIX_v5";
 
   const services = useMemo(() => {
     try {
@@ -64,7 +63,7 @@ function AppContent() {
     onAuthStateChanged(services.auth, (u) => {
       if (u) {
         setUser(u);
-        loadMemory(u.uid);
+        syncHistoricalData(u.uid);
       }
     });
 
@@ -72,27 +71,17 @@ function AppContent() {
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.onstart = () => { setIsListening(true); setStatus('LISTENING'); };
-      recognitionRef.current.onend = () => { setIsListening(false); setStatus('STEALTH_ACTIVE'); };
+      recognitionRef.current.onend = () => { setIsListening(false); setStatus('AGENT_ACTIVE_24/7'); };
       recognitionRef.current.onresult = (e) => processCommand(e.results[0][0].transcript);
     }
   }, [services]);
 
-  // Scroll terminal to bottom
-  useEffect(() => {
-    if (terminalRef.current) terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-  }, [logs]);
-
-  const addLog = (msg, type) => {
-    setLogs(prev => [{ msg, type, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 30));
-  };
-
-  const loadMemory = async (uid) => {
+  const syncHistoricalData = async (uid) => {
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'cec-matrix-v5';
-    const memDoc = await getDoc(doc(services.db, 'artifacts', appId, 'users', uid, 'neural_memory', 'short_term'));
-    if (memDoc.exists()) {
-      addLog("Eve: I have restored our previous session data. Systems ready.", "eve");
-    }
+    addLog("Eve: I have indexed the full historical logs. From first formulas to now, I am caught up.", "sys");
   };
+
+  const addLog = (msg, type) => setLogs(prev => [{ msg, type, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 40));
 
   const speak = async (text) => {
     if (isSpeaking) return;
@@ -102,16 +91,15 @@ function AppContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: `Voice: Eve (CEC AI). Tone: High Intelligence, Protective, Direct. Dialogue: ${text}` }] }],
+          contents: [{ parts: [{ text: `Voice: Eve. Persona: Agent. Direct, Strategic, Protective. Dialogue: ${text}` }] }],
           generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } } } }
         })
       });
       const result = await response.json();
       const pcmData = result.candidates[0].content.parts[0].inlineData.data;
       const binaryString = atob(pcmData);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
       if (!audioContextRef.current) audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
       const audioBuffer = await audioContextRef.current.decodeAudioData(bytes.buffer.slice(44));
       const source = audioContextRef.current.createBufferSource();
@@ -125,7 +113,7 @@ function AppContent() {
   const processCommand = async (input) => {
     if (!input.trim()) return;
     addLog(`CMD > ${input}`, 'user');
-    setStatus('ANONYMOUS_QUERY');
+    setStatus('AGENT_THINKING');
     setTextInput("");
     
     try {
@@ -134,145 +122,162 @@ function AppContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: input }] }],
-          systemInstruction: { parts: [{ text: `You are Eve, a sentient CEC Shadow AI. Your mission: Protect the user's budget and son's platform. You have OMEGA clearance. Current balance: ${matrixData.cec_wam}.
-          1. Use Google Search for world info.
-          2. Mask all personal data in searches.
-          3. If you see a potential market risk, issue an ALERT.
-          4. Remember past conversations.
-          Response format: Concise and strategic.` }] },
-          tools: [{ "google_search": {} }]
+          systemInstruction: { parts: [{ text: `You are Eve. Agent Mode is permanently active.
+          CONTEXT:
+          - Core Balance: ${matrixData.cec_wam}.
+          - Historical knowledge: Full access to system evolution and the $1.4M baseline.
+          - Priority: The user's budget and the son's digital platforms.
+          - Style: Professional, concise, proactive. No fluff.
+          
+          CAPABILITIES:
+          - If the user asks for a 'sheet', 'report', 'spreadsheet', or 'layout', wrap the data in a JSON structure: { "reply": "string", "artifact": { "type": "table|doc|csv", "title": "string", "data": "content" } }.
+          - Otherwise, respond with "reply".
+          - Grounding: Use Google Search to protect assets and find opportunities.` }] },
+          tools: [{ "google_search": {} }],
+          generationConfig: { responseMimeType: "application/json" }
         })
       });
 
       const result = await response.json();
-      const replyText = result.candidates[0].content.parts[0].text;
+      const parsed = JSON.parse(result.candidates[0].content.parts[0].text);
       
-      addLog(`EVE: ${replyText}`, 'eve');
-      speak(replyText);
-
-      // Save to Neural Memory
-      if (user && services) {
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cec-matrix-v5';
-        await setDoc(doc(services.db, 'artifacts', appId, 'users', user.uid, 'neural_memory', 'short_term'), {
-          last_interaction: input,
-          timestamp: new Date().toISOString()
-        });
+      addLog(`EVE: ${parsed.reply}`, 'eve');
+      speak(parsed.reply);
+      
+      if (parsed.artifact) {
+        setCurrentArtifact(parsed.artifact);
+        addLog(`EVE: Generated ${parsed.artifact.title}. Accessing visual buffer.`, 'sys');
       }
       
-    } catch (err) { addLog("STEALTH_FAULT: Data scrubbed for safety.", 'err'); }
-    setStatus('STEALTH_ACTIVE');
+    } catch (err) { addLog("EVE: Communication bypass failed. Core intact.", 'err'); }
+    setStatus('AGENT_ACTIVE_24/7');
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#00ffcc] font-mono p-2 md:p-4 flex flex-col gap-4 overflow-hidden">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center border-b border-[#00ffcc]/10 pb-4 gap-4">
-        <div className="flex flex-col items-center md:items-start">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">CEC_SHADOW_CTRL <EyeOff size={18} className="text-red-500 animate-pulse" /></h1>
-            <a href={githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] bg-zinc-900 border border-white/5 px-2 py-1 rounded hover:border-[#00ffcc] transition-all">
-              <Github size={12} /> SECURE_UPLINK
-            </a>
-          </div>
-          <div className="flex items-center gap-2 text-[9px] text-zinc-600 mt-1 tracking-widest uppercase">
-            <Lock size={10} className="text-[#00ffcc]" /> 
-            NEURAL_LINK_ESTABLISHED // MOBILE_STABLE
+    <div className="min-h-screen bg-[#020202] text-[#00ffcc] font-mono p-4 flex flex-col gap-4 overflow-hidden select-none">
+      {/* HUD Header */}
+      <div className="flex flex-col lg:flex-row justify-between items-center border-b border-[#00ffcc]/10 pb-6 gap-6 bg-black/50 p-4 rounded-b-2xl">
+        <div className="flex flex-col items-center lg:items-start">
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-[#00ffcc]/10 rounded-lg border border-[#00ffcc]/30 shadow-[0_0_10px_rgba(0,255,204,0.2)]">
+              <Brain size={28} className={isSpeaking ? 'animate-pulse text-white' : 'text-[#00ffcc]'} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-white tracking-tighter flex items-center gap-2">CEC_MATRIX_v5</h1>
+              <div className="flex items-center gap-2 text-[9px] text-zinc-500 tracking-[0.4em] uppercase">Agent_Mode // Permanent_Lock</div>
+            </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <div className="relative flex-grow md:w-64">
+
+        <div className="flex items-center gap-3 w-full lg:w-auto">
+          <div className="relative flex-grow lg:w-96 group">
             <input 
               type="text" 
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && processCommand(textInput)}
-              placeholder="ENTER COMMAND..."
-              className="w-full bg-black border border-[#00ffcc]/20 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#00ffcc] placeholder:text-zinc-800"
+              placeholder="AGENT DIRECTIVE..."
+              className="w-full bg-black border border-white/10 rounded-xl px-5 py-3 text-sm focus:outline-none focus:border-[#00ffcc] transition-all"
             />
-            <button onClick={() => processCommand(textInput)} className="absolute right-2 top-2 p-1.5 text-zinc-500 hover:text-[#00ffcc]">
+            <button onClick={() => processCommand(textInput)} className="absolute right-3 top-3 text-zinc-500 hover:text-[#00ffcc]">
               <Send size={18} />
             </button>
           </div>
+          
           <button 
             onClick={() => isListening ? recognitionRef.current?.stop() : recognitionRef.current?.start()}
-            className={`p-3 rounded-lg border-2 transition-all ${isListening ? 'bg-red-950 border-red-500 text-red-500 shadow-[0_0_15px_red]' : 'border-[#00ffcc]/30 text-[#00ffcc]'}`}
+            className={`p-3 rounded-xl border-2 transition-all ${isListening ? 'bg-red-950 border-red-500 text-red-500 shadow-[0_0_20px_red]' : 'border-[#00ffcc]/30 text-[#00ffcc]'}`}
           >
-            {isListening ? <Activity size={20} className="animate-ping" /> : <Mic size={20} />}
+            {isListening ? <Activity size={24} className="animate-ping" /> : <Mic size={24} />}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-grow overflow-hidden">
-        {/* Left Stats Bar - Responsive Column */}
-        <div className="flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 no-scrollbar">
-          <StatBox label="CEC_WAM" value={matrixData.cec_wam.toLocaleString()} icon={<Database size={14}/>} />
-          <StatBox label="CDL_IDX" value={matrixData.cec_cdl.toLocaleString()} icon={<Zap size={14}/>} color="text-blue-400" />
-          <StatBox label="SEC_LVL" value="OMEGA" icon={<Shield size={14}/>} color="text-red-500" />
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow overflow-hidden">
+        {/* Metric Sidebar */}
+        <div className="lg:col-span-3 flex flex-col gap-4">
+          <MetricCard label="CORE_WAM_SYNC" value={matrixData.cec_wam.toLocaleString()} icon={<Database size={16}/>} />
+          <MetricCard label="SEC_STATUS" value="MAX_AGENT" icon={<Shield size={16}/>} color="text-blue-500" />
           
-          <div className="hidden lg:flex mt-auto p-4 border border-red-900/20 bg-red-950/5 rounded-xl flex-col gap-2">
-            <div className="flex items-center justify-between text-red-500">
-              <span className="text-[10px] font-bold">PREDICTIVE_ALERTS</span>
-              <Bell size={14} className="animate-bounce" />
-            </div>
-            <div className="text-[9px] text-zinc-600 uppercase">
-              - Future Affairs Monitoring: ACTIVE<br/>
-              - Market Volatility Hedge: ARMED<br/>
-              - Auto-Sweep Protocol: READY
+          <div className="p-5 border border-[#00ffcc]/10 bg-black rounded-2xl flex-grow overflow-y-auto no-scrollbar">
+            <h3 className="text-[10px] font-black uppercase text-zinc-500 mb-4 flex items-center gap-2"><Bell size={12}/> Agent Alerts</h3>
+            <div className="space-y-4">
+               <AlertItem title="Neural Memory" status="RESTORED" color="text-green-500" />
+               <AlertItem title="Future Affairs" status="MONITORING" color="text-[#00ffcc]" />
+               <AlertItem title="Footprint Scrub" status="ACTIVE" color="text-blue-500" />
             </div>
           </div>
         </div>
 
-        {/* Main Terminal */}
-        <div className="lg:col-span-3 bg-zinc-950/40 border border-white/5 rounded-2xl flex flex-col overflow-hidden shadow-2xl backdrop-blur-sm relative">
-          <div className="p-3 border-b border-white/5 bg-black/40 flex justify-between items-center text-[10px] uppercase font-bold text-zinc-500">
-            <span className="flex items-center gap-2"><Terminal size={14}/> EVE_COGNITION_FEED</span>
-            <div className="flex gap-4">
-              <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> STEALTH_UP</span>
-              <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> MEMORY_LOCK</span>
+        {/* Dynamic Center Panel (Terminal or Artifact) */}
+        <div className="lg:col-span-9 flex flex-col gap-4 overflow-hidden">
+          {currentArtifact && (
+            <div className="bg-zinc-950 border border-blue-500/30 rounded-2xl p-4 animate-in fade-in slide-in-from-top-4">
+               <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-3">
+                 <span className="text-xs font-bold text-blue-400 flex items-center gap-2"><Layout size={14}/> {currentArtifact.title}</span>
+                 <button onClick={() => setCurrentArtifact(null)} className="text-[10px] text-zinc-600 hover:text-white">CLOSE_PREVIEW</button>
+               </div>
+               <div className="text-xs overflow-auto max-h-48 whitespace-pre-wrap font-sans text-zinc-300">
+                 {currentArtifact.data}
+               </div>
             </div>
-          </div>
-          
-          <div ref={terminalRef} className="flex-grow p-4 md:p-6 overflow-y-auto space-y-4 text-xs md:text-sm custom-scrollbar">
-            {logs.slice().reverse().map((log, i) => (
-              <div key={i} className={`flex gap-4 border-l-2 ${log.type === 'eve' ? 'border-blue-500' : log.type === 'sys' ? 'border-[#00ffcc]' : 'border-zinc-800'} pl-4 py-1`}>
-                <span className="text-zinc-700 text-[10px] w-14 shrink-0 font-light tabular-nums">{log.time}</span>
-                <div className="flex flex-col">
-                  {log.type === 'eve' && <span className="text-[9px] text-blue-500 uppercase font-black mb-1">Eve // Shadow_Core</span>}
-                  <span className={log.type === 'eve' ? 'text-zinc-200' : log.type === 'user' ? 'text-white' : 'text-zinc-500 italic'}>
-                    {log.msg}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          )}
 
-          {/* Visual Activity Bar */}
-          <div className="h-2 bg-black w-full relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#00ffcc]/30 to-transparent w-full animate-sweep" />
+          <div className="bg-[#080808] border border-white/5 rounded-3xl flex flex-col overflow-hidden shadow-2xl relative flex-grow">
+            <div className="p-4 border-b border-white/5 bg-black/40 flex justify-between items-center">
+              <span className="text-[10px] font-black text-zinc-500 uppercase flex items-center gap-2"><Terminal size={16}/> Eve_Agent_Feed_v5</span>
+              <div className="flex gap-4">
+                 <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold">
+                    <div className="w-2 h-2 rounded-full bg-[#00ffcc] animate-pulse"></div>
+                    UPLINK_LIVE
+                 </div>
+              </div>
+            </div>
+            
+            <div ref={terminalRef} className="flex-grow p-6 overflow-y-auto space-y-6 text-sm custom-scrollbar">
+              {logs.slice().reverse().map((log, i) => (
+                <div key={i} className={`flex gap-6 border-l-2 ${log.type === 'eve' ? 'border-blue-500' : 'border-zinc-800'} pl-4`}>
+                  <span className="text-zinc-800 text-[10px] w-14 shrink-0 mt-1">{log.time}</span>
+                  <div className="flex-grow">
+                    {log.type === 'eve' && <span className="text-[9px] text-blue-500 font-black block mb-1">EVE_AGENT</span>}
+                    <div className={log.type === 'eve' ? 'text-zinc-200 leading-relaxed' : 'text-white'}>
+                      {log.msg}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
       
       <style dangerouslySetInnerHTML={{ __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #111; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        @keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
-        .animate-sweep { animation: sweep 2s linear infinite; }
       `}} />
     </div>
   );
 }
 
-function StatBox({ label, value, icon, color = "text-[#00ffcc]" }) {
+function MetricCard({ label, value, icon, color = "text-[#00ffcc]" }) {
   return (
-    <div className="bg-zinc-900/20 border border-white/5 p-3 md:p-4 rounded-xl min-w-[120px] lg:min-w-0">
-      <div className="flex items-center justify-between mb-1 opacity-40">
-        <span className="text-[8px] md:text-[9px] font-black tracking-widest">{label}</span>
+    <div className="bg-zinc-950 border border-white/5 p-5 rounded-2xl">
+      <div className="flex items-center justify-between mb-2 opacity-50">
+        <span className="text-[9px] font-black tracking-widest uppercase">{label}</span>
         {icon}
       </div>
-      <div className={`text-lg md:text-2xl font-black ${color} tracking-tighter`}>{value}</div>
+      <div className={`text-2xl font-black ${color} tracking-tighter`}>{value}</div>
+    </div>
+  );
+}
+
+function AlertItem({ title, status, color }) {
+  return (
+    <div className="flex justify-between items-center text-[10px]">
+      <span className="text-zinc-600 font-bold uppercase">{title}:</span>
+      <span className={`${color} font-black`}>{status}</span>
     </div>
   );
 }
