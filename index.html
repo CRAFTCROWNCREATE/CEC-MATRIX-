@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC WAM SYSTEM - CORE v2.0</title>
+    <title>CEC WAM SYSTEM CORE</title>
     <style>
         :root {
             --neon-blue: #00f2ff;
-            --deep-gold: #ffcc00;
-            --bg-black: #050505;
+            --gold: #ffcc00;
+            --deep-black: #050505;
             --terminal-green: #00ff41;
         }
 
         body {
-            background-color: var(--bg-black);
+            background-color: var(--deep-black);
             color: var(--neon-blue);
             font-family: 'Courier New', Courier, monospace;
             margin: 0;
@@ -23,206 +23,160 @@
             height: 100vh;
         }
 
-        /* Neural Sync Background Simulation */
-        #neural-canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -1;
-            opacity: 0.3;
-        }
-
-        header {
-            border-bottom: 2px solid var(--deep-gold);
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        .status-box {
-            border: 1px solid var(--neon-blue);
+        #header {
+            border-bottom: 2px solid var(--gold);
             padding: 10px;
-            background: rgba(0, 242, 255, 0.1);
+            text-align: center;
+            background: rgba(255, 204, 0, 0.1);
         }
 
-        #main-display {
-            flex-grow: 1;
-            display: grid;
-            grid-template-columns: 1fr 300px;
+        #main-container {
+            display: flex;
+            flex: 1;
+            padding: 10px;
             gap: 10px;
-            padding: 10px;
         }
 
-        #terminal-output {
-            background: rgba(0, 0, 0, 0.9);
+        #visual-core {
+            flex: 2;
             border: 1px solid var(--neon-blue);
-            padding: 15px;
-            overflow-y: auto;
-            font-size: 0.9em;
-            box-shadow: inset 0 0 15px var(--neon-blue);
+            position: relative;
+            background-image: url('https://lh3.googleusercontent.com/gg/AIJ2gl83PkYe8mNczRe6b7cthaEZr3hKrtvv3idiFp-Qd24n11lXPscAEG7OCb0G_6QYcNL-u1VfSafwV5bMEVZB-qVC8a5UZL18nmWvrBS9nJEPLnPvbnjJfTUG270SoqPuGN0mUQS-EnZbKwBSuWEfiH3K6ACSAHIzFJ2qPoab3qrjQG5KxnUovYbkcnfn8H3KCuAo0AU0uc6dFFLIrU45rEN7rBUtF7n6LEE_A0RohsssVcoEjwGQ_satQ5M_YPB3hZekkrfrTOvwtFaUfaYuzWf_L2gdqUnR23xdkBsY4ZXmOoXxNbvoPSmuC_atUtVVhPQVmDz0R3WfEwccH3elCLYl');
+            background-size: cover;
+            background-position: center;
+            box-shadow: inset 0 0 50px rgba(0, 242, 255, 0.2);
         }
 
-        #command-input-area {
+        #terminal-side {
+            flex: 1;
             display: flex;
-            border-top: 1px solid var(--neon-blue);
-            padding: 5px;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        #cmd-in {
-            background: transparent;
-            border: none;
-            color: var(--terminal-green);
-            flex-grow: 1;
-            outline: none;
-            font-size: 1.1em;
-        }
-
-        .telemetry-panel {
-            border-left: 2px solid var(--deep-gold);
+        .panel {
+            border: 1px solid var(--neon-blue);
+            background: rgba(0, 0, 0, 0.8);
             padding: 10px;
-            background: rgba(10, 10, 10, 0.9);
+            overflow-y: auto;
         }
 
-        .val-ticker { color: var(--deep-gold); font-size: 1.5em; font-weight: bold; }
-        .log-entry { margin-bottom: 5px; }
-        .log-sys { color: var(--deep-gold); }
+        #log-output {
+            height: 250px;
+            font-size: 0.8em;
+            color: var(--terminal-green);
+            margin-bottom: 5px;
+        }
+
+        #command-line {
+            background: #000;
+            border: 1px solid var(--terminal-green);
+            color: var(--terminal-green);
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        #value-ticker {
+            text-align: center;
+            font-size: 1.5em;
+            color: var(--gold);
+        }
+
+        .glitch {
+            animation: glitch-anim 2s infinite;
+        }
+
+        @keyframes glitch-anim {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
     </style>
 </head>
 <body>
-    <canvas id="neural-canvas"></canvas>
 
-    <header>
-        <div>
-            <h1 style="margin:0; font-size: 1.2em;">CEC WAM CORE [v2.0-STABLE]</h1>
-            <small>USER COMMAND INTERFACE ENABLED</small>
-        </div>
-        <div class="status-box">
-            SYSTEM STATUS: <span style="color: var(--terminal-green);">SYNCED</span><br>
-            NEURAL LOAD: <span id="load">0.04%</span>
-        </div>
-    </header>
+    <div id="header">
+        <h1 class="glitch">CEC WAM SYSTEM CORE - V1.0.4</h1>
+    </div>
 
-    <div id="main-display">
-        <div style="display: flex; flex-direction: column;">
-            <div id="terminal-output">
-                <div class="log-entry log-sys">[SYS] INITIALIZING UPGRADED PLATFORM...</div>
-                <div class="log-entry log-sys">[SYS] COMMAND PROTOCOLS ACTIVE. TYPE 'HELP' TO BEGIN.</div>
+    <div id="main-container">
+        <div id="visual-core"></div>
+
+        <div id="terminal-side">
+            <div id="value-ticker" class="panel">
+                CORE VALUE: <span id="val-disp">1,250,000M</span>
             </div>
-            <div id="command-input-area">
-                <span>CMD>&nbsp;</span>
-                <input type="text" id="cmd-in" autofocus autocomplete="off">
+            
+            <div class="panel">
+                <div id="log-output">
+                    [SYS] INITIALIZING CORE...<br>
+                    [SYS] LOADING QUANTUM SUBSTRATE...<br>
+                    [SYS] SYNCING NEURAL NETWORKS...<br>
+                </div>
+                <input type="text" id="command-line" placeholder="ENTER COMMAND..." autofocus>
             </div>
-        </div>
 
-        <div class="telemetry-panel">
-            <h3>TELEMETRY</h3>
-            <div>LIQUID VALUE:</div>
-            <div class="val-ticker" id="val-disp">1,250,482M</div>
-            <hr>
-            <div id="telemetry-data">
-                LATENCY: 12ms<br>
-                UPLINK: ACTIVE<br>
-                ENCRYPTION: AES-X
+            <div class="panel" style="flex:1;">
+                <img src="https://lh3.googleusercontent.com/gg/AIJ2gl9H78v2MQOhQMbs5HNGwT0A4G8gBSGbyAhxbLPIcN3zgk-2l9iSbYr-d3FbuKrpmh23riYYPry57-JU72V2wdnHZXNYCvvxlullTdxLYrGOrzcgRTQp-rsyRFxBgNBnsMs6mDx_cBHeVULbB74T4Exm4u9tHixUJEzbThgRY_QF4koZb5QAVNnrQ3zTkQ8IXeHLx0j4C1crvLxf6vs5C6GaegYs-3hzXrDTDFroQcc1i6-HY_2BwMqZWgNMLGfy8xEgjj0Gll3PFlvt2LRu5Ouna4HS3YKKVCAr1UyR1hKH3Wlmj_g0Y01emQ_4jhT8hHKbdpm-IiZ8fjt3lx3svjHI" alt="Drone Schematic" style="width:100%; filter: hue-rotate(180deg);">
+                <p style="font-size: 0.7em; margin-top: 5px;">SHIELD STATUS: 98%<br>DRONE SYNC: ACTIVE</p>
             </div>
         </div>
     </div>
 
     <script>
-        const output = document.getElementById('terminal-output');
-        const cmdIn = document.getElementById('cmd-in');
-        const valDisp = document.getElementById('val-disp');
+        const log = document.getElementById('log-output');
+        const cmdInput = document.getElementById('command-line');
 
-        function addLog(msg, type = '') {
+        function addLog(msg) {
             const entry = document.createElement('div');
-            entry.className = 'log-entry ' + (type === 'sys' ? 'log-sys' : '');
-            entry.innerText = msg;
-            output.appendChild(entry);
-            output.scrollTop = output.scrollHeight;
+            entry.innerHTML = `> ${msg}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
         }
 
-        cmdIn.addEventListener('keypress', (e) => {
+        // Handle Commands
+        cmdInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                const cmd = cmdIn.value.toUpperCase();
-                addLog(`> ${cmd}`);
-                processCommand(cmd);
-                cmdIn.value = '';
+                const cmd = cmdInput.value.toLowerCase();
+                addLog(`<span style="color:white">USER: ${cmd}</span>`);
+                
+                if (cmd === 'status') {
+                    addLog("[SYS] ALL SYSTEMS NOMINAL. CORE STABLE.");
+                } else if (cmd === 'sync') {
+                    addLog("[SYS] INITIATING NEURAL SYNC... 100% COMPLETE.");
+                } else {
+                    addLog(`[ERR] COMMAND '${cmd}' NOT RECOGNIZED.`);
+                }
+                
+                cmdInput.value = '';
             }
         });
 
-        function processCommand(cmd) {
-            switch(cmd) {
-                case 'HELP':
-                    addLog('AVAILABLE COMMANDS: HELP, STATUS, SYNC, UPGRADE, CLEAR', 'sys');
-                    break;
-                case 'STATUS':
-                    addLog('[SYS] ALL SYSTEMS OPERATIONAL. UPLINK STABLE.', 'sys');
-                    break;
-                case 'CLEAR':
-                    output.innerHTML = '';
-                    break;
-                case 'SYNC':
-                    addLog('[SYS] RE-SYNCING NEURAL PATHWAYS...', 'sys');
-                    setTimeout(() => addLog('[SYS] SYNC COMPLETE.', 'sys'), 1000);
-                    break;
-                default:
-                    addLog(`[ERR] UNKNOWN COMMAND: ${cmd}`, 'sys');
-            }
-        }
+        window.onload = () => {
+            addLog("[SYS] CORE SOURCE CODE DEPLOYED.");
+        };
 
-        // Animated Value Ticker (Retained from v1)
+        // Automated System Updates
         setInterval(() => {
-            const baseVal = 1250000;
-            const randomAdd = Math.floor(Math.random() * 999);
-            valDisp.innerText = (baseVal + randomAdd).toLocaleString() + "M";
-            document.getElementById('load').innerText = (Math.random() * 2).toFixed(2) + "%";
-        }, 3000);
-
-        // Simple Neural Background Effect
-        const canvas = document.getElementById('neural-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        function draw() {
-            ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#00f2ff';
-            for(let i=0; i<20; i++) {
-                ctx.beginPath();
-                ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, 1, 0, Math.PI*2);
-                ctx.fill();
+            if (Math.random() > 0.9) {
+                const messages = [
+                    "Checking integrity...",
+                    "Syncing with local timeline...",
+                    "Updating liquid value cache...",
+                    "Scanning for off-grid signals..."
+                ];
+                addLog(`[AUTO] ${messages[Math.floor(Math.random() * messages.length)]}`);
             }
-            requestAnimationFrame(draw);
-        }
-        draw();
-    </script>/* --- SYSTEM UPGRADE OVERRIDE PROTOCOL --- */
-function initiateInterfaceJump() {
-    console.log("[SYS] FORCING INTERFACE UPGRADE...");
-    
-    // 1. Trigger Visual 'Jump' Effect
-    document.body.style.transition = "all 0.5s ease-in-out";
-    document.body.style.filter = "brightness(3) blur(10px)";
-    
-    setTimeout(() => {
-        // 2. Clear Legacy Core Data
-        const terminal = document.getElementById('terminal-output');
-        if(terminal) terminal.innerHTML = "<div class='log-sys'>[SYS] CORE UPGRADED. WELCOME TO INTERFACE v2.1</div>";
-        
-        // 3. Reset Visuals to New Theme
-        document.body.style.filter = "none";
-        document.body.style.backgroundColor = "#00050a"; // Deeper Void
-        
-        // 4. Update System IDs (Liquid Value Override)
-        const valDisp = document.getElementById('val-disp');
-        if(valDisp) valDisp.style.color = "#00ff41"; // Switch to Terminal Green for 'Active' status
-        
-        console.log("[SYS] JUMP COMPLETE. INTERFACE ACTIVE.");
-    }, 1000);
-}
-
-// EXECUTE IMMEDIATELY ON LOAD
-window.onload = initiateInterfaceJump;
-
+            
+            const baseVal = 1250000;
+            const randomAdd = Math.floor(Math.random() * 500);
+            document.getElementById('val-disp').innerText = (baseVal + randomAdd).toLocaleString() + "M";
+        }, 5000);
+    </script>
 </body>
 </html>
