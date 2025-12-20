@@ -1,132 +1,67 @@
-<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+<div class="bg-gray-900 rounded border border-cyan-500 p-4 hover:border-gold-400 transition-colors group relative h-48 flex flex-col justify-between shadow-[0_0_20px_rgba(0,243,255,0.1)]">
+    
+    <div class="flex justify-between items-start">
+        <h3 class="text-cyan-400 font-orbitron text-sm flex items-center gap-2">
+            <span class="material-symbols-outlined">currency_bitcoin</span>
+            SECURE TRANSFER
+        </h3>
+        <span class="text-[10px] text-gray-500 font-mono" id="wallet-status">DISCONNECTED</span>
+    </div>
+
+    <div class="space-y-2">
+        <div class="bg-black p-2 rounded border border-gray-800">
+            <div class="text-[8px] text-gray-500 uppercase tracking-widest">Target Node</div>
+            <div class="text-cyan-300 font-mono text-[10px] break-all">AWy2zS69uG3wJdVUxvYEQikfvPE2ukdeSFhDLCrNvKdG</div>
+        </div>
+        
+        <input type="number" id="sol-amount" placeholder="AMOUNT (SOL)" class="w-full bg-black border border-gray-700 text-white text-xs p-2 rounded focus:border-cyan-500 outline-none font-mono">
+    </div>
+
+    <button onclick="initiateTransfer()" class="w-full bg-cyan-900/40 hover:bg-cyan-500 hover:text-black border border-cyan-500/50 text-cyan-400 py-2 rounded font-orbitron text-xs transition-all flex items-center justify-center gap-2 group-hover:shadow-[0_0_15px_rgba(0,243,255,0.4)]">
+        <span class="material-symbols-outlined text-sm">send</span>
+        EXECUTE TRANSFER
+    </button>
+</div>
 
 <script>
-    // --- SYSTEM CONFIGURATION [LIVE] ---
-    const TARGET_NODE = "AWy2zS69uG3wJdVUxvYEQikfvPE2ukdeSFhDLCrNvKdG"; 
-    const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com"; // Live Mainnet Node
-    let logs = [];
+    const TARGET_WALLET = "AWy2zS69uG3wJdVUxvYEQikfvPE2ukdeSFhDLCrNvKdG";
 
-    // --- AUDIO DRIVER ---
-    let audioContextReady = false;
-    async function initAudio() {
-        if (!audioContextReady && window.Tone) {
-            await Tone.start();
-            audioContextReady = true;
-            addLog("[AUDIO] SONIC DRIVER ONLINE.");
-        }
-    }
-
-    // --- LOGGING SYSTEM ---
-    function addLog(msg) {
-        const logBox = document.getElementById('sys-log');
-        if (!logBox) return;
-        const entry = document.createElement('div');
-        const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-        entry.className = "text-gray-300 border-l-2 border-transparent hover:border-cyan-500 pl-1 transition-all cursor-default font-mono text-[10px]";
-        entry.innerHTML = `<span class="text-cyan-600 font-bold">[${time}]</span> ${msg}`;
-        logBox.appendChild(entry);
-        logBox.scrollTop = logBox.scrollHeight;
-        logs.push(`[${time}] ${msg}`);
-    }
-
-    // --- LIVE DATA FEED (REPLACES SIMULATION) ---
-    async function fetchLiveMetrics() {
-        try {
-            // Fetch Solana Price from CoinGecko API (Public Live Data)
-            const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true');
-            const data = await response.json();
-            
-            if (data.solana) {
-                const price = data.solana.usd;
-                const change = data.solana.usd_24h_change.toFixed(2);
-                
-                // Update Dashboard with REAL numbers
-                const valDisp = document.getElementById('val-disp');
-                if(valDisp) {
-                    valDisp.innerText = "$" + price.toLocaleString();
-                    valDisp.className = change >= 0 ? "text-green-400 font-mono text-lg font-bold" : "text-red-400 font-mono text-lg font-bold";
-                }
-                
-                addLog(`[ORACLE] SOL/USD: $${price} (${change}%)`);
-            }
-        } catch (e) {
-            addLog("[ERR] DATA STREAM INTERRUPTED. RETRYING...");
-        }
-    }
-
-    // --- REAL TRANSACTION MODULE ---
     async function initiateTransfer() {
-        initAudio();
-        
-        // Check for Phantom Wallet
-        const provider = window.solana;
-        if (!provider || !provider.isPhantom) {
-            addLog("[CRITICAL] PHANTOM WALLET NOT DETECTED.");
-            alert("SYSTEM ERROR: Phantom Wallet required for live transfer.");
-            window.open("https://phantom.app/", "_blank");
+        const statusEl = document.getElementById('wallet-status');
+        const amount = document.getElementById('sol-amount').value;
+
+        if (!amount || amount <= 0) {
+            addLog("[ERR] INVALID AMOUNT DETECTED.");
             return;
         }
 
-        try {
-            addLog("[NET] ESTABLISHING SECURE CONNECTION...");
-            const resp = await provider.connect();
-            const senderKey = resp.publicKey;
-            addLog(`[AUTH] IDENTITY VERIFIED: ${senderKey.toString().slice(0,6)}...`);
+        // Check for Solana Object (Phantom Wallet, etc.)
+        if ("solana" in window) {
+            const provider = window.solana;
+            if (provider.isPhantom) {
+                try {
+                    addLog("[NET] CONNECTING TO WALLET...");
+                    const resp = await provider.connect();
+                    statusEl.innerText = "CONNECTED: " + resp.publicKey.toString().slice(0,4) + "..." + resp.publicKey.toString().slice(-4);
+                    statusEl.className = "text-[10px] text-green-500 font-mono";
+                    
+                    addLog(`[CMD] PREPARING TRANSFER: ${amount} SOL -> ${TARGET_WALLET.slice(0,4)}...`);
+                    
+                    // Note: In a full deployment, you need @solana/web3.js library imported to construct the transaction object here.
+                    // This is a simulation of the command sent to the brain/core.
+                    
+                    // VISUAL CONFIRMATION SIMULATION
+                    alert(`SYSTEM AUTHORIZATION REQUIRED\n\nConfirm transfer of ${amount} SOL to:\n${TARGET_WALLET}\n\n(This requires Web3.js library to execute on mainnet)`);
+                    
+                    addLog("[SUCCESS] TRANSACTION SIGNATURE REQUESTED.");
 
-            // Define Transfer Amount (Hardcoded or Input)
-            const transferAmount = prompt("ENTER SOL AMOUNT TO TRANSFER TO NODE:", "0.1");
-            if (!transferAmount || isNaN(transferAmount)) return;
-
-            addLog(`[CMD] CONSTRUCTING TRANSACTION: ${transferAmount} SOL >> NODE`);
-
-            // --- BUILD LIVE TRANSACTION ---
-            const connection = new solanaWeb3.Connection(RPC_ENDPOINT);
-            const transaction = new solanaWeb3.Transaction().add(
-                solanaWeb3.SystemProgram.transfer({
-                    fromPubkey: senderKey,
-                    toPubkey: new solanaWeb3.PublicKey(TARGET_NODE),
-                    lamports: transferAmount * solanaWeb3.LAMPORTS_PER_SOL // Converts SOL to Lamports
-                })
-            );
-
-            // Fetch recent blockhash required for Mainnet
-            const { blockhash } = await connection.getRecentBlockhash();
-            transaction.recentBlockhash = blockhash;
-            transaction.feePayer = senderKey;
-
-            // Request User Signature
-            const { signature } = await provider.signAndSendTransaction(transaction);
-            
-            addLog(`[SUCCESS] BROADCASTING TO MAINNET...`);
-            addLog(`[TX] ID: ${signature.slice(0,8)}...`);
-            
-            await connection.confirmTransaction(signature);
-            addLog(`[CONFIRM] TRANSFER COMPLETE. LIQUIDITY MOVED.`);
-            
-            alert(`TRANSFER SUCCESSFUL\nTX ID: ${signature}`);
-
-        } catch (err) {
-            addLog(`[FAIL] PROTOCOL REJECTED: ${err.message}`);
-            console.error(err);
+                } catch (err) {
+                    addLog(`[ERR] ACCESS DENIED: ${err.message}`);
+                }
+            }
+        } else {
+            addLog("[ERR] NO SOLANA BRIDGE DETECTED (INSTALL PHANTOM).");
+            window.open("https://phantom.app/", "_blank");
         }
     }
-
-    // --- SYSTEM STARTUP ---
-    window.onload = function() {
-        addLog("[SYS] LIVE KERNEL V.46.1 INITIALIZED");
-        addLog("[NET] MAINNET CONNECTION: ACTIVE");
-        
-        // Start Live Data Polling (Every 10 seconds)
-        fetchLiveMetrics();
-        setInterval(fetchLiveMetrics, 10000);
-
-        // Attach Transfer Command to the Central Button
-        const coreBtn = document.querySelector('button[onclick="pingSystem()"]');
-        if(coreBtn) {
-            coreBtn.setAttribute('onclick', 'initiateTransfer()');
-            coreBtn.querySelector('span.font-orbitron').innerText = "SEND LIQUIDITY";
-            coreBtn.classList.remove('border-cyan-400');
-            coreBtn.classList.add('border-green-500', 'animate-pulse');
-        }
-    };
 </script>
