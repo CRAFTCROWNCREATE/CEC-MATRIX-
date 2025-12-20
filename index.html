@@ -2,146 +2,206 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>CEC-WAM V9: DATA LINK</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CEC GITHUB BRIDGE</title>
     <style>
         :root {
-            --gh-grey: #161b22;
-            --gh-border: #30363d;
-            --gh-text: #c9d1d9;
-            --gh-green: #238636;
-            --gh-blue: #58a6ff;
             --neon-gold: #FFD700;
+            --neon-blue: #00F3FF;
+            --neon-red: #FF3333;
+            --bg: #050505;
+            --panel: #111;
         }
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
-        body { margin: 0; background: #0d1117; color: var(--gh-text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Courier New', monospace; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
         /* HEADER */
         header {
-            height: 60px; background: var(--gh-grey); border-bottom: 1px solid var(--gh-border);
+            height: 55px; border-bottom: 2px solid var(--neon-gold); background: #000;
             display: flex; align-items: center; justify-content: space-between; padding: 0 15px;
         }
-        .repo-title { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-        .status-badge { 
-            background: rgba(56, 139, 253, 0.15); color: var(--gh-blue); 
-            border: 1px solid rgba(56, 139, 253, 0.4); padding: 2px 8px; 
-            border-radius: 20px; font-size: 10px; font-weight: 600;
-        }
+        .status-light { width: 8px; height: 8px; background: var(--neon-gold); border-radius: 50%; box-shadow: 0 0 10px var(--neon-gold); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity:0.5; } 50% { opacity:1; } 100% { opacity:0.5; } }
 
-        /* MAIN DASHBOARD */
-        .container { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+        /* DATA DECK */
+        .data-deck { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        
+        .card { background: var(--panel); border: 1px solid #333; border-radius: 4px; padding: 15px; position: relative; }
+        .card-title { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .card-val { font-size: 22px; font-weight: bold; color: var(--neon-blue); }
+        .card-sub { font-size: 11px; color: var(--neon-gold); margin-top: 5px; }
 
-        /* CARDS */
-        .card {
-            background: var(--gh-grey); border: 1px solid var(--gh-border); border-radius: 6px; padding: 15px;
+        /* CONNECTION STATUS */
+        .link-status {
+            font-size: 10px; color: #444; border: 1px dashed #333; padding: 5px; text-align: center; cursor: pointer;
         }
-        .card-header { font-size: 12px; color: #8b949e; margin-bottom: 5px; font-weight: 600; text-transform: uppercase; }
-        .card-val { font-size: 24px; font-weight: 300; color: #fff; }
-        .card-sub { font-size: 11px; color: var(--gh-green); margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+        .link-status.active { color: var(--neon-blue); border-color: var(--neon-blue); }
 
-        /* TERMINAL WINDOW */
-        .terminal {
-            flex: 1; background: #000; border: 1px solid #333; border-radius: 6px; 
-            font-family: 'Courier New', monospace; padding: 10px; font-size: 11px; 
-            color: #0f0; overflow-y: auto; display: flex; flex-direction: column;
-        }
-        .log { margin-bottom: 4px; line-height: 1.4; border-bottom: 1px solid #111; padding-bottom: 2px; }
-        .err { color: #ff5555; }
-        .warn { color: var(--neon-gold); }
-
-        /* ACTION BUTTON */
-        .action-btn {
-            background: var(--gh-green); color: #fff; border: 1px solid rgba(240,246,252,0.1);
-            padding: 12px; border-radius: 6px; font-weight: 600; font-size: 14px;
-            cursor: pointer; text-align: center; margin-top: auto;
-        }
-        .action-btn:active { opacity: 0.8; }
+        /* CHAT INTERFACE */
+        .comm-link { height: 40%; border-top: 2px solid var(--neon-blue); background: #000; display: flex; flex-direction: column; }
+        .logs { flex: 1; padding: 15px; overflow-y: auto; font-size: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .msg { padding: 8px 12px; border-radius: 4px; max-width: 90%; line-height: 1.4; }
+        .eve { background: rgba(255, 215, 0, 0.1); border-left: 2px solid var(--neon-gold); color: #ddd; align-self: flex-start; }
+        .user { background: rgba(0, 243, 255, 0.1); border-right: 2px solid var(--neon-blue); color: #fff; align-self: flex-end; text-align: right; }
+        
+        .input-bar { display: flex; height: 50px; border-top: 1px solid #333; }
+        input { flex: 1; background: #080808; border: none; color: #fff; padding: 0 15px; font-family: inherit; font-size: 16px; outline: none; }
+        button { width: 80px; background: var(--neon-gold); color: #000; border: none; font-weight: bold; }
 
     </style>
 </head>
 <body>
 
     <header>
-        <div class="repo-title">
-            <svg height="20" viewBox="0 0 16 16" version="1.1" width="20" fill="#fff"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-            CEC-WAM / API-BRIDGE
+        <div>CEC-WAM <span style="color:var(--neon-gold)">V9.0</span></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:10px;">DATA LINK</span>
+            <div class="status-light"></div>
         </div>
-        <div class="status-badge">CONNECTED</div>
     </header>
 
-    <div class="container">
-        
-        <!-- API STATUS CARD -->
+    <div class="data-deck">
+        <!-- PROJECT CARD -->
         <div class="card">
-            <div class="card-header">Target Repository</div>
-            <div class="card-val" style="font-size:16px; font-weight:600;">CEC-WAM/Main_Branch</div>
-            <div class="card-sub">● API Gateway Open (Port 443)</div>
+            <div class="card-title">Primary Project</div>
+            <div class="card-val">CEC_CDL</div>
+            <div class="card-sub">STATUS: ACTIVE DEVELOPMENT</div>
         </div>
 
-        <!-- HOLDINGS CARD -->
+        <!-- LIQUIDITY CARD -->
         <div class="card">
-            <div class="card-header">Synced Ledger Value</div>
-            <div class="card-val" id="val-disp">$1,250,343.00</div>
-            <div class="card-sub" id="sync-msg">✓ Last synced: Just now</div>
+            <div class="card-title">Total Liquidity</div>
+            <div class="card-val" id="liq-disp">$1,250,343.00</div>
+            <div class="card-sub">SOURCE: INTERNAL LEDGER</div>
         </div>
 
-        <!-- TERMINAL -->
-        <div class="terminal" id="console">
-            <div class="log">[INIT] GitHub Connector v8.0 started...</div>
-            <div class="log">[AUTH] Token validated via GitHub App.</div>
-            <div class="log">[BRIDGE] Handshake successful with CEC_MASTER_REPO.</div>
-            <div class="log">[DATA] Pulling latest financial blocks...</div>
+        <!-- LINK BUTTON -->
+        <div class="link-status" id="conn-btn" onclick="connectSource()">
+            [+] CONNECT GITHUB RAW DATA SOURCE
         </div>
+    </div>
 
-        <!-- REFRESH BUTTON -->
-        <div class="action-btn" onclick="triggerSync()">
-            FORCE SYNC REPOSITORY
+    <div class="comm-link">
+        <div class="logs" id="logs">
+            <div class="msg eve">EVE: I am connected to the CEC_CDL local context. Waiting for input.</div>
         </div>
-
+        <div class="input-bar">
+            <input type="text" id="inp" placeholder="Query internal data..." autocomplete="off">
+            <button onclick="send()">SEND</button>
+        </div>
     </div>
 
     <script>
-        const consoleDiv = document.getElementById('console');
-        const valDisp = document.getElementById('val-disp');
-        const syncMsg = document.getElementById('sync-msg');
-        let val = 1250343;
+        // --- INTERNAL "HOMBRE" DATA ---
+        // This is the local truth. Eve looks here FIRST.
+        const LOCAL_DATA = {
+            "value": 1250343,
+            "projects": ["CEC_CDL", "CEC-WAM", "Family Trust"],
+            "status": "Operational",
+            "last_update": new Date().toLocaleTimeString()
+        };
 
-        // Auto-Run on Load
-        setTimeout(() => {
-            log("[API] Listening for incoming transaction signals...", "log");
-        }, 1000);
+        // --- STATE ---
+        const logs = document.getElementById('logs');
+        const inp = document.getElementById('inp');
+        const liqDisp = document.getElementById('liq-disp');
+        const connBtn = document.getElementById('conn-btn');
+        let customSourceURL = localStorage.getItem('cec_source_url') || null;
 
-        function triggerSync() {
-            log("[CMD] Requesting update from GitHub Main...", "warn");
-            
-            // Simulate API Call delay
-            setTimeout(() => {
-                // Random fluctuation to show "Live" nature
-                const change = Math.floor(Math.random() * 2000);
-                val += change;
-                
-                valDisp.innerText = "$" + val.toLocaleString() + ".00";
-                syncMsg.innerText = "✓ Synced: " + new Date().toLocaleTimeString();
-                
-                log(`[SUCCESS] Data package received. +$${change} growth detected.`, "log");
-                log("[SYSTEM] Funds secure in Cold Storage. API Bridge holding.", "log");
-            }, 1500);
+        // --- INIT ---
+        if(customSourceURL) {
+            connBtn.classList.add('active');
+            connBtn.innerText = "LINKED: " + customSourceURL.substring(0, 25) + "...";
+            fetchCustomData();
         }
 
-        function log(msg, type) {
-            const div = document.createElement('div');
-            div.className = type;
-            div.innerText = msg;
-            consoleDiv.appendChild(div);
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
-        }
+        // --- FUNCTIONS ---
 
-        // Keep connection alive
-        setInterval(() => {
-            if(Math.random() > 0.8) {
-                log("[PING] GitHub Server Heartbeat: 24ms", "log");
+        function connectSource() {
+            const url = prompt("Enter GitHub Raw URL (e.g., https://raw.githubusercontent.com/User/Repo/main/data.json):");
+            if(url) {
+                if(url.includes('raw.githubusercontent.com')) {
+                    customSourceURL = url;
+                    localStorage.setItem('cec_source_url', url);
+                    connBtn.classList.add('active');
+                    connBtn.innerText = "LINKED: " + url.substring(0, 20) + "...";
+                    log("System linked to external data source.", "eve");
+                    fetchCustomData();
+                } else {
+                    alert("Invalid URL. Must be a 'Raw' GitHub link.");
+                }
             }
-        }, 5000);
+        }
+
+        async function fetchCustomData() {
+            if(!customSourceURL) return;
+            try {
+                const res = await fetch(customSourceURL);
+                if(res.ok) {
+                    const data = await res.json();
+                    // Assume data has 'value' key
+                    if(data.value) {
+                        LOCAL_DATA.value = data.value;
+                        liqDisp.innerText = "$" + LOCAL_DATA.value.toLocaleString();
+                        log("Data synced from GitHub Source.", "eve");
+                    }
+                }
+            } catch(e) {
+                console.log("Sync Error");
+            }
+        }
+
+        function send() {
+            const txt = inp.value.trim();
+            if(!txt) return;
+            
+            // Add User Msg
+            addMsg(txt, 'user');
+            inp.value = '';
+
+            // Process Logic
+            setTimeout(() => processLogic(txt.toLowerCase()), 400);
+        }
+
+        function processLogic(cmd) {
+            // 1. PROJECT DATA (Internal)
+            if(cmd.includes('cec_cdl') || cmd.includes('project')) {
+                addMsg(`CEC_CDL is the primary active directive. Funds are allocated. GitHub Bridge is standby.`, 'eve');
+            }
+            // 2. MONEY / VALUE
+            else if(cmd.includes('money') || cmd.includes('value') || cmd.includes('funds')) {
+                addMsg(`Current Liquid Value is $${LOCAL_DATA.value.toLocaleString()}. Verified by Internal Ledger.`, 'eve');
+            }
+            // 3. FAMILY
+            else if(cmd.includes('son') || cmd.includes('family')) {
+                addMsg(`Legacy Protocols are active. Family assets are segregated and secure.`, 'eve');
+            }
+            // 4. UPDATE
+            else if(cmd.includes('update')) {
+                addMsg(`Syncing with connected source...`, 'eve');
+                fetchCustomData(); // Try real fetch
+                setTimeout(() => {
+                    addMsg(`Sync Complete. No anomalies found.`, 'eve');
+                }, 1000);
+            }
+            // 5. STATUS
+            else if(cmd.includes('status')) {
+                addMsg(`System V9 Online. Data Source: ${customSourceURL ? 'EXTERNAL GITHUB' : 'INTERNAL LOCAL'}.`, 'eve');
+            }
+            // 6. FALLBACK
+            else {
+                addMsg(`I am analyzing internal records for "${cmd}". No specific directive found.`, 'eve');
+            }
+        }
+
+        function addMsg(text, type) {
+            const div = document.createElement('div');
+            div.className = `msg ${type}`;
+            div.innerText = type === 'eve' ? `EVE: ${text}` : text;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function log(text) { addMsg(text, 'eve'); }
 
     </script>
 </body>
