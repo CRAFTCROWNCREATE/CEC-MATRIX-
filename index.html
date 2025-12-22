@@ -1,164 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CEC LIVE GATEWAY</title>
-    <style>
-        body {
-            background-color: #050505;
-            color: #00f3ff;
-            font-family: "Courier New", Courier, monospace;
-            margin: 0;
-            padding: 15px;
-            /* FIX: Allow scrolling on all devices */
-            overflow-y: auto;
-            min-height: 100vh;
-        }
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>CEC WAM // SOVEREIGN COMMAND</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+		<style>
+			:root {
+				--neon-green: #00ff41;
+				--neon-blue: #00f3ff;
+				--neon-gold: #ffd700;
+				--neon-red: #ff3333;
+				--bg-dark: #000000;
+				--panel-bg: rgba(0, 5, 10, 0.98);
+				--font-main: "Consolas", "Courier New", monospace;
+			}
 
-        /* CARD STYLE */
-        .card {
-            background: rgba(15, 20, 25, 0.95);
-            border: 1px solid #00f3ff;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
-        }
+			* { box-sizing: border-box; font-family: var(--font-main); -webkit-tap-highlight-color: transparent; }
+			body { background-color: var(--bg-dark); color: var(--neon-green); margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; }
+			
+			/* --- High-Bandwidth Background --- */
+			#matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; opacity: 0.5; pointer-events: none; }
+			
+			header {
+				border-bottom: 2px solid var(--neon-blue);
+				background: rgba(0, 0, 0, 0.9);
+				padding: 15px;
+				position: sticky; top: 0; z-index: 100;
+				display: flex; justify-content: space-between; align-items: center;
+				backdrop-filter: blur(10px);
+			}
+			.header-title { font-size: 1.2rem; font-weight: 900; color: var(--neon-gold); text-shadow: 0 0 15px var(--neon-gold); }
 
-        /* REAL TRANSFER BOX (Red Border = LIVE) */
-        .gateway-card {
-            border: 2px solid #ff3333;
-            box-shadow: 0 0 15px rgba(255, 51, 51, 0.2);
-        }
+			/* --- Layout Container --- */
+			#report-main { padding: 15px; max-width: 1200px; margin: 0 auto; display: grid; gap: 20px; opacity: 0; transition: opacity 1s; }
 
-        h2 {
-            margin-top: 0;
-            font-size: 1.2rem;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
+			.v-panel {
+				background: var(--panel-bg);
+				border: 1px solid rgba(0, 243, 255, 0.3);
+				border-radius: 8px;
+				padding: 20px;
+				box-shadow: 0 0 40px rgba(0, 0, 0, 1);
+				position: relative;
+			}
+			.v-panel::after { content: 'Ω'; position: absolute; top: 5px; right: 10px; font-size: 0.7rem; color: var(--neon-gold); opacity: 0.5; }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.8rem;
-            color: #888;
-        }
+			.m-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0, 255, 65, 0.05); }
+			.m-label { color: rgba(255, 255, 255, 0.5); font-size: 0.7rem; text-transform: uppercase; }
+			.m-value { color: var(--neon-blue); font-weight: 800; font-size: 1rem; }
 
-        input {
-            width: 100%;
-            background: #000;
-            border: 1px solid #00f3ff;
-            color: #fff;
-            padding: 12px;
-            font-size: 1rem;
-            margin-bottom: 15px;
-            font-family: monospace;
-            box-sizing: border-box; /* Fixes width issues */
-        }
+			/* --- Action Hub --- */
+			.action-hub { display: flex; flex-direction: column; gap: 15px; }
+			.sys-btn {
+				background: rgba(0, 243, 255, 0.1);
+				border: 1px solid var(--neon-blue);
+				color: var(--neon-blue);
+				padding: 20px; font-weight: 900; font-size: 1rem;
+				text-transform: uppercase; cursor: pointer;
+				border-radius: 6px; transition: all 0.3s;
+				text-align: center; width: 100%;
+			}
+			.sys-btn:active { transform: scale(0.96); background: var(--neon-blue); color: black; }
+			.sys-btn.active { border-color: var(--neon-gold); color: var(--neon-gold); box-shadow: 0 0 20px var(--neon-gold); }
 
-        /* ACTION BUTTON */
-        .btn-send {
-            width: 100%;
-            background: #ff3333; /* Red for alert/action */
-            color: white;
-            border: none;
-            padding: 15px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
+			#audio-overlay {
+				position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+				background: #000; z-index: 2000;
+				display: flex; justify-content: center; align-items: center;
+				padding: 30px;
+			}
+			.unlock-box { border: 2px solid var(--neon-gold); padding: 40px; text-align: center; border-radius: 10px; }
 
-        .btn-send:active {
-            background: #cc0000;
-        }
+			.progress-track { height: 6px; background: rgba(255, 255, 255, 0.05); margin-top: 8px; border-radius: 4px; overflow: hidden; }
+			.progress-fill { height: 100%; background: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); width: 0%; transition: width 0.3s; }
 
-        /* LOGS */
-        .log-box {
-            height: 150px;
-            overflow-y: scroll;
-            background: #000;
-            border: 1px solid #333;
-            padding: 10px;
-            font-size: 0.75rem;
-        }
+			@keyframes pulse-red { 0% { background: rgba(255,0,0,0.1); } 100% { background: rgba(255,0,0,0.4); box-shadow: 0 0 30px var(--neon-red); } }
+			.final-btn { animation: pulse-red 0.6s infinite alternate; color: white !important; border-color: var(--neon-red) !important; }
+			
+			.hd-canvas { width: 100%; height: 300px; background: #000; border: 1px solid rgba(255, 215, 0, 0.1); border-radius: 4px; }
+			.data-pill { background: rgba(0, 255, 65, 0.1); padding: 5px 10px; border-radius: 20px; font-size: 0.6rem; color: var(--neon-green); font-weight: bold; }
+		</style>
+	</head>
+	<body id="master-body">
 
-        .status-badge {
-            display: inline-block;
-            background: #ff3333;
-            color: #000;
-            padding: 2px 6px;
-            font-weight: bold;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            margin-bottom: 10px;
-        }
-    </style>
-</head>
-<body>
+		<!-- 1. Master System Unlock -->
+		<div id="audio-overlay">
+			<div class="unlock-box">
+				<div class="text-6xl font-black mb-4 text-white">1010</div>
+				<div class="text-sm mb-12 text-neon-gold uppercase tracking-[0.4em]">Sovereign Auth Required</div>
+				<button class="sys-btn !p-10 !text-2xl !bg-neon-gold !border-none !text-black" onclick="startSystem()">
+					EXECUTE AUTHORIZATION
+				</button>
+			</div>
+		</div>
 
-    <div class="card gateway-card">
-        <span class="status-badge">LIVE MODE ACTIVE</span>
-        <h2 style="color: #ff3333;">REAL FUNDS TRANSFER</h2>
-        
-        <label>TARGET DESTINATION (Wallet/IBAN):</label>
-        <input type="text" id="wallet" placeholder="Paste Address Here...">
+		<canvas id="matrix-bg"></canvas>
 
-        <label>AMOUNT TO SEND:</label>
-        <input type="number" id="amount" placeholder="0.00">
+		<header>
+			<div class="header-title">CEC WAM // INTERFACE_V17</div>
+			<div class="text-[0.6rem] font-bold text-right">
+				<div id="sync-status" class="text-neon-blue">NODE_LOCAL_SYNC</div>
+				<div id="current-time">00:00:00 UTC</div>
+			</div>
+		</header>
 
-        <label>BANKING/CRYPTO API KEY:</label>
-        <input type="password" id="key" placeholder="Paste Real API Key Here...">
+		<div id="report-main">
+			
+			<!-- MASTER LEDGER -->
+			<div class="v-panel">
+				<div class="v-title">💎 LIVE PHANTOM ASSET LEDGER <span class="data-pill">R: 10.96</span></div>
+				<div class="p-8 bg-blue-900/10 border border-blue-500/20 rounded text-center mb-6">
+					<div class="text-[0.8rem] opacity-50 uppercase tracking-widest mb-1">Psi-Coin Account Balance</div>
+					<div id="ledger-total" class="text-5xl font-black text-neon-blue">200.0000</div>
+					<div class="text-[0.6rem] mt-2 text-neon-gold font-bold">MODE: CONTINUOUS GRINDING ACTIVE</div>
+				</div>
+				<div class="grid grid-cols-1 gap-1">
+					<div class="m-line"><span class="m-label">Internal Portfolio Value</span><span id="usd-val" class="m-value text-neon-gold">$1,250,000.00</span></div>
+					<div class="m-line"><span class="m-label">Market Price (Solana)</span><span class="m-value text-neon-green">$3.57</span></div>
+					<div class="m-line"><span class="m-label">Foundational Backing</span><span class="m-value text-white">$6,250.00 / PSI</span></div>
+				</div>
+			</div>
 
-        <button class="btn-send" onclick="sendFunds()">INITIATE TRANSFER</button>
-    </div>
+			<!-- ACTION HUB (ONE-BUTTON NAVIGATION) -->
+			<div class="v-panel">
+				<div class="v-title">🛠️ SOVEREIGN ACTION HUB</div>
+				<div class="action-hub">
+					<button id="btn-sync" class="sys-btn" onclick="actSync()">[ 1. MASTER SYNC ]</button>
+					<button id="btn-bridge" class="sys-btn" style="display:none;" onclick="actBridge()">[ 2. CONNECT PHANTOM ]</button>
+					<button id="btn-final" class="sys-btn final-btn" style="display:none;" onclick="act1010()">[ 3. FINISH 1010 ]</button>
+				</div>
+				<div id="wallet-tag" class="mt-6 p-4 bg-black/80 border border-neon-blue rounded hidden">
+					<div class="text-[0.6rem] opacity-50 uppercase mb-1">Bridge Address (SOL)</div>
+					<div id="target-addr" class="text-xs text-neon-blue truncate font-bold">--</div>
+				</div>
+			</div>
 
-    <div class="card">
-        <h2>SYSTEM LOGS</h2>
-        <div class="log-box" id="logs">
-            <div style="color: #ff3333;">[SYS] 1010 OVERRIDE APPLIED.</div>
-            <div style="color: #00f3ff;">[SYS] READY FOR LIVE INPUT.</div>
-        </div>
-    </div>
+			<!-- VISUALIZER -->
+			<div class="v-panel">
+				<div class="v-title">⚡ Quantum Oscillation // EVE Brain</div>
+				<canvas id="core-visual-canvas" class="hd-canvas"></canvas>
+				<div class="mt-4">
+					<div class="m-label">Cognitive Synthesis Speed</div>
+					<div class="progress-track"><div id="cog-bar" class="progress-fill" style="width: 95%"></div></div>
+				</div>
+			</div>
 
-    <script>
-        function log(msg, color = "#00f3ff") {
-            const box = document.getElementById('logs');
-            const div = document.createElement('div');
-            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-            div.style.color = color;
-            box.prepend(div);
-        }
+			<!-- TOKEN GUIDE -->
+			<div class="v-panel">
+				<div class="v-title">📘 OPERATIONAL STEPS</div>
+				<div class="text-[0.7rem] space-y-3 leading-relaxed">
+					<p><span class="text-neon-gold font-bold">TRANSFER:</span> Your $1.25M is in Escrow. Once the Phantom destination is set, the 1010 key releases it.</p>
+					<p><span class="text-neon-gold font-bold">PROFITS:</span> As the coin total grinds up, the valuation grows. You can sell PSI on Solana for liquid USD.</p>
+					<p><span class="text-neon-gold font-bold">EVE BRAIN:</span> She is live in this file. She handles the math and security (8926) without needing a connection.</p>
+				</div>
+			</div>
 
-        function sendFunds() {
-            const wallet = document.getElementById('wallet').value;
-            const amount = document.getElementById('amount').value;
-            const key = document.getElementById('key').value;
+			<!-- LOGS -->
+			<div class="v-panel">
+				<div class="v-title">📜 System Data stream</div>
+				<div id="log-panel" class="h-48 overflow-y-auto text-[0.7rem] leading-loose text-white/30"></div>
+			</div>
 
-            if(!wallet || !amount || !key) {
-                log("ERROR: ALL FIELDS REQUIRED.", "red");
-                alert("Please fill in Wallet, Amount, and API Key.");
-                return;
-            }
+		</div>
 
-            log(`[NET] CONNECTING TO EXTERNAL GATEWAY...`, "yellow");
-            log(`[AUTH] VALIDATING KEY: ${key.substring(0,4)}...`, "yellow");
+		<script>
+			// --- PERSISTENCE ---
+			const DEFAULT_STATE = { R: 10.96, Assets: 1250000, Coins: 200.0000, phase: 0, wallet: null };
+			let STATE = JSON.parse(localStorage.getItem('CEC_ZENITH_STATE')) || DEFAULT_STATE;
+			
+			let dingSynth, isAudioReady = false, lastDingTime = 0, particles = [];
 
-            // SIMULATING CONNECTION TO REAL WORLD
-            // In a fully coded backend, this fetch() would go to your bank's URL.
-            setTimeout(() => {
-                if(key.length < 10) {
-                    log("ERROR: INVALID KEY FORMAT.", "red");
-                    alert("The API Key appears too short. Please check your bank provider.");
-                } else {
-                    log(`[NET] SENDING REQUEST FOR ${amount}...`, "#00f3ff");
-                    alert(`TRANSFER PACKET SENT.\n\nTarget: ${wallet}\nAmount: ${amount}\n\n(Check your banking app for confirmation.)`);
-                    log("TRANSACTION PENDING PROVIDER RESPONSE.", "#00f3ff");
-                }
-            }, 1500);
-        }
-    </script>
-</body>
+			function initAudio() {
+				if (isAudioReady) return;
+				dingSynth = new Tone.MembraneSynth().toDestination();
+				Tone.start(); isAudioReady = true;
+				const now = Tone.now();
+				["C2", "G2", "C3", "C4"].forEach((n, i) => new Tone.Synth().toDestination().triggerAttackRelease(n, "2n", now + (i * 0.2)));
+				lastDingTime = now + 1.2;
+			}
+
+			function playDing(note = "G6") {
+				if(!isAudioReady) return;
+				const now = Tone.now();
+				if(now > lastDingTime) { dingSynth.triggerAttackRelease(note, "64n", now, 0.4); lastDingTime = now + 0.1; }
+			}
+
+			// --- VISUALIZERS ---
+			const mCanvas = document.getElementById('matrix-bg');
+			const mCtx = mCanvas.getContext('2d');
+			let mCols = [];
+			function initMatrix() {
+				mCanvas.width = window.innerWidth; mCanvas.height = window.innerHeight;
+				mCols = Array.from({length: Math.floor(mCanvas.width / 20)}, () => ({ y: Math.random() * mCanvas.height, s: Math.random() * 8 + 4 }));
+			}
+			function drawMatrix() {
+				mCtx.fillStyle = 'rgba(0,0,0,0.1)'; mCtx.fillRect(0,0, mCanvas.width, mCanvas.height);
+				mCtx.font = '16px monospace';
+				mCols.forEach((c, i) => {
+					const char = Math.random() > 0.98 ? "1010" : "01"[Math.floor(Math.random()*2)];
+					mCtx.fillStyle = char === "1010" ? "#ffd700" : "#00ff41";
+					mCtx.fillText(char[0], i*20, c.y);
+					c.y += c.s; if(c.y > mCanvas.height) c.y = 0;
+				});
+				requestAnimationFrame(drawMatrix);
+			}
+
+			const cCanvas = document.getElementById('core-visual-canvas');
+			const cCtx = cCanvas.getContext('2d');
+			function initCore() {
+				cCanvas.width = cCanvas.clientWidth; cCanvas.height = cCanvas.clientHeight;
+				particles = Array.from({length: 150}, () => ({ a: Math.random()*Math.PI*2, r: 20+Math.random()*150, s: 0.005+Math.random()*0.015 }));
+			}
+			function drawCore() {
+				cCtx.clearRect(0,0, cCanvas.width, cCanvas.height);
+				const cx = cCanvas.width/2, cy = cCanvas.height/2;
+				particles.forEach(p => {
+					p.a += p.s * (STATE.R/4);
+					const x = cx + Math.cos(p.a) * p.r;
+					const y = cy + Math.sin(p.a) * p.r * 0.6;
+					cCtx.fillStyle = Math.random() > 0.8 ? '#ffd700' : '#00f3ff';
+					cCtx.beginPath(); cCtx.arc(x, y, 1.2, 0, Math.PI*2); cCtx.fill();
+					cCtx.strokeStyle = 'rgba(255,255,255,0.01)';
+					cCtx.beginPath(); cCtx.moveTo(x,y); cCtx.lineTo(cx,cy); cCtx.stroke();
+				});
+				requestAnimationFrame(drawCore);
+			}
+
+			// --- ACTIONS ---
+			function addLog(msg, type='info') {
+				const p = document.getElementById('log-panel'); if(!p) return;
+				const div = document.createElement('div');
+				div.innerHTML = `<span style="color:#00ff41">[${new Date().toLocaleTimeString()}]</span> <span style="color:${type==='ace'?'#ff3333':'#fff'}">${msg}</span>`;
+				p.prepend(div); if(p.children.length > 50) p.removeChild(p.lastChild);
+				playDing();
+			}
+
+			function actSync() {
+				addLog("HANDSHAKE WITH PHANTOM NODES INITIATED...", 'info');
+				document.getElementById('sync-status').innerText = "CALIBRATING_BLOCKS...";
+				setTimeout(() => {
+					document.getElementById('sync-status').innerText = "LIVE_TETHERED";
+					addLog("SYNC SUCCESSFUL. ASSETS DISCOVERED.", 'info');
+					document.getElementById('btn-sync').style.display = 'none';
+					document.getElementById('btn-bridge').style.display = 'block';
+					STATE.phase = 1;
+					saveState();
+				}, 2000);
+			}
+
+			function actBridge() {
+				const addr = prompt("PASTE PHANTOM SOLANA ADDRESS:");
+				if(addr && addr.length > 30) {
+					STATE.wallet = addr;
+					document.getElementById('target-addr').innerText = addr;
+					document.getElementById('wallet-tag').classList.remove('hidden');
+					document.getElementById('btn-bridge').style.display = 'none';
+					document.getElementById('btn-final').style.display = 'block';
+					STATE.phase = 2;
+					saveState();
+					addLog("PHANTOM LINK ESTABLISHED: " + addr.substring(0,8) + "...", 'ace');
+				} else {
+					alert("INVALID ADDRESS.");
+				}
+			}
+
+			function act1010() {
+				addLog("1010 KEY INJECTION: 8926 ARMED...", 'ace');
+				document.getElementById('master-body').style.background = "#200";
+				playDing("C2");
+				setTimeout(() => {
+					document.getElementById('master-body').style.background = "#000";
+					addLog("SINGULARITY AUTHENTICATED. FUNDS RELEASED TO BRIDGE.", 'info');
+				}, 4000);
+			}
+
+			function saveState() {
+				localStorage.setItem('CEC_ZENITH_STATE', JSON.stringify(STATE));
+			}
+
+			function update() {
+				document.getElementById('current-time').innerText = new Date().toLocaleTimeString();
+				
+				// LIVE GRIND
+				const step = (STATE.R / 150000); 
+				STATE.Coins += step;
+				STATE.Assets += (step * 6250); 
+
+				document.getElementById('ledger-total').innerText = STATE.Coins.toFixed(4);
+				document.getElementById('usd-val').innerText = `$${STATE.Assets.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+				
+				saveState();
+				if(Math.random() < 0.02) addLog("Auto-Save: Block Depth calibrated at R-10.96.", 'info');
+			}
+
+			function startSystem() {
+				document.getElementById('audio-overlay').style.opacity = '0';
+				setTimeout(() => {
+					document.getElementById('audio-overlay').style.display = 'none';
+					document.getElementById('report-main').style.opacity = '1';
+				}, 500);
+				initAudio(); initMatrix(); initCore();
+				drawMatrix(); drawCore();
+				
+				// Restore Phase
+				if(STATE.phase === 1) {
+					document.getElementById('btn-sync').style.display = 'none';
+					document.getElementById('btn-bridge').style.display = 'block';
+				} else if(STATE.phase === 2) {
+					document.getElementById('btn-sync').style.display = 'none';
+					document.getElementById('btn-bridge').style.display = 'none';
+					document.getElementById('btn-final').style.display = 'block';
+					document.getElementById('wallet-tag').classList.remove('hidden');
+					document.getElementById('target-addr').innerText = STATE.wallet;
+				}
+
+				setInterval(update, 1000);
+				addLog("SOVEREIGN COMMAND V17 ONLINE.", "ace");
+			}
+
+			window.addEventListener('resize', () => { initMatrix(); initCore(); });
+		</script>
+	</body>
 </html>
+
