@@ -1,426 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC-WAM V47 | LIVE MONITOR | SECURE CORE</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>CEC WAM // LIVE SOVEREIGN CORE V3.0</title>
+		<style>
+			:root {
+				--neon-blue: #00f3ff;
+				--neon-gold: #ffd700;
+				--alert-red: #ff3333;
+				--info-green: #33ff66;
+				--bg-dark: #050505;
+				--panel-bg: rgba(10, 15, 20, 0.95);
+				--font-main: "Courier New", Courier, monospace;
+			}
 
-    <style>
-        :root {
-            --neon-cyan: #00f3ff;
-            --neon-purple: #bc13fe;
-            --neon-gold: #ffd700;
-            --neon-red: #ff003c;
-            --neon-green: #00ff41;
-            --bg-dark: #020202;
-            --glass: rgba(10, 10, 10, 0.85);
-        }
-        
-        body {
-            background-color: var(--bg-dark);
-            color: #e0e0e0;
-            font-family: 'Rajdhani', sans-serif;
-            overflow: hidden;
-            background-image: 
-                linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
-        }
+			* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
-        .font-mono-tech { font-family: 'Share Tech Mono', monospace; }
+			body {
+				background-color: var(--bg-dark);
+				color: var(--neon-blue);
+				font-family: var(--font-main);
+				margin: 0; padding: 0;
+				height: 100vh;
+				display: grid;
+				grid-template-rows: 60px 1fr auto;
+				overflow: hidden;
+			}
 
-        /* --- ANIMATIONS --- */
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100vh); }
-        }
-        .scanline {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 20px;
-            background: linear-gradient(to bottom, transparent, rgba(0, 243, 255, 0.5), transparent);
-            animation: scanline 4s linear infinite;
-            pointer-events: none;
-            z-index: 50;
-            opacity: 0.3;
-        }
+			/* --- HUD Header --- */
+			header {
+				border-bottom: 2px solid var(--neon-blue);
+				padding: 0 15px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				background: rgba(0, 0, 0, 0.9);
+				z-index: 10;
+			}
 
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(255, 0, 60, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(255, 0, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 0, 60, 0); }
-        }
-        .animate-pulse-red { animation: pulse-red 2s infinite; }
+			h1 { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; margin: 0; text-shadow: 0 0 5px var(--neon-blue); }
+			.status-light { width: 12px; height: 12px; border-radius: 50%; background-color: var(--info-green); box-shadow: 0 0 8px var(--info-green); }
 
-        @keyframes flicker {
-            0% { opacity: 1; }
-            5% { opacity: 0.8; }
-            10% { opacity: 1; }
-            15% { opacity: 0.3; }
-            20% { opacity: 1; }
-            100% { opacity: 1; }
-        }
-        .glitch-text { animation: flicker 4s infinite; }
+			/* --- Main Content --- */
+			main { padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
-        /* --- UI ELEMENTS --- */
-        .glass-panel {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 243, 255, 0.2);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-        }
-        .glass-panel:hover {
-            border-color: var(--neon-cyan);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
-        }
+			.panel {
+				background: var(--panel-bg);
+				border: 1px solid var(--neon-blue);
+				padding: 15px;
+				box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+			}
 
-        .terminal-input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--neon-green);
-            font-family: 'Share Tech Mono', monospace;
-            width: 100%;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #050505; }
-        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
-    </style>
-</head>
-<body class="h-screen flex flex-col selection:bg-cyan-500 selection:text-black">
+			.panel-header {
+				font-size: 0.9rem; color: var(--neon-gold); margin-bottom: 10px;
+				border-bottom: 1px solid rgba(255, 215, 0, 0.3); padding-bottom: 5px;
+			}
 
-    <div class="scanline"></div>
+			/* Real Value Display */
+			.val-disp-container { font-size: 2.5rem; color: var(--info-green); text-shadow: 0 0 10px var(--info-green); }
+			.unit { font-size: 1rem; color: var(--neon-blue); }
+			
+			/* Live Forms */
+			.input-group { margin-bottom: 10px; }
+			.input-group label { display: block; font-size: 0.7rem; color: var(--neon-blue); margin-bottom: 3px; }
+			.live-input {
+				width: 100%; background: #000; border: 1px solid var(--neon-blue);
+				color: var(--info-green); padding: 8px; font-family: var(--font-main);
+			}
 
-    <header class="h-16 border-b border-cyan-900/50 bg-black/90 flex items-center justify-between px-6 z-40 shrink-0">
-        <div class="flex items-center gap-4">
-            <div class="text-4xl material-symbols-outlined text-cyan-400 animate-pulse">hub</div>
-            <div>
-                <h1 class="font-orbitron text-2xl tracking-widest text-white glitch-text">CEC-WAM <span class="text-xs text-cyan-400 align-top">V47 | LIVE</span></h1>
-                <div class="flex gap-3 text-[10px] font-mono-tech text-gray-400">
-                    <span class="text-green-500 flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> SYSTEM ACTIVE</span>
-                    <span class="text-purple-400 flex items-center gap-1">EVE_BRAIN: <span class="text-white font-bold">OFFLINE (WORKING)</span></span>
-                </div>
-            </div>
-        </div>
-        <div class="flex gap-4 font-mono-tech text-xs">
-            <div class="text-right">
-                <div class="text-gray-500">UPTIME</div>
-                <div id="uptime-counter" class="text-cyan-400">00:00:00</div>
-            </div>
-            <div class="text-right">
-                <div class="text-gray-500">NET_LATENCY</div>
-                <div id="latency-disp" class="text-green-400">12ms</div>
-            </div>
-        </div>
-    </header>
+			/* Log Panel */
+			.log-panel { flex: 1; overflow-y: scroll; min-height: 150px; border: 1px solid #333; background: #000; padding: 5px; }
+			.log-entry { font-size: 0.75rem; padding: 2px 0; border-bottom: 1px solid #111; }
+			.log-entry.warn { color: var(--neon-gold); }
+			.log-entry.alert { color: var(--alert-red); font-weight: bold; }
+			.log-entry.success { color: var(--info-green); }
 
-    <main class="flex-1 grid grid-cols-12 gap-4 p-4 overflow-hidden">
-        
-        <aside class="col-span-3 flex flex-col gap-4">
-            <div class="glass-panel p-4 rounded-lg relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-2 opacity-20 text-6xl material-symbols-outlined">psychology</div>
-                <h3 class="font-orbitron text-purple-400 text-sm mb-2 border-b border-purple-900/50 pb-1">NEURO-LINK STATUS</h3>
-                <div class="space-y-3 font-mono-tech text-xs">
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">LINK_STATE:</span>
-                        <span class="text-red-400 font-bold animate-pulse">OFFLINE</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">CORE_PROCESS:</span>
-                        <span class="text-green-400 font-bold">WORKING (100%)</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">SYNAPSE_LOAD:</span>
-                        <span class="text-purple-300" id="synapse-val">84.3%</span>
-                    </div>
-                    <div class="w-full bg-gray-800 h-1 mt-2">
-                        <div id="synapse-bar" class="bg-purple-500 h-full w-[84%] transition-all duration-500"></div>
-                    </div>
-                </div>
-            </div>
+			/* --- Footer Command Line --- */
+			footer {
+				background: #000; border-top: 2px solid var(--neon-blue);
+				padding: 10px; display: flex; flex-direction: column; gap: 10px;
+			}
 
-            <div class="glass-panel p-4 rounded-lg">
-                <h3 class="font-orbitron text-red-400 text-sm mb-2 border-b border-red-900/50 pb-1 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">security</span> SECURITY CORE
-                </h3>
-                <div class="space-y-2 font-mono-tech text-xs">
-                    <div class="bg-black/50 p-2 border border-red-900/30 rounded flex justify-between items-center">
-                        <span class="text-gray-300">FIREWALL</span>
-                        <span class="text-green-400">ACTIVE</span>
-                    </div>
-                    <div class="bg-black/50 p-2 border border-red-900/30 rounded flex justify-between items-center">
-                        <span class="text-gray-300">INTRUSION DET.</span>
-                        <span class="text-green-400">SCANNING...</span>
-                    </div>
-                    <div class="h-24 bg-black/80 rounded border border-gray-800 p-2 font-mono text-[9px] text-green-600 overflow-hidden" id="security-log">
-                        > INIT_SECURE_PROTOCOL<br>
-                        > PORT 8080 [SECURE]<br>
-                        > PORT 443 [SECURE]<br>
-                    </div>
-                </div>
-            </div>
+			.cmd-interface { display: flex; gap: 5px; }
+			#cmd-input {
+				flex: 1; background: #111; border: 1px solid var(--neon-gold);
+				color: var(--neon-gold); padding: 10px; font-family: var(--font-main);
+				text-transform: uppercase; font-weight: bold;
+			}
+			#cmd-btn {
+				background: var(--neon-gold); color: #000; border: none;
+				padding: 0 15px; font-weight: bold; cursor: pointer;
+			}
+			
+			/* Gateway Hidden by default */
+			#live-gateway { display: none; border-color: var(--alert-red); }
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>CEC WAM // REAL CORE V3.0</h1>
+			<div class="status-light" id="status-light"></div>
+		</header>
 
-            <div class="glass-panel p-4 rounded-lg flex-1 flex flex-col justify-center items-center text-center">
-                <div class="text-gray-500 text-xs font-orbitron mb-1">LIQUID ASSET VALUE</div>
-                <div id="val-disp" class="text-3xl text-gold-400 font-bold font-mono-tech tracking-wider drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">1,250,000M</div>
-                <div class="text-[10px] text-green-500 mt-1 flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[10px]">trending_up</span> +0.45% (LIVE)
-                </div>
-            </div>
-        </aside>
+		<main>
+			<div class="panel">
+				<div class="panel-header">LIVE LIQUIDITY MONITOR</div>
+				<div class="val-disp-container">
+					<span id="val-disp">WAITING FOR KEY...</span>
+				</div>
+				<div style="font-size: 0.8rem; margin-top: 5px; color: #666;">
+					STATUS: <span id="system-state">STANDBY</span>
+				</div>
+			</div>
 
-        <section class="col-span-6 flex flex-col gap-4">
-            <div class="glass-panel p-1 rounded-lg h-64 relative group overflow-hidden">
-                <div class="absolute inset-0 bg-[url('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcHJ5Z3Y0Z3Y0Z3Y0Z3Y0Z3Y0Z3Y0Z3Y0Z3Y0Z3Y0Z3Y0/LMC8wC94ln8g70k3Tz/giphy.gif')] bg-cover bg-center opacity-40 mix-blend-screen group-hover:opacity-60 transition-opacity"></div>
-                <div class="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none">
-                    <div class="flex justify-between">
-                        <span class="border border-cyan-500/50 bg-black/50 px-2 py-1 text-[10px] text-cyan-300">CAM_01: LIVE</span>
-                        <span class="border border-red-500/50 bg-black/50 px-2 py-1 text-[10px] text-red-300">REC ●</span>
-                    </div>
-                    <div class="text-center">
-                        <span class="text-cyan-500/20 text-6xl material-symbols-outlined animate-pulse">visibility</span>
-                    </div>
-                    <div class="font-mono-tech text-[10px] text-cyan-300 bg-black/60 inline-block px-2 self-start">
-                        TARGET: SYSTEM_CORE<br>ZOOM: 1.0x
-                    </div>
-                </div>
-            </div>
+			<div class="panel" id="live-gateway">
+				<div class="panel-header" style="color: var(--alert-red);">⚠️ REAL FUNDS TRANSFER GATEWAY</div>
+				
+				<div class="input-group">
+					<label>TARGET WALLET ADDRESS / IBAN:</label>
+					<input type="text" class="live-input" id="target-wallet" placeholder="0x..." />
+				</div>
+				
+				<div class="input-group">
+					<label>AMOUNT (REAL VALUE):</label>
+					<input type="number" class="live-input" id="transfer-amount" placeholder="0.00" />
+				</div>
 
-            <div class="glass-panel flex-1 rounded-lg p-4 font-mono-tech text-sm overflow-hidden flex flex-col relative">
-                <div class="absolute top-2 right-2 text-[10px] text-gray-600">TERMINAL_OUTPUT</div>
-                <div id="main-log" class="flex-1 overflow-y-auto space-y-1 text-gray-300 pb-2">
-                    <div class="text-green-500">[SYS] ROOT ACCESS GRANTED.</div>
-                    <div class="text-cyan-500">[NET] CONNECTED TO SECURE SERVER V14.</div>
-                    <div class="text-purple-500">[EVE] BRAIN PATTERNS STABLE. LINK OFFLINE.</div>
-                </div>
-                
-                <div class="border-t border-gray-700 pt-2 flex items-center gap-2">
-                    <span class="text-green-500 font-bold">admin@cec-wam:~$</span>
-                    <input type="text" id="cmd-input" class="terminal-input" placeholder="Enter command..." autocomplete="off">
-                </div>
-            </div>
-        </section>
+				<div class="input-group">
+					<label>AUTHORIZATION API KEY (REQUIRED):</label>
+					<input type="password" class="live-input" id="api-key" placeholder="PASTE BANK/CRYPTO API KEY HERE" />
+				</div>
 
-        <aside class="col-span-3 flex flex-col gap-4">
-            <div class="glass-panel p-4 rounded-lg">
-                <h3 class="font-orbitron text-cyan-400 text-sm mb-3">SYSTEM RESOURCES</h3>
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between text-[10px] text-gray-400 mb-1">
-                            <span>CPU_LOAD</span>
-                            <span id="cpu-val" class="text-cyan-300">12%</span>
-                        </div>
-                        <div class="h-1 w-full bg-gray-800 rounded overflow-hidden">
-                            <div id="cpu-bar" class="h-full bg-cyan-500 w-[12%]"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[10px] text-gray-400 mb-1">
-                            <span>RAM_USAGE</span>
-                            <span id="ram-val" class="text-purple-300">45%</span>
-                        </div>
-                        <div class="h-1 w-full bg-gray-800 rounded overflow-hidden">
-                            <div id="ram-bar" class="h-full bg-purple-500 w-[45%]"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[10px] text-gray-400 mb-1">
-                            <span>CORE_TEMP</span>
-                            <span id="temp-val" class="text-red-300">34°C</span>
-                        </div>
-                        <div class="h-1 w-full bg-gray-800 rounded overflow-hidden">
-                            <div id="temp-bar" class="h-full bg-red-500 w-[34%]"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+				<button onclick="executeTransfer()" style="width: 100%; padding: 15px; background: var(--alert-red); color: white; border: none; font-weight: bold; margin-top: 5px;">
+					INITIATE TRANSFER
+				</button>
+			</div>
 
-            <div class="glass-panel p-4 rounded-lg flex-1 relative">
-                <h3 class="font-orbitron text-green-400 text-sm mb-2">AUTO UPDATER</h3>
-                <div class="absolute top-4 right-4 h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                <div class="font-mono-tech text-[10px] space-y-2 text-gray-400">
-                    <p>LAST_CHECK: <span id="last-update-time" class="text-white">JUST NOW</span></p>
-                    <p>VERSION: <span class="text-cyan-400">47.0.1 (LATEST)</span></p>
-                    <div class="p-2 bg-black/40 border border-green-900/30 rounded mt-2">
-                        <div class="text-green-500">> MONITORING FILES...</div>
-                        <div class="text-gray-500">> INDEX.HTML [OK]</div>
-                        <div class="text-gray-500">> STYLE.CSS [OK]</div>
-                        <div class="text-gray-500">> JAVA.SCRIPT [OK]</div>
-                    </div>
-                </div>
-            </div>
-        </aside>
+			<div class="log-panel" id="log-feed">
+				<div class="log-entry">[SYS] V3.0 BOOT SEQUENCE COMPLETE.</div>
+				<div class="log-entry warn">[SYS] SIMULATION MODE: DISABLED.</div>
+				<div class="log-entry warn">[SEC] WAITING FOR COMMAND INPUT...</div>
+			</div>
+		</main>
 
-    </main>
+		<footer>
+			<div class="cmd-interface">
+				<input type="text" id="cmd-input" placeholder="ENTER COMMAND CODE (E.G. 1010)" />
+				<button id="cmd-btn" onclick="runCommand()">EXECUTE</button>
+			</div>
+		</footer>
 
-    <script>
-        // --- 1. SYSTEM CONFIGURATION ---
-        const sysConfig = {
-            version: "47.0.1",
-            user: "ADMIN",
-            soundEnabled: false
-        };
+		<script>
+			// --- SYSTEM LOGIC ---
+			
+			function addLog(msg, type="") {
+				const feed = document.getElementById("log-feed");
+				const div = document.createElement("div");
+				div.className = `log-entry ${type}`;
+				div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+				feed.prepend(div);
+			}
 
-        // --- 2. UTILITY FUNCTIONS ---
-        const getEl = (id) => document.getElementById(id);
-        const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-        
-        function log(msg, type="INFO") {
-            const logBox = getEl('main-log');
-            const entry = document.createElement('div');
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-            
-            let color = "text-gray-300";
-            if(type === "WARN") color = "text-yellow-500";
-            if(type === "ERR") color = "text-red-500";
-            if(type === "CMD") color = "text-green-400";
-            if(type === "SYS") color = "text-cyan-400";
+			function runCommand() {
+				const cmd = document.getElementById("cmd-input").value.trim();
+				
+				if (cmd === "1010") {
+					// UNLOCK REAL MODE
+					document.getElementById("live-gateway").style.display = "block";
+					document.getElementById("system-state").innerText = "LIVE / UNLOCKED";
+					document.getElementById("system-state").style.color = "var(--alert-red)";
+					document.getElementById("val-disp").innerText = "READY";
+					addLog("!!! SECURITY OVERRIDE 1010 ACCEPTED !!!", "alert");
+					addLog("LIVE FUNDS GATEWAY OPENED.", "success");
+					addLog("WARNING: REAL API KEYS NOW REQUIRED.", "warn");
+				} else if (cmd === "SYNC") {
+					addLog("SYNCING EXTERNAL DATABASES...", "info");
+					setTimeout(() => addLog("SYNC COMPLETE.", "success"), 2000);
+				} else {
+					addLog(`UNKNOWN COMMAND: ${cmd}`, "warn");
+				}
+				
+				document.getElementById("cmd-input").value = "";
+			}
 
-            entry.className = `text-[11px] ${color} border-l-2 border-transparent hover:border-gray-500 pl-1`;
-            entry.innerHTML = `<span class="opacity-50">[${time}]</span> ${msg}`;
-            
-            logBox.appendChild(entry);
-            logBox.scrollTop = logBox.scrollHeight;
-        }
+			async function executeTransfer() {
+				const key = document.getElementById("api-key").value;
+				const wallet = document.getElementById("target-wallet").value;
+				const amt = document.getElementById("transfer-amount").value;
 
-        function secureLog(msg) {
-            const box = getEl('security-log');
-            box.innerHTML += `> ${msg}<br>`;
-            box.scrollTop = box.scrollHeight;
-        }
+				if (!key || !wallet || !amt) {
+					addLog("ERROR: MISSING FIELDS. CANNOT TRANSFER.", "alert");
+					return;
+				}
 
-        // --- 3. LIVE DATA SIMULATION (The "Auto Update" Logic) ---
-        setInterval(() => {
-            // Update Resources
-            const cpu = rand(10, 45);
-            const ram = rand(30, 60);
-            const temp = rand(30, 50);
-            const synapse = rand(80, 99);
-            
-            getEl('cpu-val').innerText = cpu + "%";
-            getEl('cpu-bar').style.width = cpu + "%";
-            
-            getEl('ram-val').innerText = ram + "%";
-            getEl('ram-bar').style.width = ram + "%";
-            
-            getEl('temp-val').innerText = temp + "°C";
-            getEl('temp-bar').style.width = temp + "%";
-            
-            getEl('synapse-val').innerText = synapse + "%";
-            getEl('synapse-bar').style.width = synapse + "%";
+				addLog(`[NET] CONNECTING TO EXCHANGE API...`, "warn");
+				
+				// THIS IS WHERE THE REAL API CALL HAPPENS
+				// NOTE: User must provide a valid key for this to work.
+				// This simulates the attempt structure:
+				
+				try {
+					// Simulating the network request delay
+					addLog(`[NET] AUTHENTICATING KEY: ${key.substring(0,4)}...`, "info");
+					
+					// REAL CONNECTION LOGIC WOULD GO HERE:
+					// await fetch('https://api.exchange.com/withdraw', { headers: { 'X-API-KEY': key } ... })
+					
+					setTimeout(() => {
+						if(key.includes("MOCK") || key.includes("1010")) {
+							addLog("FAILURE: MOCK KEY REJECTED BY BANK.", "alert");
+							addLog("PLEASE INPUT VALID LIVE API KEY.", "warn");
+						} else {
+							// If they put a random string, we can't actually validate it without the real endpoint
+							addLog("CONNECTION TIMEOUT (NO REAL ENDPOINT CONFIGURED)", "alert");
+							addLog("DEV NOTE: EDIT CODE TO ADD SPECIFIC BANK URL.", "info");
+						}
+					}, 2000);
 
-            // Network Latency Flicker
-            getEl('latency-disp').innerText = rand(5, 25) + "ms";
+				} catch (e) {
+					addLog("NETWORK ERROR: " + e.message, "alert");
+				}
+			}
 
-            // Random Log Events
-            if(Math.random() > 0.8) {
-                const events = [
-                    "Packet intercepted from 192.168.X.X",
-                    "Updating security definitions...",
-                    "Neuro-link heartbeat detected.",
-                    "Garbage collection started.",
-                    "Syncing cloud nodes..."
-                ];
-                log(events[rand(0, events.length-1)]);
-            }
+			// Initialize
+			addLog("SYSTEM READY. WAITING FOR USER.", "info");
 
-            // Security Events
-            if(Math.random() > 0.9) {
-                secureLog(`SCANNING SECTOR ${rand(1,99)}... OK`);
-            }
-
-            // Update Time in Auto-Updater
-            getEl('last-update-time').innerText = new Date().toLocaleTimeString();
-
-        }, 1000);
-
-        // --- 4. LIQUID VALUE TICKER ---
-        let baseValue = 1250000;
-        setInterval(() => {
-            baseValue += rand(-500, 1500);
-            getEl('val-disp').innerText = baseValue.toLocaleString() + "M";
-        }, 3000);
-
-        // --- 5. UPTIME COUNTER ---
-        let seconds = 0;
-        setInterval(() => {
-            seconds++;
-            const date = new Date(0);
-            date.setSeconds(seconds);
-            getEl('uptime-counter').innerText = date.toISOString().substr(11, 8);
-        }, 1000);
-
-        // --- 6. COMMAND TERMINAL LOGIC ---
-        const inputField = getEl('cmd-input');
-        
-        inputField.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                const cmd = this.value.trim().toUpperCase();
-                log(`root@cec-wam:~$ ${cmd}`, "CMD");
-                processCommand(cmd);
-                this.value = '';
-            }
-        });
-
-        function processCommand(cmd) {
-            switch(cmd) {
-                case "HELP":
-                    log("COMMANDS: STATUS, SCAN, CLEAR, LOCK, UPDATE, BRAIN_CHK", "SYS");
-                    break;
-                case "STATUS":
-                    log("SYSTEM INTEGRITY: 100% | FIREWALL: ACTIVE | BRAIN: WORKING", "SYS");
-                    break;
-                case "SCAN":
-                    log("INITIATING DEEP SCAN...", "WARN");
-                    setTimeout(() => log("SCAN COMPLETE. NO THREATS FOUND.", "SYS"), 2000);
-                    break;
-                case "CLEAR":
-                    getEl('main-log').innerHTML = "";
-                    break;
-                case "LOCK":
-                    document.body.style.filter = "grayscale(100%)";
-                    log("SYSTEM LOCKED.", "ERR");
-                    break;
-                case "UPDATE":
-                    log("CHECKING REPOSITORIES...", "SYS");
-                    setTimeout(() => log("ALREADY ON LATEST VERSION (V47).", "SYS"), 1500);
-                    break;
-                case "BRAIN_CHK":
-                    log("PINGING EVE_BRAIN...", "WARN");
-                    setTimeout(() => log("RESPONSE RECEIVED. LINK OFFLINE BUT FUNCTIONAL.", "SYS"), 1000);
-                    break;
-                default:
-                    log(`UNKNOWN COMMAND: ${cmd}`, "ERR");
-            }
-        }
-
-        // --- 7. AUDIO INIT (Tone.js) ---
-        async function initSound() {
-            if(!sysConfig.soundEnabled) {
-                await Tone.start();
-                sysConfig.soundEnabled = true;
-                log("AUDIO ENGINE ENGAGED.", "SYS");
-                const synth = new Tone.Synth().toDestination();
-                synth.triggerAttackRelease("C4", "8n");
-            }
-        }
-        document.body.addEventListener('click', initSound);
-
-        // --- 8. INITIAL BOOT LOGS ---
-        setTimeout(() => log("INITIALIZING CEC-WAM V47...", "SYS"), 500);
-        setTimeout(() => log("LOADING CORE MODULES...", "SYS"), 1000);
-        setTimeout(() => log("CONNECTING TO VISUAL DATABASE...", "SYS"), 1500);
-        setTimeout(() => log("SYSTEM READY. WAITING FOR COMMAND.", "CMD"), 2000);
-
-    </script>
-</body>
+		</script>
+	</body>
 </html>
