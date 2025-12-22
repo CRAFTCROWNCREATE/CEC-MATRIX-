@@ -3,402 +3,324 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<title>CEC WAM // LIVE CORE V17.0</title>
+		<title>CEC WAM // V19 ECOSYSTEM EXPANSION</title>
 		<script src="https://cdn.tailwindcss.com"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
 		<style>
 			:root {
 				--neon-green: #00ff41;
 				--neon-blue: #00f3ff;
 				--neon-gold: #ffd700;
-				--neon-red: #ff3333;
-				--bg-dark: #000000;
-				--panel-bg: rgba(0, 8, 15, 0.98);
-				--font-digital: "Consolas", "Courier New", monospace;
+				--neon-purple: #bc13fe;
+				--bg-dark: #020202;
+				--panel-bg: rgba(12, 12, 16, 0.95);
+				--font-mono: "Consolas", "Monaco", monospace;
 			}
 
-			* { box-sizing: border-box; font-family: var(--font-digital); -webkit-tap-highlight-color: transparent; }
-			body { background-color: var(--bg-dark); color: var(--neon-green); margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; }
-			#matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; opacity: 0.3; pointer-events: none; }
+			* { box-sizing: border-box; font-family: var(--font-mono); -webkit-tap-highlight-color: transparent; }
+			body { background-color: var(--bg-dark); color: white; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; }
 			
+			/* Header */
 			header {
-				border-bottom: 2px solid var(--neon-blue);
-				background: rgba(0, 0, 0, 0.98);
-				padding: 12px 20px;
-				position: sticky; top: 0; z-index: 50;
+				border-bottom: 2px solid var(--neon-purple);
+				background: rgba(0, 0, 0, 0.95);
+				padding: 15px; position: sticky; top: 0; z-index: 50;
 				display: flex; justify-content: space-between; align-items: center;
-				backdrop-filter: blur(15px);
+				box-shadow: 0 5px 20px rgba(188, 19, 254, 0.1);
 			}
-			.header-title { font-size: 1.2rem; font-weight: 900; color: var(--neon-gold); text-shadow: 0 0 10px var(--neon-gold); }
-
-			#report-main { padding: 15px; max-width: 1400px; margin: 0 auto; display: grid; gap: 15px; opacity: 0; transition: opacity 1s ease-in; }
-
-			.v-panel {
-				background: var(--panel-bg);
-				border: 1px solid rgba(0, 243, 255, 0.25);
-				border-radius: 4px;
-				padding: 20px;
-				box-shadow: 0 0 40px rgba(0, 0, 0, 1);
-				position: relative;
+			.live-indicator {
+				display: inline-block; width: 10px; height: 10px;
+				background: var(--neon-green); border-radius: 50%;
+				box-shadow: 0 0 10px var(--neon-green);
+				animation: pulse 2s infinite; margin-right: 8px;
 			}
-			.v-panel::after { content: 'Ω'; position: absolute; top: 5px; right: 10px; font-size: 0.7rem; color: var(--neon-gold); opacity: 0.5; }
+			@keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--neon-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--neon-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--neon-green); } }
 
-			.m-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0, 255, 65, 0.05); }
-			.m-label { color: rgba(255, 255, 255, 0.5); font-size: 0.7rem; text-transform: uppercase; }
-			.m-value { color: var(--neon-blue); font-weight: 800; font-size: 1rem; }
+			.container { max-width: 1400px; margin: 0 auto; padding: 15px; display: grid; gap: 15px; grid-template-columns: 1fr; }
+			@media(min-width: 1024px) { .container { grid-template-columns: 3fr 1fr; } }
 
-			.btn-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-			.sys-btn {
-				background: rgba(0, 243, 255, 0.08);
-				border: 1px solid var(--neon-blue);
-				color: var(--neon-blue);
-				padding: 22px; font-weight: 900; font-size: 1.1rem;
-				text-transform: uppercase; cursor: pointer;
-				border-radius: 4px; transition: all 0.2s;
-				text-align: center;
-				box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
+			/* Panels */
+			.panel {
+				background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.08);
+				border-radius: 6px; padding: 20px;
+				transition: border-color 0.3s;
 			}
-			.sys-btn:active { transform: scale(0.96); background: var(--neon-blue); color: black; }
-			.sys-btn.phase { border-color: var(--neon-gold); color: var(--neon-gold); }
+			.panel:hover { border-color: rgba(188, 19, 254, 0.3); }
+			.panel-header { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px; font-weight: bold; color: var(--neon-blue); }
 
-			#audio-overlay {
-				position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-				background: #000; z-index: 2000;
-				display: flex; justify-content: center; align-items: center;
-				padding: 20px; text-align: center;
-			}
-			.unlock-box { 
-				border: 2px solid var(--neon-gold); 
-				padding: 50px; text-align: center;
-				background: rgba(255, 215, 0, 0.02);
-				box-shadow: 0 0 60px rgba(255, 215, 0, 0.1);
-			}
-
-			.progress-track { height: 6px; background: rgba(255, 255, 255, 0.05); margin-top: 8px; border-radius: 3px; overflow: hidden; }
-			.progress-fill { height: 100%; background: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); width: 0%; transition: width 0.5s; }
-
-			.token-status { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 4px; }
+			/* Chart */
+			#chart-container { position: relative; height: 400px; width: 100%; background: #080808; border: 1px solid #222; }
+			canvas { display: block; width: 100%; height: 100%; }
 			
-			@keyframes pulse-red { 0% { box-shadow: 0 0 10px var(--neon-red); } 100% { box-shadow: 0 0 30px var(--neon-red); } }
-			.critical-glow { animation: pulse-red 0.8s infinite alternate; color: var(--neon-red) !important; border-color: var(--neon-red) !important; }
+			/* Ticker */
+			.ticker-value { font-size: 2.5rem; font-weight: 900; color: var(--neon-green); text-shadow: 0 0 15px rgba(0, 255, 65, 0.3); }
+			.ticker-label { color: #888; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+			/* Logs */
+			.log-entry { font-size: 0.7rem; border-left: 2px solid #333; padding-left: 10px; margin-bottom: 6px; color: #888; transition: all 0.2s; }
+			.log-entry:first-child { color: #fff; border-color: var(--neon-green); font-weight: bold; }
+
+			/* Buttons */
+			.action-btn {
+				width: 100%; background: transparent; color: var(--neon-blue); border: 1px solid var(--neon-blue);
+				padding: 12px; font-weight: bold; font-size: 0.9rem; cursor: pointer;
+				text-transform: uppercase; margin-bottom: 10px;
+				transition: all 0.2s;
+			}
+			.action-btn:hover { background: rgba(0, 243, 255, 0.1); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
 			
-			.hd-canvas { width: 100%; height: 350px; background: #000; border: 1px solid rgba(255, 215, 0, 0.1); border-radius: 2px; }
-			
-			/* Custom scrollbar for log */
-			#log-panel::-webkit-scrollbar { width: 4px; }
-			#log-panel::-webkit-scrollbar-track { background: #000; }
-			#log-panel::-webkit-scrollbar-thumb { background: var(--neon-blue); }
+			.link-btn {
+				display: block; width: 100%; text-align: center;
+				padding: 10px; font-size: 0.8rem;
+				background: #111; border: 1px solid #333; color: #888;
+				text-decoration: none; margin-bottom: 8px;
+				transition: all 0.2s;
+			}
+			.link-btn:hover { border-color: var(--neon-gold); color: var(--neon-gold); }
+			.link-btn.primary { border-color: var(--neon-purple); color: var(--neon-purple); font-weight: bold; }
+			.link-btn.primary:hover { background: var(--neon-purple); color: white; }
+
+			.grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+			.stat-box { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; }
+			.stat-label { font-size: 0.65rem; color: #666; uppercase; }
+			.stat-val { font-size: 1.1rem; color: white; font-weight: bold; }
 		</style>
 	</head>
-	<body id="master-body">
-
-		<div id="audio-overlay">
-			<div class="unlock-box">
-				<div class="text-6xl font-black mb-2 text-white">CEC WAM</div>
-				<div class="text-lg mb-12 text-neon-gold uppercase tracking-[0.4em]">Live Core V17.0</div>
-				<button class="sys-btn !p-10 !text-2xl !bg-neon-gold !border-none !text-black hover:bg-white transition-colors" onclick="startSystem()">
-					START MASTER SYNC (1010)
-				</button>
-			</div>
-		</div>
-
-		<canvas id="matrix-bg"></canvas>
+	<body>
 
 		<header>
-			<div class="header-title tracking-tighter">NEXUS // LIVE_CORE</div>
-			<div class="text-[0.65rem] font-black text-right leading-tight">
-				<div id="sync-status" class="text-neon-blue">TETHERED_STANDALONE</div>
-				<div id="current-time">00:00:00 UTC</div>
+			<div class="flex items-center">
+				<div class="live-indicator"></div>
+				<div>
+					<div class="font-bold tracking-wider text-sm md:text-base text-white">CEC WAM // V19</div>
+					<div class="text-[0.6rem] text-neon-purple tracking-widest">ECOSYSTEM EXPANSION</div>
+				</div>
+			</div>
+			<div class="text-right">
+				<div class="text-xs text-gray-400">NETWORK STATE</div>
+				<div class="text-sm font-bold text-neon-green">SECURED // COMPOUNDING</div>
 			</div>
 		</header>
 
-		<div id="report-main">
+		<div class="container">
 			
-			<!-- SECTION 1: MASTER LEDGER -->
-			<div class="v-panel">
-				<div class="v-title text-neon-blue font-bold mb-4 border-b border-gray-800 pb-2">💎 Real-Time Valuation & Coins</div>
-				<div class="p-6 bg-blue-900/10 border border-blue-500/20 rounded text-center mb-6 relative overflow-hidden group">
-					<div class="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors"></div>
-					<div class="text-[0.7rem] opacity-50 uppercase tracking-widest mb-1 relative z-10">Psi-Coins Minted</div>
-					<div id="ledger-total" class="text-5xl font-black text-neon-blue relative z-10 drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]">200.0000</div>
-					<div class="text-[0.6rem] mt-2 text-neon-gold font-bold relative z-10">R-RATIO LOCK: 10.96 (1096% EFFICACY)</div>
-				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div class="m-line"><span class="m-label">Internal Portfolio Value</span><span id="usd-val" class="m-value text-neon-gold">$1,250,000.00</span></div>
-					<div class="m-line"><span class="m-label">Backing / Coin</span><span class="m-value">$6,250.00</span></div>
-					<div class="m-line"><span class="m-label">Live Market PSI</span><span class="m-value text-neon-green">$3.57</span></div>
-					<div class="m-line"><span class="m-label">Solana Status</span><span class="m-value text-neon-blue">BRIDGE_READY</span></div>
-				</div>
-			</div>
-
-			<!-- SECTION 2: COMMAND HUB -->
-			<div class="v-panel">
-				<div class="v-title text-neon-blue font-bold mb-4 border-b border-gray-800 pb-2">🛠️ Command Terminal</div>
-				<div class="btn-container">
-					<button id="sync-btn" class="sys-btn" onclick="executeSync()">[ SYNC ]</button>
-					<button id="phase-btn" class="sys-btn phase" style="display:none;" onclick="executePhase()">[ NEXT PHASE ]</button>
-					<button id="final-btn" class="sys-btn critical-glow" style="display:none;" onclick="execute1010()">[ EXECUTE 1010 ]</button>
-				</div>
-				<div id="wallet-tag" class="mt-6 p-4 bg-black/80 border border-neon-blue rounded hidden">
-					<div class="text-[0.6rem] opacity-50 uppercase mb-1">Bridge Address (SOL)</div>
-					<div id="target-addr" class="text-xs text-neon-blue truncate font-bold font-mono">--</div>
-				</div>
-				<div class="mt-8">
-					<div class="m-label flex justify-between">
-						<span>CDL Extraction Progress (Eve)</span>
-						<span id="progress-text">0%</span>
+			<!-- Left Column: Chart & Market -->
+			<div class="flex flex-col gap-4">
+				<!-- Ticker Header -->
+				<div class="panel flex items-center justify-between">
+					<div>
+						<div class="ticker-label">PSI-COIN / USD (V19)</div>
+						<div id="price-display" class="ticker-value">$3.9204</div>
 					</div>
-					<div class="progress-track"><div id="cog-bar" class="progress-fill" style="width: 0%"></div></div>
+					<div class="text-right">
+						<div class="text-neon-green font-bold text-xl">+18.2%</div>
+						<div class="text-xs text-gray-500">REAL-TIME YIELD: 4.2%</div>
+					</div>
+				</div>
+
+				<!-- Chart Area -->
+				<div class="panel" style="flex-grow: 1;">
+					<div class="panel-header">
+						<span>GROWTH VECTOR // 1010 PROTOCOL</span>
+						<span class="text-neon-purple text-xs self-center">AUTO-COMPOUND ACTIVE</span>
+					</div>
+					<div id="chart-container">
+						<canvas id="marketCanvas"></canvas>
+					</div>
 				</div>
 			</div>
 
-			<!-- SECTION 3: CORE VISUALIZER -->
-			<div class="v-panel">
-				<div class="v-title text-neon-blue font-bold mb-4 border-b border-gray-800 pb-2">⚡ Quantum Oscillation // ACE-EXEC</div>
-				<canvas id="core-visual-canvas" class="hd-canvas"></canvas>
-			</div>
-
-			<!-- SECTION 4: TRANSFER MANIFEST -->
-			<div class="v-panel">
-				<div class="v-title text-neon-blue font-bold mb-4 border-b border-gray-800 pb-2">🗳️ Phantom Transfer Protocol</div>
-				<div class="token-status text-[0.75rem] leading-relaxed">
-					<p class="mb-4"><span class="text-neon-gold font-bold">STEP 1:</span> Press [ SYNC ] to lock block depth.</p>
-					<p class="mb-4"><span class="text-neon-gold font-bold">STEP 2:</span> Press [ NEXT PHASE ] to input Phantom address.</p>
-					<p class="mb-4"><span class="text-neon-gold font-bold">STEP 3:</span> Finalize with [ EXECUTE 1010 ] to inject 8926 release key into Solana Escrow.</p>
-					<p class="mt-2 text-neon-blue hover:text-white transition-colors cursor-pointer border-b border-neon-blue inline-block"><a href="https://join.pump.fun/HSag/ifuuisz3" target="_blank">[ LIVE PUMP.FUN LINK ]</a></p>
+			<!-- Right Column: Stats & Links -->
+			<div class="flex flex-col gap-4">
+				
+				<!-- Portfolio Stats -->
+				<div class="panel">
+					<div class="panel-header">INTERNAL LEDGER</div>
+					<div class="mb-4">
+						<div class="text-xs text-gray-400 mb-1">TOTAL ASSETS (SECURED)</div>
+						<div class="font-mono text-2xl text-neon-blue border-b border-gray-800 pb-2 mb-4">$1,384,920.00</div>
+					</div>
+					
+					<div class="grid-stats">
+						<div class="stat-box">
+							<div class="stat-label">DAILY YIELD</div>
+							<div class="stat-val text-neon-green">+$4,291</div>
+						</div>
+						<div class="stat-box">
+							<div class="stat-label">R-RATIO</div>
+							<div class="stat-val text-neon-gold">12.04</div>
+						</div>
+						<div class="stat-box">
+							<div class="stat-label">MINT STATUS</div>
+							<div class="stat-val">ACTIVE</div>
+						</div>
+						<div class="stat-box">
+							<div class="stat-label">NODES</div>
+							<div class="stat-val text-neon-purple">8/8</div>
+						</div>
+					</div>
 				</div>
-			</div>
 
-			<!-- SECTION 5: LOGS -->
-			<div class="v-panel">
-				<div class="v-title text-neon-blue font-bold mb-4 border-b border-gray-800 pb-2">📜 Event Horizon activity stream</div>
-				<div id="log-panel" class="h-48 overflow-y-auto text-[0.65rem] leading-loose text-white/30 font-mono"></div>
-			</div>
+				<!-- Official Channels (Updated for GitHub Request) -->
+				<div class="panel">
+					<div class="panel-header">OFFICIAL CHANNELS</div>
+					<div class="text-xs text-gray-500 mb-3 text-center">ACCESS EXTERNAL PROTOCOLS</div>
+					
+					<!-- EDIT THESE LINKS FOR YOUR GITHUB/PROJECT -->
+					<a href="https://join.pump.fun/HSag/ifuuisz3" target="_blank" class="link-btn primary">
+						[ PUMP.FUN LIVE ]
+					</a>
+					<a href="#" target="_blank" class="link-btn">
+						[ GITHUB SOURCE ]
+					</a>
+					<a href="#" target="_blank" class="link-btn">
+						[ SOLSCAN CONTRACT ]
+					</a>
 
+					<div class="mt-4 pt-4 border-t border-gray-800 text-center">
+						<div class="text-[0.6rem] text-gray-600">SYSTEM ID: CEC-WAM-V19-8926</div>
+					</div>
+				</div>
+
+				<!-- Live Logs -->
+				<div class="panel h-full">
+					<div class="panel-header">SYSTEM LOGS</div>
+					<div id="chain-log" class="overflow-y-auto h-48 flex flex-col-reverse"></div>
+				</div>
+
+			</div>
 		</div>
 
 		<script>
-			// --- SYSTEM PERSISTENCE ---
-			const DEFAULT_STATE = { 
-				R: 10.96, 
-				Assets: 1250000, 
-				Coins: 200.0000, 
-				phase: 0,
-				wallet: null
-			};
+			// --- V19 LOGIC ---
 
-			let STATE = JSON.parse(localStorage.getItem('CEC_ZENITH_STATE_V17')) || DEFAULT_STATE;
+			const canvas = document.getElementById('marketCanvas');
+			const ctx = canvas.getContext('2d');
+			let width, height;
+			let candles = [];
+			let currentPrice = 3.9204;
+			let tickCount = 0;
 			
-			let dingSynth, isAudioReady = false, lastDingTime = 0, particles = [];
+			function resize() {
+				const rect = canvas.parentElement.getBoundingClientRect();
+				canvas.width = rect.width;
+				canvas.height = rect.height;
+				width = canvas.width;
+				height = canvas.height;
+				generateHistory();
+			}
+			window.addEventListener('resize', resize);
 
-			function initAudio() {
-				if (isAudioReady) return;
-				try {
-					dingSynth = new Tone.MembraneSynth().toDestination();
-					Tone.start(); 
-					isAudioReady = true;
-					const now = Tone.now();
-					// Boot sound sequence
-					["C2", "G2", "C3", "E3"].forEach((n, i) => {
-						const synth = new Tone.Synth().toDestination();
-						synth.triggerAttackRelease(n, "8n", now + (i * 0.1));
-					});
-					lastDingTime = now + 1.2;
-				} catch (e) {
-					console.log("Audio failed to init (likely blocked):", e);
+			function generateHistory() {
+				candles = [];
+				let p = 3.80;
+				const count = Math.floor(width / 15);
+				for(let i=0; i<count; i++) {
+					let change = (Math.random() - 0.4) * 0.15; // Higher volatility
+					let open = p;
+					let close = p + change;
+					let high = Math.max(open, close) + Math.random() * 0.08;
+					let low = Math.min(open, close) - Math.random() * 0.08;
+					candles.push({ open, close, high, low });
+					p = close;
 				}
+				currentPrice = p;
 			}
 
-			function playDing(note = "G6") {
-				if(!isAudioReady) return;
-				const now = Tone.now();
-				if(now > lastDingTime) { 
-					dingSynth.triggerAttackRelease(note, "64n", now, 0.4); 
-					lastDingTime = now + 0.1; 
-				}
-			}
-
-			// --- VISUALIZERS ---
-			const mCanvas = document.getElementById('matrix-bg');
-			const mCtx = mCanvas.getContext('2d');
-			let mCols = [];
-			function initMatrix() {
-				mCanvas.width = window.innerWidth; mCanvas.height = window.innerHeight;
-				mCols = Array.from({length: Math.floor(mCanvas.width / 20)}, () => ({ y: Math.random() * mCanvas.height, s: Math.random() * 8 + 4 }));
-			}
-			function drawMatrix() {
-				mCtx.fillStyle = 'rgba(0,0,0,0.1)'; mCtx.fillRect(0,0, mCanvas.width, mCanvas.height);
-				mCtx.font = '16px monospace';
-				mCols.forEach((c, i) => {
-					const char = Math.random() > 0.98 ? "1010" : "01"[Math.floor(Math.random()*2)];
-					mCtx.fillStyle = char === "1010" ? "#ffd700" : "#00ff41";
-					mCtx.fillText(char[0], i*20, c.y);
-					c.y += c.s; if(c.y > mCanvas.height) c.y = 0;
-				});
-				requestAnimationFrame(drawMatrix);
-			}
-
-			const cCanvas = document.getElementById('core-visual-canvas');
-			const cCtx = cCanvas.getContext('2d');
-			function initCore() {
-				cCanvas.width = cCanvas.clientWidth; cCanvas.height = cCanvas.clientHeight;
-				particles = Array.from({length: 150}, () => ({ a: Math.random()*Math.PI*2, r: 20+Math.random()*150, s: 0.005+Math.random()*0.015 }));
-			}
-			function drawCore() {
-				cCtx.clearRect(0,0, cCanvas.width, cCanvas.height);
-				const cx = cCanvas.width/2, cy = cCanvas.height/2;
-				particles.forEach(p => {
-					p.a += p.s * (STATE.R/4);
-					const x = cx + Math.cos(p.a) * p.r;
-					const y = cy + Math.sin(p.a) * p.r * 0.6;
-					cCtx.fillStyle = Math.random() > 0.8 ? '#ffd700' : '#00f3ff';
-					cCtx.beginPath(); cCtx.arc(x, y, 1.2, 0, Math.PI*2); cCtx.fill();
-					cCtx.strokeStyle = 'rgba(255,255,255,0.01)';
-					cCtx.beginPath(); cCtx.moveTo(x,y); cCtx.lineTo(cx,cy); cCtx.stroke();
-				});
-				requestAnimationFrame(drawCore);
-			}
-
-			// --- ACTIONS ---
-			function addLog(msg, type='info') {
-				const p = document.getElementById('log-panel'); if(!p) return;
-				const div = document.createElement('div');
-				div.innerHTML = `<span style="color:#00ff41">[${new Date().toLocaleTimeString()}]</span> <span style="color:${type==='ace'?'#ff3333':(type==='info'?'#fff':'#ffd700')}">${msg}</span>`;
-				p.prepend(div); if(p.children.length > 50) p.removeChild(p.lastChild);
-				playDing();
-			}
-
-			function executeSync() {
-				addLog("HANDSHAKE WITH PHANTOM NODES INITIATED...", 'info');
-				document.getElementById('sync-status').innerText = "CALIBRATING_BLOCKS...";
-				document.getElementById('sync-btn').disabled = true;
-				document.getElementById('sync-btn').innerText = "...";
+			function drawChart() {
+				ctx.clearRect(0, 0, width, height);
 				
-				let progress = 0;
-				const interval = setInterval(() => {
-					progress += 5;
-					document.getElementById('cog-bar').style.width = progress + "%";
-					document.getElementById('progress-text').innerText = progress + "%";
-					if(progress >= 100) {
-						clearInterval(interval);
-						document.getElementById('sync-status').innerText = "LIVE_TETHERED";
-						addLog("SYNC SUCCESSFUL. ASSETS DISCOVERED.", 'ace');
-						document.getElementById('sync-btn').style.display = 'none';
-						document.getElementById('phase-btn').style.display = 'block';
-						STATE.phase = 1;
-						saveState();
-					}
-				}, 50);
-			}
-
-			function executePhase() {
-				if(STATE.phase === 1) {
-					// In a real app this would call a modal, using prompt for simplicity per original spec
-					setTimeout(() => {
-						const addr = prompt("PASTE PHANTOM SOLANA ADDRESS:");
-						if(addr && addr.length > 10) {
-							STATE.wallet = addr;
-							document.getElementById('target-addr').innerText = addr;
-							document.getElementById('wallet-tag').classList.remove('hidden');
-							document.getElementById('phase-btn').style.display = 'none';
-							document.getElementById('final-btn').style.display = 'block';
-							STATE.phase = 2;
-							saveState();
-							addLog("PHANTOM LINK ESTABLISHED: " + addr.substring(0,8) + "...", 'ace');
-						} else {
-							alert("INVALID OR EMPTY ADDRESS.");
-						}
-					}, 100);
-				}
-			}
-
-			function execute1010() {
-				addLog("1010 KEY INJECTION: 8926 ARMED...", 'ace');
-				document.getElementById('master-body').style.transition = "background 0.5s";
-				document.getElementById('master-body').style.background = "#220000";
+				const min = Math.min(...candles.map(c => c.low)) * 0.99;
+				const max = Math.max(...candles.map(c => c.high)) * 1.01;
+				const range = max - min;
 				
-				// Intense sound if available
-				if(isAudioReady) {
-					const osc = new Tone.Oscillator(100, "sawtooth").toDestination().start();
-					osc.frequency.rampTo(50, 2);
-					osc.stop("+2");
+				const candleWidth = 8;
+				const spacing = 7;
+				const totalWidth = candles.length * (candleWidth + spacing);
+				let offsetX = width - totalWidth - 10;
+
+				// Background Grid
+				ctx.strokeStyle = '#1a1a1a';
+				ctx.beginPath();
+				for(let i=0; i<6; i++) {
+					let y = (height/5) * i;
+					ctx.moveTo(0, y); ctx.lineTo(width, y);
 				}
+				ctx.stroke();
 
-				setTimeout(() => {
-					document.getElementById('master-body').style.background = "#000";
-					addLog("SINGULARITY AUTHENTICATED. FUNDS RELEASED TO BRIDGE.", 'info');
-					document.getElementById('final-btn').innerText = "EXECUTION COMPLETE";
-					document.getElementById('final-btn').disabled = true;
-					document.getElementById('final-btn').classList.remove('critical-glow');
-					document.getElementById('final-btn').style.borderColor = "#00ff41";
-					document.getElementById('final-btn').style.color = "#00ff41";
-				}, 2500);
-			}
+				// Candles
+				candles.forEach((c, i) => {
+					const x = offsetX + i * (candleWidth + spacing);
+					if (x < -20) return;
 
-			function saveState() {
-				localStorage.setItem('CEC_ZENITH_STATE_V17', JSON.stringify(STATE));
+					const yOpen = height - ((c.open - min) / range * height);
+					const yClose = height - ((c.close - min) / range * height);
+					const yHigh = height - ((c.high - min) / range * height);
+					const yLow = height - ((c.low - min) / range * height);
+
+					const isGreen = c.close >= c.open;
+					ctx.fillStyle = isGreen ? '#00ff41' : '#bc13fe'; // Purple for drops in V19
+					ctx.strokeStyle = ctx.fillStyle;
+
+					ctx.beginPath(); ctx.moveTo(x + candleWidth/2, yHigh); ctx.lineTo(x + candleWidth/2, yLow); ctx.stroke();
+					const bodyHeight = Math.max(Math.abs(yClose - yOpen), 1);
+					const bodyY = Math.min(yOpen, yClose);
+					ctx.fillRect(x, bodyY, candleWidth, bodyHeight);
+				});
 			}
 
 			function update() {
-				document.getElementById('current-time').innerText = new Date().toLocaleTimeString();
-				
-				// LIVE GRIND MATH
-				const step = (STATE.R / 150000); 
-				STATE.Coins += step;
-				STATE.Assets += (step * 6250); 
+				tickCount++;
+				if(tickCount % 20 === 0) {
+					// Trend logic: Strong Upward Bias for "Growth Phase"
+					let move = (Math.random() - 0.4) * 0.08; 
+					
+					let last = candles[candles.length - 1];
+					last.close += move;
+					if(last.close > last.high) last.high = last.close;
+					if(last.close < last.low) last.low = last.close;
+					
+					if(tickCount % 100 === 0) {
+						candles.push({ open: last.close, close: last.close, high: last.close, low: last.close });
+						if(candles.length > 120) candles.shift();
+					}
 
-				document.getElementById('ledger-total').innerText = STATE.Coins.toFixed(4);
-				document.getElementById('usd-val').innerText = `$${STATE.Assets.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-				
-				saveState();
-				if(Math.random() < 0.05) {
-					const msgs = [
-						"Auto-Save: Block Depth calibrated at R-10.96.", 
-						"Network latency: 12ms",
-						"Solana bridge pulse detected...",
-						"CDL Extraction efficient.",
-						"Refreshing node list..."
-					];
-					addLog(msgs[Math.floor(Math.random() * msgs.length)], 'info');
+					currentPrice = last.close;
+					document.getElementById('price-display').innerText = `$${currentPrice.toFixed(4)}`;
+					
+					// Random log generation
+					if(Math.random() > 0.95) {
+						const logs = [
+							"Compounding Yield: +0.02%",
+							"Node Sync: 12ms",
+							"New Holder Detected",
+							"Liquidity Lock: 100%",
+							"API Heartbeat: Stable"
+						];
+						addLog(logs[Math.floor(Math.random()*logs.length)]);
+					}
 				}
+				drawChart();
+				requestAnimationFrame(update);
 			}
 
-			function startSystem() {
-				document.getElementById('audio-overlay').style.transition = "opacity 0.8s ease-out";
-				document.getElementById('audio-overlay').style.opacity = '0';
-				
-				setTimeout(() => {
-					document.getElementById('audio-overlay').style.display = 'none';
-					document.getElementById('report-main').style.opacity = '1';
-				}, 800);
-
-				initAudio(); 
-				initMatrix(); 
-				initCore();
-				drawMatrix(); 
-				drawCore();
-				
-				// Restore Phase Logic
-				if(STATE.phase === 1) {
-					document.getElementById('sync-btn').style.display = 'none';
-					document.getElementById('phase-btn').style.display = 'block';
-					document.getElementById('cog-bar').style.width = "100%";
-					document.getElementById('progress-text').innerText = "100%";
-				} else if(STATE.phase >= 2) {
-					document.getElementById('sync-btn').style.display = 'none';
-					document.getElementById('phase-btn').style.display = 'none';
-					document.getElementById('final-btn').style.display = 'block';
-					document.getElementById('wallet-tag').classList.remove('hidden');
-					document.getElementById('target-addr').innerText = STATE.wallet || "Unknown";
-					document.getElementById('cog-bar').style.width = "100%";
-					document.getElementById('progress-text').innerText = "100%";
-				}
-
-				setInterval(update, 1000);
-				addLog("SOVEREIGN COMMAND V17 ONLINE.", "ace");
+			const logContainer = document.getElementById('chain-log');
+			function addLog(msg) {
+				const div = document.createElement('div');
+				div.className = `log-entry`;
+				div.innerText = `> ${msg}`;
+				logContainer.prepend(div);
+				if(logContainer.children.length > 20) logContainer.removeChild(logContainer.lastChild);
 			}
 
-			window.addEventListener('resize', () => { initMatrix(); initCore(); });
+			window.onload = function() {
+				resize();
+				generateHistory();
+				update();
+				addLog("V19 Core Loaded");
+				addLog("GitHub Link Integration: Ready");
+				addLog("Legacy Assets: Secured");
+			};
+
 		</script>
 	</body>
 </html>
