@@ -3,131 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC-WAM // SYSTEM V.47.0 // LIVE LEDGER</title>
+    <title>CEC-WAM // PSI-RUNNER // EARN PROTOCOL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     <style>
-        :root { --neon-cyan: #00f3ff; --bg-dark: #050505; }
-        body { background: var(--bg-dark); color: #e0e0e0; font-family: 'Rajdhani', sans-serif; }
+        :root { --neon-cyan: #00f3ff; --neon-purple: #bc13fe; --neon-green: #00ff41; --neon-red: #ff003c; --bg-dark: #020202; }
+        body { background: var(--bg-dark); color: #e0e0e0; font-family: 'Rajdhani', sans-serif; overflow: hidden; user-select: none; }
         .font-orbitron { font-family: 'Orbitron', sans-serif; }
-        .border-glow { box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
-        /* CRT Effect */
+        
+        /* HUD & UI */
+        .hud-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+        }
         .scanline {
-            width: 100%; height: 100px; z-index: 10;
-            background: linear-gradient(0deg, transparent 0%, rgba(0, 243, 255, 0.03) 50%, transparent 100%);
-            opacity: 0.1; position: absolute; bottom: 100%;
-            animation: scanline 10s linear infinite; pointer-events: none;
+            width: 100%; height: 100px; z-index: 50;
+            background: linear-gradient(0deg, transparent 0%, rgba(0, 243, 255, 0.05) 50%, transparent 100%);
+            opacity: 0.2; position: absolute; bottom: 100%;
+            animation: scanline 8s linear infinite; pointer-events: none;
         }
         @keyframes scanline { 0% { bottom: 100%; } 100% { bottom: -100px; } }
+        
+        /* Game Canvas */
+        #game-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; cursor: none;
+        }
     </style>
 </head>
-<body class="h-screen overflow-hidden flex flex-col relative bg-black">
+<body class="h-screen w-screen flex flex-col relative">
 
     <div class="scanline"></div>
 
-    <header class="h-16 border-b border-cyan-900 flex items-center justify-between px-6 z-20 bg-gray-900/50">
-        <div class="flex items-center gap-4">
-            <span class="material-symbols-outlined text-cyan-400 animate-pulse">hub</span>
+    <div class="absolute top-0 left-0 w-full h-full z-20 pointer-events-none flex flex-col justify-between p-6">
+        
+        <header class="flex justify-between items-start">
+            <div class="hud-panel p-4 rounded-lg">
+                <h1 class="font-orbitron text-2xl text-white italic tracking-widest drop-shadow-[0_0_10px_rgba(0,243,255,0.8)]">
+                    CEC-WAM <span class="text-neon-cyan text-sm align-top">V.50.0</span>
+                </h1>
+                <div class="flex items-center gap-2 text-[10px] text-gray-400 font-mono mt-1">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    SYSTEM ONLINE
+                </div>
+            </div>
+
+            <div class="hud-panel p-4 rounded-lg text-right min-w-[200px]">
+                <div class="text-[10px] text-gray-400 font-bold tracking-widest mb-1">TOTAL LIQUIDITY</div>
+                <div id="val-disp" class="text-3xl text-green-400 font-mono font-bold drop-shadow-[0_0_10px_rgba(0,255,65,0.5)]">
+                    $1,250,000M
+                </div>
+                <div class="text-xs text-cyan-400 mt-1" id="earn-rate">
+                    MINING ACTIVE...
+                </div>
+            </div>
+        </header>
+
+        <div id="start-screen" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-auto">
+            <h2 class="text-5xl font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600 mb-4 drop-shadow-[0_0_20px_rgba(188,19,254,0.5)]">
+                PSI-RUNNER
+            </h2>
+            <p class="text-gray-300 font-mono mb-8 max-w-md mx-auto">
+                PILOT THE NODE. DODGE THE CYCLONES. COLLECT THE DATA.
+            </p>
+            <button onclick="startGame()" class="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-4 px-12 rounded-full font-orbitron text-xl transition-all shadow-[0_0_30px_rgba(0,243,255,0.4)] hover:scale-105 border-2 border-white">
+                INITIATE LAUNCH
+            </button>
+        </div>
+
+        <footer class="flex justify-between items-end text-[10px] text-gray-500 font-mono">
             <div>
-                <h1 class="font-orbitron text-2xl text-white tracking-widest">CEC-WAM <span class="text-cyan-400 text-xs">V.47.0</span></h1>
-                <div class="text-[10px] text-gray-500 font-mono">SYSTEM: ONLINE | SECURITY: MAX</div>
+                SECURE CONNECTION // PROTOCOL: OMEGA<br>
+                LATENCY: 12ms
             </div>
-        </div>
-        <div class="text-xs font-mono text-green-500 border border-green-900 px-3 py-1 rounded">
-            CONNECTION: SECURE
-        </div>
-    </header>
+            <div class="hud-panel px-3 py-1 rounded">
+                MOUSE/TOUCH TO STEER
+            </div>
+        </footer>
+    </div>
 
-    <main class="flex-1 flex overflow-hidden relative">
-        <aside class="w-80 border-r border-gray-800 flex flex-col z-10 bg-black/90">
-            <div class="p-6 border-b border-gray-800">
-                <h3 class="font-orbitron text-cyan-400 text-sm mb-4">LIVE LEDGER</h3>
-                
-                <div class="bg-gray-900 p-4 rounded border border-cyan-500/50 border-glow mb-4">
-                    <div class="text-[10px] text-gray-400 mb-1">TOTAL LIQUIDITY (PSI)</div>
-                    <div id="val-disp" class="text-3xl text-white font-mono font-bold tracking-wider">$1,250,039M</div>
-                    <div class="text-[10px] text-green-400 mt-2 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[12px]">trending_up</span>
-                        <span id="growth-rate">+0.00%</span> INFLOW
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-black p-2 rounded border border-gray-800">
-                        <div class="text-[10px] text-gray-500">DARK ENERGY</div>
-                        <div class="text-purple-400 font-mono font-bold">0.999Ω</div>
-                    </div>
-                    <div class="bg-black p-2 rounded border border-gray-800">
-                        <div class="text-[10px] text-gray-500">THREAT LEVEL</div>
-                        <div class="text-green-500 font-mono font-bold">ZERO</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex-1 p-4 overflow-y-auto font-mono text-xs space-y-2" id="sys-log">
-                <div class="text-green-500">[SYS] LEDGER SYNCED.</div>
-            </div>
-        </aside>
-
-        <section class="flex-1 bg-black p-6 relative flex flex-col items-center justify-center">
-            <div class="w-full h-full absolute inset-0 opacity-20 bg-[url('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDdtYmxuOGV6ZWF6ZWF6ZWF6ZWF6ZWF6ZWF6ZWF6ZWF6ZWF6ZWF6ZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/L8K62iMJnrW6I/giphy.gif')] bg-cover bg-center"></div>
-            
-            <div class="z-10 text-center">
-                <h2 class="text-4xl font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-4">THE CYCLONE IS ACTIVE</h2>
-                <p class="text-gray-400 font-mono text-sm max-w-md mx-auto">Neural pathways are optimizing. Liquidity injection in progress. Monitoring global nodes.</p>
-            </div>
-        </section>
-    </main>
+    <canvas id="game-canvas"></canvas>
 
     <script>
-        // 1. INITIAL SETUP
-        // We check if there is a saved balance. If not, we start at 1,250,039,000.
-        let currentBalance = parseFloat(localStorage.getItem('cec_balance')) || 1250039000;
+        // --- CONFIGURATION ---
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        let gameRunning = false;
+        let animationFrame;
+        let score = parseFloat(localStorage.getItem('cec_balance')) || 1250000000;
         
+        // Audio
+        let synth;
+        let audioReady = false;
+
+        // Assets
+        const player = { x: 0, y: 0, size: 20, speed: 0.1 };
+        let cyclones = []; // Enemies
+        let coins = [];    // Money
+        let particles = []; // Matrix rain background
+
+        // --- CORE FUNCTIONS ---
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 100;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
         function updateDisplay() {
-            // Format the number to look like currency (e.g. $1,250,039,400)
-            const formatted = "$" + currentBalance.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
+            // Format score to look like huge money
+            const formatted = "$" + Math.floor(score).toLocaleString();
             document.getElementById('val-disp').innerText = formatted;
+            localStorage.setItem('cec_balance', score);
         }
 
-        function addLog(msg) {
-            const logBox = document.getElementById('sys-log');
-            const entry = document.createElement('div');
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-            entry.className = "text-gray-400 hover:text-cyan-400 transition-colors";
-            entry.innerHTML = `<span class="text-gray-600">[${time}]</span> ${msg}`;
-            logBox.prepend(entry); // New logs at top
+        async function initAudio() {
+            if (!audioReady) {
+                await Tone.start();
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                synth.volume.value = -10;
+                audioReady = true;
+            }
         }
 
-        // 2. THE GROWTH LOOP
-        setInterval(() => {
-            // A. Calculate Growth (Random amount between $100 and $5500)
-            const growth = Math.floor(Math.random() * 5400) + 100;
+        // --- GAME LOOP ---
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            gameRunning = true;
+            initAudio();
             
-            // B. Add to Balance
-            currentBalance += growth;
+            // Add initial entities
+            spawnCyclone();
+            spawnCoin();
             
-            // C. Save to Memory (So it remembers on refresh)
-            localStorage.setItem('cec_balance', currentBalance);
+            gameLoop();
+        }
+
+        function spawnCyclone() {
+            if (!gameRunning) return;
+            const size = Math.random() * 40 + 20;
+            cyclones.push({
+                x: Math.random() * canvas.width,
+                y: -50,
+                size: size,
+                speed: Math.random() * 3 + 2,
+                color: '#ff003c' // Neon Red
+            });
+            setTimeout(spawnCyclone, 800); // New enemy every 800ms
+        }
+
+        function spawnCoin() {
+            if (!gameRunning) return;
+            coins.push({
+                x: Math.random() * canvas.width,
+                y: -50,
+                size: 15,
+                speed: 4,
+                val: 10000 // $10k per coin
+            });
+            setTimeout(spawnCoin, 1500); // New coin every 1.5s
+        }
+
+        // --- MATRIX BACKGROUND ---
+        function drawMatrix() {
+            if (Math.random() > 0.8) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: -20,
+                    speed: Math.random() * 5 + 5,
+                    char: String.fromCharCode(0x30A0 + Math.random() * 96), // Katakana chars
+                    alpha: 1
+                });
+            }
             
-            // D. Update Screen
-            updateDisplay();
+            ctx.fillStyle = '#00ff41';
+            ctx.font = '14px monospace';
             
-            // E. Randomly log the transaction
-            if (Math.random() > 0.7) {
-                addLog(`[NET] INFLOW DETECTED: +$${growth}`);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.y += p.speed;
+                p.alpha -= 0.01;
+                
+                ctx.globalAlpha = p.alpha;
+                ctx.fillText(p.char, p.x, p.y);
+                ctx.globalAlpha = 1;
+
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            // Neon Glow
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#00f3ff';
+            
+            // Draw Ship (Triangle)
+            ctx.beginPath();
+            ctx.moveTo(0, -20);
+            ctx.lineTo(15, 20);
+            ctx.lineTo(0, 15); // Engine indent
+            ctx.lineTo(-15, 20);
+            ctx.closePath();
+            
+            ctx.fillStyle = '#000';
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+
+        function drawEntities() {
+            // Draw Cyclones (Red Enemies)
+            for (let i = cyclones.length - 1; i >= 0; i--) {
+                const c = cyclones[i];
+                c.y += c.speed;
+                
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = c.color;
+                
+                // Draw Spiky Circle
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+                ctx.strokeStyle = c.color;
+                ctx.stroke();
+                
+                // Text inside
+                ctx.fillStyle = c.color;
+                ctx.font = '10px Arial';
+                ctx.fillText("!!!", c.x - 5, c.y + 3);
+
+                // Collision Check (Player Hit)
+                const dist = Math.hypot(player.x - c.x, player.y - c.y);
+                if (dist < c.size + player.size) {
+                    // HIT!
+                    if(audioReady) synth.triggerAttackRelease("C2", "8n");
+                    // Deduct money or flash screen red (optional)
+                    score -= 50000; // Penalty
+                    cyclones.splice(i, 1);
+                    document.body.style.backgroundColor = 'red';
+                    setTimeout(() => document.body.style.backgroundColor = '#020202', 100);
+                }
+
+                if (c.y > canvas.height + 50) cyclones.splice(i, 1);
             }
 
-        }, 3000); // Runs every 3 seconds
+            // Draw Coins (Green Psi)
+            for (let i = coins.length - 1; i >= 0; i--) {
+                const c = coins[i];
+                c.y += c.speed;
+                
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#00ff41';
+                
+                // Draw Symbol
+                ctx.font = '30px Arial';
+                ctx.fillStyle = '#00ff41';
+                ctx.fillText("Ψ", c.x - 10, c.y + 10);
 
-        // 3. Start immediately
-        updateDisplay();
-        addLog("[SYS] VALUE TRACKING PROTOCOL INITIATED.");
+                // Collision Check (Collect Money)
+                const dist = Math.hypot(player.x - c.x, player.y - c.y);
+                if (dist < 40) {
+                    // COLLECTED!
+                    score += c.val;
+                    if(audioReady) synth.triggerAttackRelease(["C5", "E5"], "16n");
+                    coins.splice(i, 1);
+                    
+                    // Visual Feedback
+                    const floatText = document.createElement('div');
+                    floatText.innerText = "+$10,000";
+                    floatText.style.position = 'absolute';
+                    floatText.style.left = c.x + 'px';
+                    floatText.style.top = c.y + 'px';
+                    floatText.style.color = '#00ff41';
+                    floatText.style.fontWeight = 'bold';
+                    floatText.style.transition = 'all 1s';
+                    document.body.appendChild(floatText);
+                    setTimeout(() => {
+                        floatText.style.transform = 'translateY(-50px)';
+                        floatText.style.opacity = 0;
+                    }, 50);
+                    setTimeout(() => floatText.remove(), 1000);
+                }
+
+                if (c.y > canvas.height + 50) coins.splice(i, 1);
+            }
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            // Clear Screen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Logic
+            drawMatrix();
+            drawEntities();
+            drawPlayer();
+            updateDisplay();
+
+            // Passive Growth
+            score += 100; 
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- INPUT HANDLING ---
+        window.addEventListener('mousemove', (e) => {
+            if (!gameRunning) return;
+            // Smooth follow
+            player.x += (e.clientX - player.x) * 0.1;
+            player.y += (e.clientY - player.y) * 0.1;
+        });
+        
+        window.addEventListener('touchmove', (e) => {
+            if (!gameRunning) return;
+            const touch = e.touches[0];
+            player.x = touch.clientX;
+            player.y = touch.clientY - 50; // Offset so finger doesn't cover ship
+        });
+
     </script>
 </body>
 </html>
