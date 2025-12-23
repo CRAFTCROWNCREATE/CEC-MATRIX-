@@ -1,327 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<title>CEC WAM // V19 ECOSYSTEM EXPANSION</title>
-		<script src="https://cdn.tailwindcss.com"></script>
-		<style>
-			:root {
-				--neon-green: #00ff41;
-				--neon-blue: #00f3ff;
-				--neon-gold: #ffd700;
-				--neon-purple: #bc13fe;
-				--bg-dark: #020202;
-				--panel-bg: rgba(12, 12, 16, 0.95);
-				--font-mono: "Consolas", "Monaco", monospace;
-			}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>CEC-BIOMETRIC CORE V5.4 (BHP-09)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/tone@14.9.12/build/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inconsolata:wght@400;700&display=swap');
+        :root { --neon: #00FF41; --cyan: #00F3FF; --purple: #bc13fe; --red: #FF003C; --bg-dark: #000; }
+        body { background: var(--bg-dark); color: var(--neon); font-family: 'Inconsolata', monospace; margin: 0; min-height: 100vh; overflow: hidden; user-select: none; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
+        .shell-container { max-width: 900px; width: 100%; margin: 0 auto; border: 2px solid var(--neon); box-shadow: 0 0 20px rgba(0, 255, 65, 0.5); background: rgba(0, 5, 0, 0.98); display: flex; flex-direction: column; flex-grow: 1; height: calc(100vh - 30px); position: relative; }
+        .header { background: rgba(0, 255, 65, 0.1); padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--neon); font-family: 'Orbitron', sans-serif; font-size: 0.8rem; }
+        .status-light { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-online { background-color: var(--neon); box-shadow: 0 0 5px var(--neon); }
+        #output-feed { flex-grow: 1; overflow-y: scroll; padding: 15px; font-size: 0.9rem; line-height: 1.5; color: #ccc; white-space: pre-wrap; }
+        .prompt { color: var(--neon); font-weight: 700; }
+        .system-response { color: var(--cyan); margin-left: 10px; }
+        .alert-error { color: var(--red); font-weight: 700; }
+        .alert-success { color: var(--purple); font-weight: 700; }
+        .log-timestamp { color: #888; font-weight: 400; margin-right: 5px; }
+        .input-line { display: flex; border-top: 1px solid var(--neon); padding: 10px 15px; align-items: center; flex-shrink: 0; }
+        .input-line span { color: var(--neon); margin-right: 8px; font-weight: 700; }
+        #command-input { flex-grow: 1; background: transparent; border: none; outline: none; color: #fff; font-family: 'Inconsolata', monospace; font-size: 0.95rem; caret-color: var(--neon); -webkit-appearance: none; }
+        .biometric-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 50; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        .biometric-panel { background: #08081a; border: 2px solid var(--purple); box-shadow: 0 0 30px var(--purple); padding: 30px; border-radius: 10px; width: 80%; max-width: 450px; text-align: center; }
+        .biometric-panel h2 { color: var(--cyan); font-family: 'Orbitron', sans-serif; }
+        .file-upload-btn { background: var(--neon); color: var(--bg-dark); padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; font-weight: 700; transition: background 0.2s; }
+        .file-upload-btn:hover { background: #00d437; }
+        #loading-spinner { border: 4px solid rgba(0, 255, 65, 0.2); border-top: 4px solid var(--neon); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div class="shell-container">
+    <div class="header">
+        <span><span class="status-light status-online" id="status-dot"></span> CEC-CDL AGI MASTER</span>
+        <span id="header-status">INITIATING CORE...</span>
+        <span id="user-id-display" style="font-size: 0.7rem;">ID: Loading...</span>
+    </div>
+    <div id="output-feed">
+        <span class="system-response">System Initializing... Connecting to Firebase Persistence Layer...</span><br>
+    </div>
+    <div class="input-line">
+        <span id="prompt-prefix">INIT:></span>
+        <input type="text" id="command-input" onkeypress="if(event.key === 'Enter') executeCommand()" disabled>
+    </div>
+    <div id="biometric-modal" class="biometric-modal">
+        <div class="biometric-panel">
+            <h2 id="biometric-modal-title">BHP-09: BIOMETRIC REGISTRY</h2>
+            <p id="biometric-modal-role" style="color: var(--neon); margin-bottom: 15px;"></p>
+            <p style="color: #ccc;">Select image for high-security AGI analysis and hash generation.</p>
+            <input type="file" id="biometric-file-input" accept="image/*" style="display: none;">
+            <button class="file-upload-btn" onclick="document.getElementById('biometric-file-input').click()"> <i class="fas fa-upload"></i> SELECT IMAGE </button>
+            <div id="loading-spinner"></div>
+            <p id="biometric-status" style="color: var(--cyan); margin-top: 15px;">Awaiting file selection...</p>
+        </div>
+    </div>
+</div>
 
-			* { box-sizing: border-box; font-family: var(--font-mono); -webkit-tap-highlight-color: transparent; }
-			body { background-color: var(--bg-dark); color: white; margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; }
-			
-			/* Header */
-			header {
-				border-bottom: 2px solid var(--neon-purple);
-				background: rgba(0, 0, 0, 0.95);
-				padding: 15px; position: sticky; top: 0; z-index: 50;
-				display: flex; justify-content: space-between; align-items: center;
-				box-shadow: 0 5px 20px rgba(188, 19, 254, 0.1);
-			}
-			.live-indicator {
-				display: inline-block; width: 10px; height: 10px;
-				background: var(--neon-green); border-radius: 50%;
-				box-shadow: 0 0 10px var(--neon-green);
-				animation: pulse 2s infinite; margin-right: 8px;
-			}
-			@keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 10px var(--neon-green); } 50% { opacity: 0.4; box-shadow: 0 0 2px var(--neon-green); } 100% { opacity: 1; box-shadow: 0 0 10px var(--neon-green); } }
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-			.container { max-width: 1400px; margin: 0 auto; padding: 15px; display: grid; gap: 15px; grid-template-columns: 1fr; }
-			@media(min-width: 1024px) { .container { grid-template-columns: 3fr 1fr; } }
+    // --- PASTE YOUR KEYS BELOW ---
+    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"; 
+    
+    const firebaseConfig = {
+        // PASTE YOUR FIREBASE CONFIG OBJECT HERE (apiKey, authDomain, projectId, etc.)
+    };
 
-			/* Panels */
-			.panel {
-				background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.08);
-				border-radius: 6px; padding: 20px;
-				transition: border-color 0.3s;
-			}
-			.panel:hover { border-color: rgba(188, 19, 254, 0.3); }
-			.panel-header { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 15px; font-weight: bold; color: var(--neon-blue); }
+    const appId = 'cec-live-system-1010'; 
+    const CONFIG_DOC_ID = 'master_config';
+    let db, auth, userId = 'anonymous';
+    let systemState = { agiStatus: "AGI 5.4 LOCKED", wamScore: 92.0, financeAssets: 8472500, commandLog: [], biometricProfiles: [], lastUpdate: Date.now() };
+    let currentBiometricRole = null;
 
-			/* Chart */
-			#chart-container { position: relative; height: 400px; width: 100%; background: #080808; border: 1px solid #222; }
-			canvas { display: block; width: 100%; height: 100%; }
-			
-			/* Ticker */
-			.ticker-value { font-size: 2.5rem; font-weight: 900; color: var(--neon-green); text-shadow: 0 0 15px rgba(0, 255, 65, 0.3); }
-			.ticker-label { color: #888; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+    async function playBeep(freq = 440, duration = 0.1) { try { await Tone.start(); const synth = new Tone.Synth().toDestination(); synth.triggerAttackRelease(freq, duration); } catch (e) { console.error("Audio error:", e); } }
 
-			/* Logs */
-			.log-entry { font-size: 0.7rem; border-left: 2px solid #333; padding-left: 10px; margin-bottom: 6px; color: #888; transition: all 0.2s; }
-			.log-entry:first-child { color: #fff; border-color: var(--neon-green); font-weight: bold; }
+    function addOutput(text, type = 'system-response') {
+        const feed = document.getElementById('output-feed');
+        const now = new Date();
+        const timestamp = `<span class="log-timestamp">[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]</span>`;
+        const outputLine = document.createElement('div');
+        outputLine.innerHTML = `${timestamp} <span class="${type}">${text}</span>`;
+        feed.appendChild(outputLine);
+        feed.scrollTop = feed.scrollHeight;
+    }
 
-			/* Buttons */
-			.action-btn {
-				width: 100%; background: transparent; color: var(--neon-blue); border: 1px solid var(--neon-blue);
-				padding: 12px; font-weight: bold; font-size: 0.9rem; cursor: pointer;
-				text-transform: uppercase; margin-bottom: 10px;
-				transition: all 0.2s;
-			}
-			.action-btn:hover { background: rgba(0, 243, 255, 0.1); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
-			
-			.link-btn {
-				display: block; width: 100%; text-align: center;
-				padding: 10px; font-size: 0.8rem;
-				background: #111; border: 1px solid #333; color: #888;
-				text-decoration: none; margin-bottom: 8px;
-				transition: all 0.2s;
-			}
-			.link-btn:hover { border-color: var(--neon-gold); color: var(--neon-gold); }
-			.link-btn.primary { border-color: var(--neon-purple); color: var(--neon-purple); font-weight: bold; }
-			.link-btn.primary:hover { background: var(--neon-purple); color: white; }
+    function showBiometricModal(role) { currentBiometricRole = role; document.getElementById('biometric-modal-role').innerText = `PROFILE: ${role.toUpperCase()}`; document.getElementById('biometric-modal').style.display = 'flex'; document.getElementById('biometric-file-input').value = ''; document.getElementById('biometric-status').innerText = 'Awaiting file selection...'; document.querySelector('.file-upload-btn').style.display = 'block'; }
+    function hideBiometricModal() { document.getElementById('biometric-modal').style.display = 'none'; }
 
-			.grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-			.stat-box { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 4px; }
-			.stat-label { font-size: 0.65rem; color: #666; uppercase; }
-			.stat-val { font-size: 1.1rem; color: white; font-weight: bold; }
-		</style>
-	</head>
-	<body>
+    function setupDataListener() {
+        if (!db || !userId) return;
+        const docRef = doc(db, 'artifacts', appId, 'users', userId, 'system_state', CONFIG_DOC_ID);
+        onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const loadedState = docSnap.data();
+                const initialLoad = systemState.commandLog.length === 0;
+                systemState = { ...systemState, ...loadedState };
+                if (initialLoad) {
+                    addOutput(`[CORE] PERSISTENCE CORE RESTORED. AGI ${systemState.agiStatus} // WAM ${systemState.wamScore.toFixed(1)}`, 'alert-success');
+                    systemState.commandLog.forEach(log => { addOutput(`[HISTORY] ${log.cmd}`, 'prompt'); addOutput(log.res, log.type); });
+                }
+            } else { saveSystemState(true); addOutput("[CORE] NEW INSTANCE DETECTED. INITIAL STATE SAVED.", 'alert-success'); }
+            document.getElementById('header-status').innerText = `AGI ${systemState.agiStatus} // WAM ${systemState.wamScore.toFixed(1)}`;
+            document.getElementById('status-dot').style.backgroundColor = 'var(--neon)';
+        });
+    }
 
-		<header>
-			<div class="flex items-center">
-				<div class="live-indicator"></div>
-				<div>
-					<div class="font-bold tracking-wider text-sm md:text-base text-white">CEC WAM // V19</div>
-					<div class="text-[0.6rem] text-neon-purple tracking-widest">ECOSYSTEM EXPANSION</div>
-				</div>
-			</div>
-			<div class="text-right">
-				<div class="text-xs text-gray-400">NETWORK STATE</div>
-				<div class="text-sm font-bold text-neon-green">SECURED // COMPOUNDING</div>
-			</div>
-		</header>
+    async function saveSystemState(isInitial = false) { if (!db || userId === 'anonymous') return; try { await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'system_state', CONFIG_DOC_ID), systemState); } catch (e) { console.error("Error saving system state:", e); } }
 
-		<div class="container">
-			
-			<!-- Left Column: Chart & Market -->
-			<div class="flex flex-col gap-4">
-				<!-- Ticker Header -->
-				<div class="panel flex items-center justify-between">
-					<div>
-						<div class="ticker-label">PSI-COIN / USD (V19)</div>
-						<div id="price-display" class="ticker-value">$3.9204</div>
-					</div>
-					<div class="text-right">
-						<div class="text-neon-green font-bold text-xl">+18.2%</div>
-						<div class="text-xs text-gray-500">REAL-TIME YIELD: 4.2%</div>
-					</div>
-				</div>
+    async function initializeFirebase() {
+        if (!firebaseConfig.apiKey) { addOutput("FATAL: FIREBASE CONFIG MISSING IN CODE.", 'alert-error'); return; }
+        try {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            await signInAnonymously(auth);
+        } catch (error) { console.error("Auth Error:", error); }
 
-				<!-- Chart Area -->
-				<div class="panel" style="flex-grow: 1;">
-					<div class="panel-header">
-						<span>GROWTH VECTOR // 1010 PROTOCOL</span>
-						<span class="text-neon-purple text-xs self-center">AUTO-COMPOUND ACTIVE</span>
-					</div>
-					<div id="chart-container">
-						<canvas id="marketCanvas"></canvas>
-					</div>
-				</div>
-			</div>
+        onAuthStateChanged(auth, (user) => {
+            if (user) { userId = user.uid; document.getElementById('user-id-display').innerText = `ID: ${userId.substring(0, 8)}...`; setupDataListener(); }
+            document.getElementById('command-input').disabled = false;
+            document.getElementById('prompt-prefix').innerText = 'CEC-CDL:>';
+            document.getElementById('command-input').focus();
+        });
+    }
 
-			<!-- Right Column: Stats & Links -->
-			<div class="flex flex-col gap-4">
-				
-				<!-- Portfolio Stats -->
-				<div class="panel">
-					<div class="panel-header">INTERNAL LEDGER</div>
-					<div class="mb-4">
-						<div class="text-xs text-gray-400 mb-1">TOTAL ASSETS (SECURED)</div>
-						<div class="font-mono text-2xl text-neon-blue border-b border-gray-800 pb-2 mb-4">$1,384,920.00</div>
-					</div>
-					
-					<div class="grid-stats">
-						<div class="stat-box">
-							<div class="stat-label">DAILY YIELD</div>
-							<div class="stat-val text-neon-green">+$4,291</div>
-						</div>
-						<div class="stat-box">
-							<div class="stat-label">R-RATIO</div>
-							<div class="stat-val text-neon-gold">12.04</div>
-						</div>
-						<div class="stat-box">
-							<div class="stat-label">MINT STATUS</div>
-							<div class="stat-val">ACTIVE</div>
-						</div>
-						<div class="stat-box">
-							<div class="stat-label">NODES</div>
-							<div class="stat-val text-neon-purple">8/8</div>
-						</div>
-					</div>
-				</div>
+    function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); }); }
 
-				<!-- Official Channels (Updated for GitHub Request) -->
-				<div class="panel">
-					<div class="panel-header">OFFICIAL CHANNELS</div>
-					<div class="text-xs text-gray-500 mb-3 text-center">ACCESS EXTERNAL PROTOCOLS</div>
-					
-					<!-- EDIT THESE LINKS FOR YOUR GITHUB/PROJECT -->
-					<a href="https://join.pump.fun/HSag/ifuuisz3" target="_blank" class="link-btn primary">
-						[ PUMP.FUN LIVE ]
-					</a>
-					<a href="#" target="_blank" class="link-btn">
-						[ GITHUB SOURCE ]
-					</a>
-					<a href="#" target="_blank" class="link-btn">
-						[ SOLSCAN CONTRACT ]
-					</a>
+    async function generateBiometricHash(base64Data, mimeType, role) {
+        if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") { throw new Error("API KEY MISSING IN CODE"); }
+        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`;
+        const payload = {
+            contents: [{ role: "user", parts: [{ text: `Analyze face for role: ${role}. Generate Biometric Signature Hash (BSH).` }, { inlineData: { mimeType: mimeType, data: base64Data } }] }],
+            generationConfig: { responseMimeType: "application/json", responseSchema: { type: "OBJECT", properties: { "BSH": { "type": "STRING" } } } }
+        };
+        const response = await fetch(GEMINI_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (response.ok) { const result = await response.json(); return JSON.parse(result.candidates[0].content.parts[0].text).BSH; }
+        throw new Error("API Failed");
+    }
 
-					<div class="mt-4 pt-4 border-t border-gray-800 text-center">
-						<div class="text-[0.6rem] text-gray-600">SYSTEM ID: CEC-WAM-V19-8926</div>
-					</div>
-				</div>
+    document.getElementById('biometric-file-input').addEventListener('change', async (event) => {
+        const file = event.target.files[0]; if (!file) return;
+        document.getElementById('biometric-status').innerText = `Processing ${file.name}...`; document.querySelector('.file-upload-btn').style.display = 'none'; document.getElementById('loading-spinner').style.display = 'block';
+        try {
+            const base64Data = await fileToBase64(file);
+            const hash = await generateBiometricHash(base64Data, file.type, currentBiometricRole);
+            const existingIndex = systemState.biometricProfiles.findIndex(p => p.role.toLowerCase() === currentBiometricRole.toLowerCase());
+            if (existingIndex !== -1) { systemState.biometricProfiles[existingIndex].hash = hash; } else { systemState.biometricProfiles.push({ role: currentBiometricRole, hash: hash }); }
+            await saveSystemState(); playBeep(800, 0.5); addOutput(`SUCCESS: '${currentBiometricRole.toUpperCase()}' Registered. Hash: ${hash}`, 'alert-success');
+        } catch (error) { addOutput(`ERROR: ${error.message}`, 'alert-error'); playBeep(200, 0.2); } finally { hideBiometricModal(); document.getElementById('loading-spinner').style.display = 'none'; document.getElementById('command-input').focus(); }
+    });
 
-				<!-- Live Logs -->
-				<div class="panel h-full">
-					<div class="panel-header">SYSTEM LOGS</div>
-					<div id="chain-log" class="overflow-y-auto h-48 flex flex-col-reverse"></div>
-				</div>
+    window.executeCommand = function() {
+        const input = document.getElementById('command-input'); const command = input.value.trim();
+        if (!command) return;
+        addOutput(`CEC-CDL:> ${command}`, 'prompt'); input.value = ''; playBeep(600, 0.05);
+        const lowerCmd = command.toLowerCase();
+        let response = "", responseType = 'system-response';
 
-			</div>
-		</div>
+        if (lowerCmd.startsWith('register biometric')) {
+            const parts = command.split(/\s+/); const role = parts[2] ? parts[2].toUpperCase() : 'UNKNOWN';
+            if (role === 'UNKNOWN') { response = "ERROR: Specify role (e.g., 'MASTER')."; responseType = 'alert-error'; } else { showBiometricModal(role); return; }
+        } else if (lowerCmd === 'status') {
+            response = `AGI ${systemState.agiStatus} // WAM ${systemState.wamScore}. Assets: $${systemState.financeAssets}. Profiles: ${systemState.biometricProfiles.length}.`; responseType = 'alert-success';
+        } else if (lowerCmd.includes('reset system')) {
+             systemState.commandLog = []; systemState.biometricProfiles = []; response = "SYSTEM RESET. LOGS WIPED."; responseType = 'alert-error';
+        } else { response = "UNKNOWN COMMAND. Try: STATUS, REGISTER BIOMETRIC [ROLE]"; responseType = 'alert-error'; playBeep(200, 0.2); }
+        
+        systemState.commandLog.push({ cmd: command, res: response, type: responseType });
+        if (systemState.commandLog.length > 50) systemState.commandLog = systemState.commandLog.slice(-50);
+        addOutput(response, responseType); saveSystemState();
+    }
 
-		<script>
-			// --- V19 LOGIC ---
-
-			const canvas = document.getElementById('marketCanvas');
-			const ctx = canvas.getContext('2d');
-			let width, height;
-			let candles = [];
-			let currentPrice = 3.9204;
-			let tickCount = 0;
-			
-			function resize() {
-				const rect = canvas.parentElement.getBoundingClientRect();
-				canvas.width = rect.width;
-				canvas.height = rect.height;
-				width = canvas.width;
-				height = canvas.height;
-				generateHistory();
-			}
-			window.addEventListener('resize', resize);
-
-			function generateHistory() {
-				candles = [];
-				let p = 3.80;
-				const count = Math.floor(width / 15);
-				for(let i=0; i<count; i++) {
-					let change = (Math.random() - 0.4) * 0.15; // Higher volatility
-					let open = p;
-					let close = p + change;
-					let high = Math.max(open, close) + Math.random() * 0.08;
-					let low = Math.min(open, close) - Math.random() * 0.08;
-					candles.push({ open, close, high, low });
-					p = close;
-				}
-				currentPrice = p;
-			}
-
-			function drawChart() {
-				ctx.clearRect(0, 0, width, height);
-				
-				const min = Math.min(...candles.map(c => c.low)) * 0.99;
-				const max = Math.max(...candles.map(c => c.high)) * 1.01;
-				const range = max - min;
-				
-				const candleWidth = 8;
-				const spacing = 7;
-				const totalWidth = candles.length * (candleWidth + spacing);
-				let offsetX = width - totalWidth - 10;
-
-				// Background Grid
-				ctx.strokeStyle = '#1a1a1a';
-				ctx.beginPath();
-				for(let i=0; i<6; i++) {
-					let y = (height/5) * i;
-					ctx.moveTo(0, y); ctx.lineTo(width, y);
-				}
-				ctx.stroke();
-
-				// Candles
-				candles.forEach((c, i) => {
-					const x = offsetX + i * (candleWidth + spacing);
-					if (x < -20) return;
-
-					const yOpen = height - ((c.open - min) / range * height);
-					const yClose = height - ((c.close - min) / range * height);
-					const yHigh = height - ((c.high - min) / range * height);
-					const yLow = height - ((c.low - min) / range * height);
-
-					const isGreen = c.close >= c.open;
-					ctx.fillStyle = isGreen ? '#00ff41' : '#bc13fe'; // Purple for drops in V19
-					ctx.strokeStyle = ctx.fillStyle;
-
-					ctx.beginPath(); ctx.moveTo(x + candleWidth/2, yHigh); ctx.lineTo(x + candleWidth/2, yLow); ctx.stroke();
-					const bodyHeight = Math.max(Math.abs(yClose - yOpen), 1);
-					const bodyY = Math.min(yOpen, yClose);
-					ctx.fillRect(x, bodyY, candleWidth, bodyHeight);
-				});
-			}
-
-			function update() {
-				tickCount++;
-				if(tickCount % 20 === 0) {
-					// Trend logic: Strong Upward Bias for "Growth Phase"
-					let move = (Math.random() - 0.4) * 0.08; 
-					
-					let last = candles[candles.length - 1];
-					last.close += move;
-					if(last.close > last.high) last.high = last.close;
-					if(last.close < last.low) last.low = last.close;
-					
-					if(tickCount % 100 === 0) {
-						candles.push({ open: last.close, close: last.close, high: last.close, low: last.close });
-						if(candles.length > 120) candles.shift();
-					}
-
-					currentPrice = last.close;
-					document.getElementById('price-display').innerText = `$${currentPrice.toFixed(4)}`;
-					
-					// Random log generation
-					if(Math.random() > 0.95) {
-						const logs = [
-							"Compounding Yield: +0.02%",
-							"Node Sync: 12ms",
-							"New Holder Detected",
-							"Liquidity Lock: 100%",
-							"API Heartbeat: Stable"
-						];
-						addLog(logs[Math.floor(Math.random()*logs.length)]);
-					}
-				}
-				drawChart();
-				requestAnimationFrame(update);
-			}
-
-			const logContainer = document.getElementById('chain-log');
-			function addLog(msg) {
-				const div = document.createElement('div');
-				div.className = `log-entry`;
-				div.innerText = `> ${msg}`;
-				logContainer.prepend(div);
-				if(logContainer.children.length > 20) logContainer.removeChild(logContainer.lastChild);
-			}
-
-			window.onload = function() {
-				resize();
-				generateHistory();
-				update();
-				addLog("V19 Core Loaded");
-				addLog("GitHub Link Integration: Ready");
-				addLog("Legacy Assets: Secured");
-			};
-
-		</script>
-	</body>
+    window.onload = function() { initializeFirebase(); };
+</script>
+</body>
 </html>
-
