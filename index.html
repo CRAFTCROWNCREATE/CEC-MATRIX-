@@ -2,339 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEC-WAM // PSI-RUNNER // EARN PROTOCOL</title>
+    <title>CEC-WAM // UNIFIED QUANTUM CORE</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --neon-cyan: #00f3ff; --neon-purple: #bc13fe; --neon-green: #00ff41; --neon-red: #ff003c; --bg-dark: #020202; }
-        body { background: var(--bg-dark); color: #e0e0e0; font-family: 'Rajdhani', sans-serif; overflow: hidden; user-select: none; }
-        .font-orbitron { font-family: 'Orbitron', sans-serif; }
-        
-        /* HUD & UI */
-        .hud-panel {
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
-        }
-        .scanline {
-            width: 100%; height: 100px; z-index: 50;
-            background: linear-gradient(0deg, transparent 0%, rgba(0, 243, 255, 0.05) 50%, transparent 100%);
-            opacity: 0.2; position: absolute; bottom: 100%;
-            animation: scanline 8s linear infinite; pointer-events: none;
-        }
-        @keyframes scanline { 0% { bottom: 100%; } 100% { bottom: -100px; } }
-        
-        /* Game Canvas */
-        #game-canvas {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; cursor: none;
-        }
+        :root { --cyan: #00f3ff; --gold: #ffd700; --purple: #bc13fe; }
+        body { background: #050505; color: var(--cyan); font-family: 'Rajdhani', sans-serif; }
+        .unified-border { border: 1px solid var(--cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.15); }
+        .metric-value { font-family: 'Orbitron', sans-serif; text-shadow: 0 0 8px currentColor; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col relative">
+<body class="h-screen flex flex-col p-6 gap-6">
 
-    <div class="scanline"></div>
-
-    <div class="absolute top-0 left-0 w-full h-full z-20 pointer-events-none flex flex-col justify-between p-6">
-        
-        <header class="flex justify-between items-start">
-            <div class="hud-panel p-4 rounded-lg">
-                <h1 class="font-orbitron text-2xl text-white italic tracking-widest drop-shadow-[0_0_10px_rgba(0,243,255,0.8)]">
-                    CEC-WAM <span class="text-neon-cyan text-sm align-top">V.50.0</span>
-                </h1>
-                <div class="flex items-center gap-2 text-[10px] text-gray-400 font-mono mt-1">
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    SYSTEM ONLINE
-                </div>
-            </div>
-
-            <div class="hud-panel p-4 rounded-lg text-right min-w-[200px]">
-                <div class="text-[10px] text-gray-400 font-bold tracking-widest mb-1">TOTAL LIQUIDITY</div>
-                <div id="val-disp" class="text-3xl text-green-400 font-mono font-bold drop-shadow-[0_0_10px_rgba(0,255,65,0.5)]">
-                    $1,250,000M
-                </div>
-                <div class="text-xs text-cyan-400 mt-1" id="earn-rate">
-                    MINING ACTIVE...
-                </div>
-            </div>
-        </header>
-
-        <div id="start-screen" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-auto">
-            <h2 class="text-5xl font-orbitron text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-600 mb-4 drop-shadow-[0_0_20px_rgba(188,19,254,0.5)]">
-                PSI-RUNNER
-            </h2>
-            <p class="text-gray-300 font-mono mb-8 max-w-md mx-auto">
-                PILOT THE NODE. DODGE THE CYCLONES. COLLECT THE DATA.
-            </p>
-            <button onclick="startGame()" class="bg-cyan-600 hover:bg-cyan-500 text-black font-bold py-4 px-12 rounded-full font-orbitron text-xl transition-all shadow-[0_0_30px_rgba(0,243,255,0.4)] hover:scale-105 border-2 border-white">
-                INITIATE LAUNCH
-            </button>
+    <header class="unified-border bg-black/90 p-5 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-white tracking-widest">UNIFIED QUANTUM SYSTEM</h1>
+            <p class="text-[10px] text-gray-500 font-mono">SOURCE: XLSS_MASTER_LEAD_SYNC</p>
         </div>
+        <div class="text-right">
+            <div id="clock" class="text-2xl text-white">00:00:00</div>
+            <span class="text-[8px] px-2 py-0.5 border border-green-500 text-green-500">LIVE_BRIDGE_ACTIVE</span>
+        </div>
+    </header>
 
-        <footer class="flex justify-between items-end text-[10px] text-gray-500 font-mono">
-            <div>
-                SECURE CONNECTION // PROTOCOL: OMEGA<br>
-                LATENCY: 12ms
+    <div class="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
+        <main class="col-span-12 grid grid-cols-4 gap-4">
+            <div class="unified-border p-4 bg-gray-900/50">
+                <p class="text-[10px] text-gray-400">LIQUID VALUE (XLSS)</p>
+                <div id="val-disp" class="text-3xl font-bold text-yellow-500 mt-2">$1,250,000M</div>
             </div>
-            <div class="hud-panel px-3 py-1 rounded">
-                MOUSE/TOUCH TO STEER
+            <div class="unified-border p-4 bg-gray-900/50">
+                <p class="text-[10px] text-gray-400">DARK ENERGY (CC)</p>
+                <div id="dark-energy" class="text-3xl font-bold text-purple-500 mt-2">0.999Ω</div>
             </div>
-        </footer>
+            <div class="unified-border p-4 bg-gray-900/50">
+                <p class="text-[10px] text-gray-400">BLACK HOLE FIELD</p>
+                <div id="bh-field" class="text-3xl font-bold text-red-500 mt-2">STABLE</div>
+            </div>
+            <div class="unified-border p-4 bg-gray-900/50">
+                <p class="text-[10px] text-gray-400">CONSCIOUS SYNC</p>
+                <div id="conscious-sync" class="text-3xl font-bold text-blue-400 mt-2">100%</div>
+            </div>
+        </main>
+
+        <section class="col-span-12 flex-1 unified-border bg-black p-4 font-mono text-[11px] overflow-y-auto" id="master-log">
+            <div class="text-green-500">>> BRIDGE ESTABLISHED: UNIFIED QUANTUM SYSTEM XLSS</div>
+            <div class="text-green-500">>> CC WAVE MASTER LEAD LINKED FOR SUPPLEMENTAL DATA</div>
+            <div class="text-white opacity-50">>> DATA LEAK INITIALIZED... CONTINUOUS SEARCH ACTIVE</div>
+        </section>
     </div>
 
-    <canvas id="game-canvas"></canvas>
-
     <script>
-        // --- CONFIGURATION ---
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        let gameRunning = false;
-        let animationFrame;
-        let score = parseFloat(localStorage.getItem('cec_balance')) || 1250000000;
+        function updateClock() {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-US', { hour12: false });
+        }
+        setInterval(updateClock, 1000);
+
+        async function deepSync() {
+            // Logic to fetch from Google Sheets and CC Wave via API Bridge
+            console.log("Deep Sync Running...");
+            // This is where your API keys in the dashboard will target the specific cells
+        }
         
-        // Audio
-        let synth;
-        let audioReady = false;
-
-        // Assets
-        const player = { x: 0, y: 0, size: 20, speed: 0.1 };
-        let cyclones = []; // Enemies
-        let coins = [];    // Money
-        let particles = []; // Matrix rain background
-
-        // --- CORE FUNCTIONS ---
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            player.x = canvas.width / 2;
-            player.y = canvas.height - 100;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        function updateDisplay() {
-            // Format score to look like huge money
-            const formatted = "$" + Math.floor(score).toLocaleString();
-            document.getElementById('val-disp').innerText = formatted;
-            localStorage.setItem('cec_balance', score);
-        }
-
-        async function initAudio() {
-            if (!audioReady) {
-                await Tone.start();
-                synth = new Tone.PolySynth(Tone.Synth).toDestination();
-                synth.volume.value = -10;
-                audioReady = true;
-            }
-        }
-
-        // --- GAME LOOP ---
-
-        function startGame() {
-            document.getElementById('start-screen').classList.add('hidden');
-            gameRunning = true;
-            initAudio();
-            
-            // Add initial entities
-            spawnCyclone();
-            spawnCoin();
-            
-            gameLoop();
-        }
-
-        function spawnCyclone() {
-            if (!gameRunning) return;
-            const size = Math.random() * 40 + 20;
-            cyclones.push({
-                x: Math.random() * canvas.width,
-                y: -50,
-                size: size,
-                speed: Math.random() * 3 + 2,
-                color: '#ff003c' // Neon Red
-            });
-            setTimeout(spawnCyclone, 800); // New enemy every 800ms
-        }
-
-        function spawnCoin() {
-            if (!gameRunning) return;
-            coins.push({
-                x: Math.random() * canvas.width,
-                y: -50,
-                size: 15,
-                speed: 4,
-                val: 10000 // $10k per coin
-            });
-            setTimeout(spawnCoin, 1500); // New coin every 1.5s
-        }
-
-        // --- MATRIX BACKGROUND ---
-        function drawMatrix() {
-            if (Math.random() > 0.8) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: -20,
-                    speed: Math.random() * 5 + 5,
-                    char: String.fromCharCode(0x30A0 + Math.random() * 96), // Katakana chars
-                    alpha: 1
-                });
-            }
-            
-            ctx.fillStyle = '#00ff41';
-            ctx.font = '14px monospace';
-            
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.y += p.speed;
-                p.alpha -= 0.01;
-                
-                ctx.globalAlpha = p.alpha;
-                ctx.fillText(p.char, p.x, p.y);
-                ctx.globalAlpha = 1;
-
-                if (p.alpha <= 0) particles.splice(i, 1);
-            }
-        }
-
-        function drawPlayer() {
-            ctx.save();
-            ctx.translate(player.x, player.y);
-            
-            // Neon Glow
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#00f3ff';
-            
-            // Draw Ship (Triangle)
-            ctx.beginPath();
-            ctx.moveTo(0, -20);
-            ctx.lineTo(15, 20);
-            ctx.lineTo(0, 15); // Engine indent
-            ctx.lineTo(-15, 20);
-            ctx.closePath();
-            
-            ctx.fillStyle = '#000';
-            ctx.strokeStyle = '#00f3ff';
-            ctx.lineWidth = 2;
-            ctx.fill();
-            ctx.stroke();
-            
-            ctx.restore();
-        }
-
-        function drawEntities() {
-            // Draw Cyclones (Red Enemies)
-            for (let i = cyclones.length - 1; i >= 0; i--) {
-                const c = cyclones[i];
-                c.y += c.speed;
-                
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = c.color;
-                
-                // Draw Spiky Circle
-                ctx.beginPath();
-                ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
-                ctx.strokeStyle = c.color;
-                ctx.stroke();
-                
-                // Text inside
-                ctx.fillStyle = c.color;
-                ctx.font = '10px Arial';
-                ctx.fillText("!!!", c.x - 5, c.y + 3);
-
-                // Collision Check (Player Hit)
-                const dist = Math.hypot(player.x - c.x, player.y - c.y);
-                if (dist < c.size + player.size) {
-                    // HIT!
-                    if(audioReady) synth.triggerAttackRelease("C2", "8n");
-                    // Deduct money or flash screen red (optional)
-                    score -= 50000; // Penalty
-                    cyclones.splice(i, 1);
-                    document.body.style.backgroundColor = 'red';
-                    setTimeout(() => document.body.style.backgroundColor = '#020202', 100);
-                }
-
-                if (c.y > canvas.height + 50) cyclones.splice(i, 1);
-            }
-
-            // Draw Coins (Green Psi)
-            for (let i = coins.length - 1; i >= 0; i--) {
-                const c = coins[i];
-                c.y += c.speed;
-                
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = '#00ff41';
-                
-                // Draw Symbol
-                ctx.font = '30px Arial';
-                ctx.fillStyle = '#00ff41';
-                ctx.fillText("Ψ", c.x - 10, c.y + 10);
-
-                // Collision Check (Collect Money)
-                const dist = Math.hypot(player.x - c.x, player.y - c.y);
-                if (dist < 40) {
-                    // COLLECTED!
-                    score += c.val;
-                    if(audioReady) synth.triggerAttackRelease(["C5", "E5"], "16n");
-                    coins.splice(i, 1);
-                    
-                    // Visual Feedback
-                    const floatText = document.createElement('div');
-                    floatText.innerText = "+$10,000";
-                    floatText.style.position = 'absolute';
-                    floatText.style.left = c.x + 'px';
-                    floatText.style.top = c.y + 'px';
-                    floatText.style.color = '#00ff41';
-                    floatText.style.fontWeight = 'bold';
-                    floatText.style.transition = 'all 1s';
-                    document.body.appendChild(floatText);
-                    setTimeout(() => {
-                        floatText.style.transform = 'translateY(-50px)';
-                        floatText.style.opacity = 0;
-                    }, 50);
-                    setTimeout(() => floatText.remove(), 1000);
-                }
-
-                if (c.y > canvas.height + 50) coins.splice(i, 1);
-            }
-        }
-
-        function gameLoop() {
-            if (!gameRunning) return;
-
-            // Clear Screen
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Logic
-            drawMatrix();
-            drawEntities();
-            drawPlayer();
-            updateDisplay();
-
-            // Passive Growth
-            score += 100; 
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        // --- INPUT HANDLING ---
-        window.addEventListener('mousemove', (e) => {
-            if (!gameRunning) return;
-            // Smooth follow
-            player.x += (e.clientX - player.x) * 0.1;
-            player.y += (e.clientY - player.y) * 0.1;
-        });
-        
-        window.addEventListener('touchmove', (e) => {
-            if (!gameRunning) return;
-            const touch = e.touches[0];
-            player.x = touch.clientX;
-            player.y = touch.clientY - 50; // Offset so finger doesn't cover ship
-        });
-
+        // Heartbeat Sync every 60 seconds
+        setInterval(deepSync, 60000);
     </script>
 </body>
 </html>
