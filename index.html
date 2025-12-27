@@ -1,103 +1,70 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>CEC SYSTEM</title>
+<title>CEC MASTER</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
 <style>
-    /* GLOBAL STYLES */
-    body { margin: 0; background: #000; overflow: hidden; height: 100vh; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-     
-    /* --- STATE 1: DECOY (RED) --- */
-    #decoy-screen {
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        width: 100%; height: 100%;
-        background: radial-gradient(circle, #220000 0%, #000000 90%);
-        color: red; text-align: center;
-        position: absolute; top: 0; left: 0; z-index: 10;
-    }
-    .alert-box { border: 2px solid red; padding: 30px; background: rgba(50,0,0,0.8); border-radius: 10px; box-shadow: 0 0 20px red; }
-    .decoy-title { font-family: 'Orbitron', sans-serif; font-size: 2rem; margin-bottom: 10px; text-shadow: 0 0 10px red; }
-     
-    /* --- STATE 2: 5D SYSTEM (BLUE/HOLO) --- */
-    #holo-screen {
-        display: none; /* Hidden by default */
-        flex-direction: column; align-items: center; justify-content: center;
-        width: 100%; height: 100%;
-        background: radial-gradient(circle at 50% 50%, #1a0033 0%, #000 100%);
-        color: #fff;
-        position: absolute; top: 0; left: 0; z-index: 20;
-    }
-    .glass-card {
-        background: rgba(15, 20, 35, 0.75);
-        border: 1px solid rgba(0, 243, 255, 0.3);
-        box-shadow: 0 0 30px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        border-radius: 20px; padding: 30px; width: 85%; max-width: 400px;
-        text-align: center; animation: float 6s ease-in-out infinite;
-    }
-    .holo-title { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; letter-spacing: 2px; color: #00f3ff; text-shadow: 0 0 10px #00f3ff; margin-bottom: 20px; }
-    .value { font-size: 3rem; font-weight: bold; text-shadow: 0 0 20px #bc13fe; margin: 10px 0; }
-    .gold { color: #ffd700; text-shadow: 0 0 20px #ffd700; }
-    .status-dot { height: 10px; width: 10px; background: #00ff00; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #00ff00; margin-right: 5px; animation: blink 2s infinite; }
-     
-    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-    @keyframes blink { 0% {opacity:1;} 50% {opacity:0.4;} 100% {opacity:1;} }
- 
-    /* INPUT FIELD */
-    #passcode { 
-        background: transparent; border: none; border-bottom: 2px solid red; 
-        color: red; font-size: 1.5rem; text-align: center; width: 150px; margin-top: 20px; outline: none; font-family: 'Orbitron', sans-serif;
-    }
-    #passcode:focus { border-bottom: 2px solid #fff; color: #fff; }
+    body { margin: 0; background: #000; overflow: hidden; height: 100vh; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    
+    /* RED DECOY LAYER */
+    #decoy { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #220000 0%, #000 90%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; transition: opacity 1s; }
+    .alert { border: 2px solid red; padding: 30px; background: rgba(50,0,0,0.8); box-shadow: 0 0 20px red; text-align: center; color: red; animation: pulse 2s infinite; }
+    input { background: transparent; border: none; border-bottom: 2px solid red; color: red; font-size: 1.5rem; text-align: center; width: 150px; margin-top: 20px; outline: none; font-family: 'Orbitron', sans-serif; }
+    
+    /* BLUE HOLOGRAM LAYER */
+    #holo { opacity: 0; display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 50%, #1a0033 0%, #000 100%); z-index: 5; transition: opacity 1s; }
+    .card { background: rgba(10, 15, 30, 0.65); border: 1px solid rgba(0, 243, 255, 0.3); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 20px; padding: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(0, 243, 255, 0.2); animation: float 6s infinite; }
+    .val { font-size: 3rem; font-weight: bold; text-shadow: 0 0 20px #00f3ff; margin: 15px 0; color: #fff; }
+    .gold { color: #ffd700; text-shadow: 0 0 20px #ffd700; }
+    
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+    @keyframes pulse { 0% { box-shadow: 0 0 20px red; } 50% { box-shadow: 0 0 40px red; } 100% { box-shadow: 0 0 20px red; } }
 </style>
 </head>
 <body>
- 
-    <!-- SCREEN 1: THE DECOY -->
-    <div id="decoy-screen">
-        <div class="alert-box">
-            <div class="decoy-title">ACCESS DENIED</div>
-            <p>AUTHORIZATION REQUIRED</p>
-            <p>SYSTEM LOCKED</p>
-            <input type="password" id="passcode" placeholder="PASSCODE" oninput="checkPass(this)">
-        </div>
-    </div>
- 
-    <!-- SCREEN 2: THE 5D SYSTEM -->
-    <div id="holo-screen">
-        <div class="glass-card">
-            <div class="holo-title"><span class="status-dot"></span> CEC-WAM CORE</div>
-             
-            <p style="margin:0; font-size:0.8rem; opacity:0.8;">LIQUID ASSETS</p>
-            <div class="value">$1,250,000.00</div>
-             
-            <hr style="border:0; border-bottom:1px solid rgba(255,255,255,0.1); margin:15px 0;">
-             
-            <p style="margin:0; font-size:0.8rem; opacity:0.8;">NET WORTH</p>
-            <div class="value gold">$176M</div>
-             
-            <div style="margin-top:20px; font-size:0.8rem; color:#00f3ff; text-align:left;">
-                > [SYS] 5D VISUALS: ONLINE<br>
-                > [EVE] BRAIN: SYNCED<br>
-                > [NET] SECURE CONNECTION ESTABLISHED
-            </div>
-        </div>
-    </div>
- 
+
+    <div id="decoy">
+        <div class="alert">
+            <h1 style="font-family:'Orbitron'; margin:0;">ACCESS DENIED</h1>
+            <p>CEC SECURITY PROTOCOL</p>
+            <input type="tel" id="pass" placeholder="PIN" oninput="check(this)">
+        </div>
+    </div>
+
+    <div id="holo">
+        <div class="card">
+            <p style="color:#00f3ff; letter-spacing:2px;">CEC SYSTEM: ONLINE</p>
+            <h1>LIQUID ASSETS</h1>
+            <div class="val">$1,250,000.00</div>
+            <hr style="opacity:0.3; margin:20px 0;">
+            <h1>NET WORTH</h1>
+            <div class="val gold">$176M</div>
+            <p style="color:#bc13fe; margin-top:20px;">> EVE: VOICE ACTIVE</p>
+        </div>
+    </div>
+
 <script>
-    function checkPass(input) {
-        if(input.value === '1010') {
-            // UNLOCK SYSTEM
-            document.getElementById('decoy-screen').style.display = 'none';
-            document.getElementById('holo-screen').style.display = 'flex';
-             
-            // Play a fake 'unlock' sound effect logic (visual only for now)
-            console.log("SYSTEM UNLOCKED");
-        }
-    }
+    function check(el) {
+        if(el.value === '1010') {
+            document.getElementById('pass').blur();
+            let d = document.getElementById('decoy');
+            let h = document.getElementById('holo');
+            d.style.opacity = '0';
+            setTimeout(() => { 
+                d.style.display = 'none'; 
+                h.style.display = 'flex'; 
+                setTimeout(()=> h.style.opacity='1', 50);
+                speak("Identity confirmed. Visuals online.");
+            }, 1000);
+        }
+    }
+    function speak(txt) {
+        let u = new SpeechSynthesisUtterance(txt);
+        window.speechSynthesis.speak(u);
+    }
 </script>
- 
- 
-</body></html>
+</body>
+</html>
