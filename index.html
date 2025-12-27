@@ -4,66 +4,184 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>CEC MASTER</title>
+<title>CEC OMNI-INTERFACE</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
 <style>
-    body { margin: 0; background: #000; overflow: hidden; height: 100vh; font-family: 'Rajdhani', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    /* CORE VISUALS */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: #000; overflow: hidden; height: 100vh; font-family: 'Rajdhani', sans-serif; color: white; display: flex; flex-direction: column; }
     
-    /* RED DECOY LAYER */
-    #decoy { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #220000 0%, #000 90%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; transition: opacity 1s; }
-    .alert { border: 2px solid red; padding: 30px; background: rgba(50,0,0,0.8); box-shadow: 0 0 20px red; text-align: center; color: red; animation: pulse 2s infinite; }
-    input { background: transparent; border: none; border-bottom: 2px solid red; color: red; font-size: 1.5rem; text-align: center; width: 150px; margin-top: 20px; outline: none; font-family: 'Orbitron', sans-serif; }
+    /* ANIMATED MATRIX BACKGROUND */
+    canvas { position: fixed; top: 0; left: 0; z-index: 0; opacity: 0.4; }
+
+    /* DECOY SCREEN (RED) */
+    #decoy { 
+        position: absolute; z-index: 999; width: 100%; height: 100%; background: #000; 
+        display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 1s;
+    }
+    .alert { border: 2px solid red; padding: 30px; box-shadow: 0 0 30px red; text-align: center; background: rgba(0,0,0,0.9); }
     
-    /* BLUE HOLOGRAM LAYER */
-    #holo { opacity: 0; display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 50%, #1a0033 0%, #000 100%); z-index: 5; transition: opacity 1s; }
-    .card { background: rgba(10, 15, 30, 0.65); border: 1px solid rgba(0, 243, 255, 0.3); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 20px; padding: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(0, 243, 255, 0.2); animation: float 6s infinite; }
-    .val { font-size: 3rem; font-weight: bold; text-shadow: 0 0 20px #00f3ff; margin: 15px 0; color: #fff; }
-    .gold { color: #ffd700; text-shadow: 0 0 20px #ffd700; }
+    /* MAIN INTERFACE (BLUE GLASS) */
+    #interface { 
+        z-index: 10; width: 100%; height: 100%; display: none; opacity: 0; flex-direction: column; padding: 15px; gap: 15px; transition: opacity 1.5s; 
+    }
     
-    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-    @keyframes pulse { 0% { box-shadow: 0 0 20px red; } 50% { box-shadow: 0 0 40px red; } 100% { box-shadow: 0 0 20px red; } }
+    /* GLASS PANELS */
+    .glass { 
+        background: rgba(10, 20, 40, 0.65); border: 1px solid rgba(0, 243, 255, 0.3); 
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+        border-radius: 15px; padding: 20px; text-align: center; 
+        box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+    }
+    
+    .row { display: flex; gap: 10px; width: 100%; }
+    .col { flex: 1; }
+    
+    .label { color: #00f3ff; font-family: 'Orbitron'; font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 5px; }
+    .val-big { font-size: 2.5rem; font-weight: 700; color: #fff; text-shadow: 0 0 20px #00f3ff; }
+    .val-med { font-size: 1.5rem; color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+    .ticker { color: #00ff00; font-size: 0.9rem; margin-top: 5px; }
+
+    /* VOICE COMMAND CENTER */
+    #voice-panel {
+        margin-top: auto; padding: 10px; display: flex; align-items: center; gap: 10px;
+        background: rgba(0,0,0,0.6); border-top: 1px solid #00f3ff;
+    }
+    #mic-btn {
+        width: 50px; height: 50px; border-radius: 50%; background: rgba(0, 243, 255, 0.2); 
+        border: 2px solid #00f3ff; display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; cursor: pointer;
+    }
+    #mic-btn.listening { background: red; border-color: red; animation: pulse 1s infinite; }
+    #log { font-family: 'Courier New'; font-size: 0.8rem; color: #00f3ff; flex: 1; overflow: hidden; white-space: nowrap; }
+
+    @keyframes pulse { 0% { box-shadow: 0 0 10px red; } 50% { box-shadow: 0 0 30px red; } 100% { box-shadow: 0 0 10px red; } }
 </style>
 </head>
 <body>
 
+    <canvas id="matrix"></canvas>
+
     <div id="decoy">
         <div class="alert">
-            <h1 style="font-family:'Orbitron'; margin:0;">ACCESS DENIED</h1>
-            <p>CEC SECURITY PROTOCOL</p>
-            <input type="tel" id="pass" placeholder="PIN" oninput="check(this)">
+            <h1 style="color:red; font-family:'Orbitron';">LOCKED</h1>
+            <p style="color:red;">BIOMETRIC SCAN REQUIRED</p>
+            <input type="tel" id="pin" placeholder="****" style="background:transparent; border:none; border-bottom:2px solid red; color:red; font-size:2rem; text-align:center; width:100px; outline:none; margin-top:20px;" oninput="unlock(this)">
         </div>
     </div>
 
-    <div id="holo">
-        <div class="card">
-            <p style="color:#00f3ff; letter-spacing:2px;">CEC SYSTEM: ONLINE</p>
-            <h1>LIQUID ASSETS</h1>
-            <div class="val">$1,250,000.00</div>
-            <hr style="opacity:0.3; margin:20px 0;">
-            <h1>NET WORTH</h1>
-            <div class="val gold">$176M</div>
-            <p style="color:#bc13fe; margin-top:20px;">> EVE: VOICE ACTIVE</p>
+    <div id="interface">
+        <div class="glass" style="padding:10px; display:flex; justify-content:space-between;">
+            <span class="label">CEC-WAM OS</span>
+            <span style="color:#00ff00; font-size:0.7rem;">● LIVE CONNECTION</span>
+        </div>
+
+        <div class="glass">
+            <div class="label">TOTAL LIQUIDITY</div>
+            <div class="val-big">$1,250,000.00</div>
+            <div class="ticker">▲ +2.4% (24h)</div>
+        </div>
+
+        <div class="row">
+            <div class="glass col">
+                <div class="label">NET WORTH</div>
+                <div class="val-med">$176M</div>
+            </div>
+            <div class="glass col">
+                <div class="label">PSI-COIN</div>
+                <div class="val-med" id="psi-price">$0.45</div>
+                <div class="ticker" id="psi-move">ACTIVE</div>
+            </div>
+        </div>
+        
+        <div class="glass" style="padding:15px;">
+             <div class="label">PUMP.FUN LIVE TRACKER</div>
+             <div style="font-size:0.8rem; text-align:left; margin-top:5px; color:#ccc;">
+                 > SOLANA: <span style="color:#00ff00;">CONNECTED</span><br>
+                 > WALLET: <span style="color:#bc13fe;">0x71...F4A</span>
+             </div>
+        </div>
+
+        <div id="voice-panel">
+            <div id="mic-btn" onclick="toggleVoice()">🎙️</div>
+            <div id="log">> EVE LISTENING...</div>
         </div>
     </div>
 
 <script>
-    function check(el) {
-        if(el.value === '1010') {
-            document.getElementById('pass').blur();
-            let d = document.getElementById('decoy');
-            let h = document.getElementById('holo');
-            d.style.opacity = '0';
-            setTimeout(() => { 
-                d.style.display = 'none'; 
-                h.style.display = 'flex'; 
-                setTimeout(()=> h.style.opacity='1', 50);
-                speak("Identity confirmed. Visuals online.");
-            }, 1000);
+    // 1. MATRIX RAIN
+    const cvs = document.getElementById('matrix');
+    const ctx = cvs.getContext('2d');
+    cvs.width = window.innerWidth; cvs.height = window.innerHeight;
+    const chars = '01CEC_PSI_COIN_DATA';
+    const drops = Array(Math.floor(cvs.width/14)).fill(1);
+    setInterval(()=>{
+        ctx.fillStyle='rgba(0,0,0,0.05)'; ctx.fillRect(0,0,cvs.width,cvs.height);
+        ctx.fillStyle='#0F0'; ctx.font='14px monospace';
+        drops.forEach((y,i)=>{
+            ctx.fillText(chars[Math.floor(Math.random()*chars.length)],i*14,y*14);
+            if(y*14>cvs.height && Math.random()>0.975) drops[i]=0;
+            drops[i]++;
+        });
+    }, 33);
+
+    // 2. UNLOCK
+    function unlock(el) {
+        if(el.value==='1010'){
+            document.getElementById('pin').blur();
+            let d=document.getElementById('decoy'), i=document.getElementById('interface');
+            d.style.opacity='0';
+            setTimeout(()=>{ d.style.display='none'; i.style.display='flex'; i.style.opacity='1'; speak("Welcome back, Sovereign. Systems live."); },1000);
         }
     }
+
+    // 3. LIVE DATA SIMULATION (PSI COIN)
+    setInterval(()=>{
+        let price = (Math.random() * (0.50 - 0.40) + 0.40).toFixed(4);
+        document.getElementById('psi-price').innerText = '$' + price;
+        document.getElementById('psi-move').innerText = '▲ LIVE';
+    }, 2000);
+
+    // 4. VOICE LOGIC (EVE)
     function speak(txt) {
         let u = new SpeechSynthesisUtterance(txt);
         window.speechSynthesis.speak(u);
+    }
+    
+    function toggleVoice() {
+        let btn = document.getElementById('mic-btn');
+        let log = document.getElementById('log');
+        
+        if (!('webkitSpeechRecognition' in window)) {
+            log.innerText = "VOICE NOT SUPPORTED ON THIS BROWSER";
+            return;
+        }
+        
+        let recognition = new webkitSpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.start();
+        
+        btn.classList.add('listening');
+        log.innerText = "LISTENING...";
+        
+        recognition.onresult = function(event) {
+            let cmd = event.results[0][0].transcript;
+            log.innerText = "> " + cmd.toUpperCase();
+            btn.classList.remove('listening');
+            
+            if(cmd.toLowerCase().includes('status')) {
+                speak("All systems nominal. Psi Coin is active.");
+            } else if(cmd.toLowerCase().includes('money')) {
+                speak("Total liquid assets are 1.25 million.");
+            } else {
+                speak("Command received.");
+            }
+        };
+        
+        recognition.onerror = function() {
+            btn.classList.remove('listening');
+            log.innerText = "ERROR. TRY AGAIN.";
+        };
     }
 </script>
 </body>
