@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>CEC 5D MASTER CORE</title>
+<style>
+    /* CEC-WAM HOLOGRAPHIC CORE v5.0 */
+    :root { --neon-blue: #00f3ff; --neon-purple: #bc13fe; --neon-gold: #ffd700; }
+    body {
+        margin: 0;
+        background-color: #000;
+        background-image: radial-gradient(circle at 50% 50%, #1a0033 0%, #000 100%);
+        color: #00f3ff;
+        font-family: 'Courier New', monospace;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        padding: 30px;
+        width: 85%;
+        text-align: center;
+        animation: float 6s ease-in-out infinite;
+    }
+    h1 { font-size: 1.8rem; text-shadow: 0 0 10px var(--neon-blue); margin-bottom: 10px; }
+    .value { font-size: 2.5rem; font-weight: bold; color: #fff; text-shadow: 0 0 10px var(--neon-purple); }
+    .gold { color: var(--neon-gold); text-shadow: 0 0 10px var(--neon-gold); }
+    @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
+    .status-dot { height: 10px; width: 10px; background-color: #00ff00; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #00ff00; animation: blink 2s infinite; }
+    @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.3;} 100% {opacity: 1;} }
+    #log-box { text-align: left; margin-top: 20px; font-size: 0.8rem; height: 100px; overflow-y: auto; }
+</style>
+</head>
+<body>
+    <div class="glass-panel">
+        <div style="margin-bottom: 10px;"><span class="status-dot"></span> EVE PROTOCOL: ACTIVE</div>
+        <h1>LIQUID ASSETS</h1>
+        <div class="value">$1,250,000.00</div>
+        <p style="font-size: 0.7rem;">SOURCE: CEC MASTER CORE (PENDING FAX)</p>
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+        <h1>NET WORTH</h1>
+        <div class="value gold">$176,000,000</div>
+        <p style="font-size: 0.7rem;">LOCKED // QUANTUM SECURE</p>
+        <div id="log-box">
+            <div>> [SYS] 5D Holographic Interface Loaded.</div>
+            <div>> [EVE] Brain Core Synced. Listening for '1010'.</div>
+        </div>
+        <input type="text" id="cmdInput" placeholder="ENTER 1010 COMMAND..." style="width:100%; background:transparent; border:none; border-bottom:1px solid #00f3ff; color:#fff; text-align:center; margin-top:20px; outline:none;" onkeydown="if(event.key==='Enter'){this.value=''; document.getElementById('log-box').innerHTML+='<div>> [USER] Command Sent.</div>';}">
+    </div>
+</body>
+</html>
