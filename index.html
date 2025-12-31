@@ -160,6 +160,69 @@
         const u = new SpeechSynthesisUtterance(text);
         window.speechSynthesis.speak(u);
     }
+</script><script>
+// ===============================
+// CEC MATRIX LIVE ENGINE @EVE = HEI
+// SYSTEM INPUT: 1010
+// ===============================
+
+// --- SYSTEM IDENTITY ---
+const SYSTEM_ID = "@CEC_MATRIX_LIVE";
+const EVE_ID = "@EVE_HEI";
+const SYSTEM_INPUT = "1010";
+
+// --- LIVE DATA ENDPOINTS (replace with your CSV URLs) ---
+const CEC_CORE_CSV = "YOUR_CSV_URL_HERE";
+const LOGS_CSV     = "YOUR_CSV_URL_HERE";
+const PSI_CSV      = "YOUR_CSV_URL_HERE";
+const WAM_CSV      = "YOUR_CSV_URL_HERE";
+const MAP_CSV      = "YOUR_CSV_URL_HERE";
+const CONFIG_CSV   = "YOUR_CSV_URL_HERE";
+
+// --- CSV FETCHER ---
+async function fetchCSV(url) {
+  const res = await fetch(url);
+  const text = await res.text();
+  const rows = text.trim().split("\n").map(r => r.split(","));
+  const headers = rows[0];
+  return rows.slice(1).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = r[i]);
+    return obj;
+  });
+}
+
+// --- MAIN LOADER ---
+async function loadCEC() {
+  console.log("CEC MATRIX LIVE ENGINE BOOTING…", SYSTEM_ID, EVE_ID, SYSTEM_INPUT);
+
+  const [core, logs, psi, wam, map, config] = await Promise.all([
+    fetchCSV(CEC_CORE_CSV),
+    fetchCSV(LOGS_CSV),
+    fetchCSV(PSI_CSV),
+    fetchCSV(WAM_CSV),
+    fetchCSV(MAP_CSV),
+    fetchCSV(CONFIG_CSV)
+  ]);
+
+  // Apply CONFIG values to UI
+  const titleCfg = config.find(c => c.Key === "CEC_TITLE");
+  if (titleCfg) {
+    const el = document.getElementById("cec-title");
+    if (el) el.textContent = titleCfg.Value + " @" + EVE_ID;
+  }
+
+  // Display system input 1010
+  const inputEl = document.getElementById("cec-input");
+  if (inputEl) inputEl.textContent = "INPUT: " + SYSTEM_INPUT;
+
+  // Log everything for now
+  console.log({ core, logs, psi, wam, map, config });
+}
+
+loadCEC();
 </script>
+
+
 </body>
 </html>
