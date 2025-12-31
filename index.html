@@ -1,123 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CEC-WAM // SOVEREIGN V6</title>
-<style>
-    :root { --neon: #00f3ff; --eve: #bc13fe; --bg: #000; }
-    body { margin: 0; background: var(--bg); color: white; font-family: 'Courier New', monospace; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    
-    /* MATRIX LAYER */
-    canvas { position: absolute; top: 0; left: 0; z-index: -1; opacity: 0.3; }
-
-    /* DECOY SCREEN */
-    #decoy-layer { position: absolute; width: 100%; height: 100%; background: black; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    #auth-input { background: transparent; border: 1px solid #333; color: white; text-align: center; font-size: 1.5em; padding: 10px; width: 150px; }
-
-    /* REAL INTERFACE */
-    #main-interface { display: none; width: 95%; max-width: 600px; z-index: 10; flex-direction: column; }
-    .card { background: rgba(0,0,0,0.8); border: 1px solid var(--neon); padding: 15px; margin-bottom: 10px; border-radius: 8px; }
-    .val { font-size: 2em; font-weight: bold; }
-    
-    /* CHAT */
-    #chat-box { height: 200px; overflow-y: auto; background: rgba(0,0,0,0.5); border: 1px solid #333; padding: 10px; margin-bottom: 10px; font-size: 0.9em; }
-    .msg-eve { color: var(--neon); margin-bottom: 5px; }
-    .msg-user { color: #888; text-align: right; margin-bottom: 5px; }
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEC: 5D GLASS MATRIX</title>
+    <style>
+        :root {
+            --glass: rgba(20, 20, 30, 0.6);
+            --border: rgba(0, 243, 255, 0.3);
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --bg-dark: #050505;
+        }
+        body {
+            margin: 0;
+            background: radial-gradient(circle at center, #1a0b2e 0%, #000 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+            overflow: hidden;
+        }
+        .interface {
+            width: 90%;
+            max-width: 420px;
+            height: 80vh;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        /* SECURITY LAYER */
+        #security-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            transition: opacity 0.5s ease;
+        }
+        .lock-title {
+            color: var(--neon-blue);
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px var(--neon-blue);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+        .pin-input {
+            background: transparent;
+            border: 2px solid var(--neon-purple);
+            color: #fff;
+            font-size: 2rem;
+            width: 120px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            outline: none;
+            letter-spacing: 5px;
+        }
+        /* MAIN CHAT */
+        .header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            font-weight: bold;
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+        .chat-display {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .msg {
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .eve-msg {
+            background: rgba(0, 243, 255, 0.1);
+            border-left: 3px solid var(--neon-blue);
+            align-self: flex-start;
+        }
+        .user-msg {
+            background: rgba(188, 19, 254, 0.1);
+            border-right: 3px solid var(--neon-purple);
+            align-self: flex-end;
+            text-align: right;
+        }
+        .input-area {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            outline: none;
+        }
+        button {
+            background: var(--neon-blue);
+            border: none;
+            padding: 10px 20px;
+            color: #000;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+    </style>
 </head>
 <body>
 
-    <canvas id="matrix"></canvas>
-
-    <div id="decoy-layer">
-        <h1 style="color:red;">⚠️ SYSTEM LOCKED</h1>
-        <input type="tel" id="auth-input" placeholder="CODE" onkeyup="checkAuth(this)">
+<div class="interface">
+    <div id="security-layer">
+        <div class="lock-title">SYSTEM LOCKED</div>
+        <input type="password" class="pin-input" id="pin" placeholder="____" maxlength="4" autofocus>
     </div>
 
-    <div id="main-interface">
-        <div class="card">
-            <div style="color:var(--eve)">NET WORTH</div>
-            <div class="val">$176,000,000</div>
-            <div style="color:#00ff00; margin-top:5px;">LIQUID: $1,250,000 (VERIFIED)</div>
-        </div>
-
-        <div id="chat-box">
-            <div class="msg-eve">EVE: Matrix Visuals Loaded. Waiting for command...</div>
-        </div>
-
-        <button onclick="startVoice()" style="width:100%; padding:20px; background:var(--eve); color:white; border:none; font-size:1.2em; font-weight:bold;">🎙️ TAP TO SPEAK</button>
+    <div class="header">CEC // EVE AGENT ONLINE</div>
+    <div class="chat-display" id="chat">
+        <div class="msg eve-msg">System Initialized. Identity verified.</div>
     </div>
+    <div class="input-area">
+        <input type="text" id="cmd" placeholder="Enter command...">
+        <button onclick="send()">SEND</button>
+    </div>
+</div>
 
 <script>
-    // 1. MATRIX RAIN (OPTIMIZED)
-    const c = document.getElementById('matrix');
-    const ctx = c.getContext('2d');
-    c.width = window.innerWidth; c.height = window.innerHeight;
-    const chars = "01CEC_WAM_V6_CORE";
-    const drops = Array(Math.floor(c.width/20)).fill(1);
+    // 1010 UNLOCK PROTOCOL
+    const pin = document.getElementById('pin');
+    const layer = document.getElementById('security-layer');
     
-    function drawMatrix() {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
-        ctx.fillRect(0, 0, c.width, c.height);
-        ctx.fillStyle = '#0F0'; 
-        ctx.font = '15px monospace';
-        drops.forEach((y, i) => {
-            const text = chars[Math.floor(Math.random()*chars.length)];
-            ctx.fillText(text, i*20, y*20);
-            if(y*20 > c.height && Math.random() > 0.975) drops[i] = 0;
-            drops[i]++;
-        });
-        requestAnimationFrame(drawMatrix);
-    }
-    drawMatrix();
-
-    // 2. UNLOCK
-    function checkAuth(el) {
-        if(el.value === "1010") {
-            document.getElementById('decoy-layer').style.display = 'none';
-            document.getElementById('main-interface').style.display = 'flex';
-            speak("Welcome back Sovereign.");
+    pin.addEventListener('keyup', (e) => {
+        if(e.target.value === '1010') {
+            layer.style.opacity = '0';
+            setTimeout(() => layer.remove(), 500);
+            addMsg("Welcome, Sovereign Architect. 5D Interface Active.", 'eve');
         }
-    }
+    });
 
-    // 3. VOICE LOGIC
-    function startVoice() {
-        // Simple alert for testing if voice API fails
-        if (!('webkitSpeechRecognition' in window)) {
-            alert("Use Chrome or Safari for Voice.");
-            return;
-        }
-        const recognition = new webkitSpeechRecognition();
-        recognition.lang = "en-US";
-        recognition.start();
+    // CHAT LOGIC
+    const chat = document.getElementById('chat');
+    const cmd = document.getElementById('cmd');
+
+    function send() {
+        const val = cmd.value;
+        if(!val) return;
         
-        recognition.onresult = function(event) {
-            const txt = event.results[0][0].transcript;
-            log("USER", txt);
-            processCmd(txt);
-        }
-    }
+        addMsg(val, 'user');
+        cmd.value = '';
 
-    function processCmd(txt) {
-        let resp = "Processing: " + txt;
-        if(txt.toLowerCase().includes("status")) resp = "System Green. Matrix rain is active.";
+        // EVE BRAIN RESPONSE
         setTimeout(() => {
-            log("EVE", resp);
-            speak(resp);
-        }, 500);
+            let response = "Processing...";
+            if(val.toLowerCase().includes('status')) response = "ALL SYSTEMS GREEN. Valuation: $1.25M. Psi-Coins: 200.";
+            else if(val.toLowerCase().includes('money') || val.toLowerCase().includes('finance')) response = "Valuation: $1,250,000. Burn Rate: Nominal.";
+            else response = "Command received. Executing protocol.";
+            
+            addMsg(response, 'eve');
+        }, 600);
     }
 
-    function log(who, msg) {
-        const box = document.getElementById('chat-box');
-        box.innerHTML += `<div class="${who === 'EVE' ? 'msg-eve' : 'msg-user'}">${who}: ${msg}</div>`;
-        box.scrollTop = box.scrollHeight;
-    }
-
-    function speak(t) {
-        window.speechSynthesis.speak(new SpeechSynthesisUtterance(t));
+    function addMsg(text, type) {
+        const div = document.createElement('div');
+        div.className = `msg ${type}-msg`;
+        div.innerText = text;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
     }
 </script>
+
 </body>
 </html>
