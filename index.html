@@ -1,43 +1,308 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>CEC: 5D MATRIX</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEC-WAM V.50.0 | ARCHITECT CONSOLE</title>
     <style>
-        body { background: #000; color: #00f3ff; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .card { border: 1px solid #00f3ff; padding: 20px; border-radius: 10px; background: rgba(0, 243, 255, 0.1); box-shadow: 0 0 20px rgba(0,243,255,0.2); text-align: center; width: 300px; }
-        h1 { font-size: 2.5rem; margin: 10px 0; text-shadow: 0 0 10px #00f3ff; }
-        .label { font-size: 0.8rem; color: #fff; letter-spacing: 2px; }
-        #loader { margin-top: 10px; font-size: 0.8rem; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        /* --- CORE SYSTEM AESTHETICS --- */
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-gold: #ffd700;
+            --alert-red: #ff3333;
+            --bg-dark: #020202;
+            --glass: rgba(10, 10, 15, 0.85);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* LIVE STAR MAP BACKGROUND */
+        canvas#star-map {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at bottom, #1a0b2e 0%, #000 100%);
+        }
+
+        /* --- HEADER & PSI LOGO --- */
+        header {
+            border-bottom: 2px solid var(--neon-blue);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+        }
+        .psi-logo {
+            font-size: 3em;
+            color: #fff;
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px var(--neon-purple),
+                0 0 40px var(--neon-purple),
+                0 0 80px var(--neon-purple);
+            animation: pulsate 2s infinite alternate;
+        }
+        @keyframes pulsate { 100% { text-shadow: 0 0 4px #fff, 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue); } }
+
+        .sys-info { text-align: right; }
+        .sys-status { color: #0f0; font-weight: bold; letter-spacing: 1px; }
+
+        /* --- DASHBOARD GRID --- */
+        .container {
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px; /* Left Sidebar, Main, Right Sidebar */
+            gap: 20px;
+        }
+
+        /* PANELS */
+        .panel {
+            background: var(--glass);
+            border: 1px solid #333;
+            padding: 15px;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+        }
+        h3 { margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 5px; color: var(--neon-blue); text-transform: uppercase; }
+
+        /* METRICS */
+        .metric-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9em; }
+        .val { color: var(--neon-gold); font-weight: bold; }
+        
+        /* FORMULA DISPLAY */
+        .formula-box {
+            text-align: center;
+            font-size: 1.5em;
+            color: #fff;
+            padding: 20px;
+            border: 1px dashed var(--neon-purple);
+            margin-bottom: 20px;
+            background: rgba(188, 19, 254, 0.1);
+        }
+
+        /* VISUAL GALLERY */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border: 1px solid #555;
+            transition: 0.3s;
+        }
+        .gallery-item img:hover { transform: scale(1.5); border-color: var(--neon-blue); z-index: 100; position: relative; }
+
+        /* --- EVE LIVE CHAT --- */
+        .chat-window {
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        #chat-logs {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #333;
+            background: #000;
+            padding: 10px;
+            font-size: 0.8em;
+            color: #0f0;
+            margin-bottom: 10px;
+        }
+        .chat-input-area { display: flex; }
+        #user-input {
+            flex-grow: 1;
+            background: #111;
+            border: 1px solid var(--neon-blue);
+            color: white;
+            padding: 10px;
+            font-family: inherit;
+        }
+        #send-btn {
+            background: var(--neon-blue);
+            border: none;
+            color: #000;
+            font-weight: bold;
+            padding: 0 20px;
+            cursor: pointer;
+        }
+        #send-btn:hover { background: #fff; }
+
+        /* RESPONSIVE */
+        @media (max-width: 1000px) {
+            .container { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="label">NET WORTH</div>
-        <h1 id="val">$ LOADING</h1>
-        <div class="label">PSI-COINS</div>
-        <h2 id="coins" style="color:gold;">...</h2>
-        <div id="loader">CONNECTING TO EVE...</div>
+
+    <canvas id="star-map"></canvas>
+
+    <header>
+        <div style="display:flex; align-items:center; gap:20px;">
+            <div class="psi-logo">Ψ</div>
+            <div>
+                <h1 style="margin:0; font-size:1.5em;">CEC-WAM CORE</h1>
+                <small style="color:var(--neon-gold)">ARCHITECT ACCESS // UNLOCKED</small>
+            </div>
+        </div>
+        <div class="sys-info">
+            <div>STATUS: <span class="sys-status">ONLINE</span></div>
+            <div>PROCESSOR: <span class="sys-status">98% LOAD</span></div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="col-left">
+            <div class="panel">
+                <h3>System Telemetry</h3>
+                <div class="metric-row"><span>LIQUID VAL:</span> <span class="val" id="liq-val">1,250,343M</span></div>
+                <div class="metric-row"><span>ENTROPY:</span> <span class="val">1.618 φ</span></div>
+                <div class="metric-row"><span>DARK ENERGY:</span> <span class="val">0.999 Ω</span></div>
+                <div class="metric-row"><span>TEMP:</span> <span class="val">4.2 K</span></div>
+            </div>
+
+            <div class="panel" style="margin-top:20px;">
+                <h3>Quantum Formula</h3>
+                <div class="formula-box">
+                    Ψ = (Λc²) / 3
+                </div>
+                <small style="color:#aaa;">Calculated Expansion Pressure. Stability locked.</small>
+            </div>
+        </div>
+
+        <div class="col-center">
+            <div class="panel">
+                <h3>Visual Artifact Database</h3>
+                <div class="gallery-grid">
+                    <div class="gallery-item"><img src="IMG_4092.PNG" title="Core Schematic"></div>
+                    <div class="gallery-item"><img src="IMG_4088.PNG" title="Neural Link"></div>
+                    <div class="gallery-item"><img src="IMG_4028.PNG" title="Quantum Field"></div>
+                    <div class="gallery-item"><img src="IMG_4029.PNG" title="Dimension Map"></div>
+                    <div class="gallery-item"><img src="IMG_4030.PNG" title="Security Alert"></div>
+                    <div class="gallery-item"><img src="IMG_4031.PNG" title="Eve Interface"></div>
+                    <div class="gallery-item"><img src="IMG_3846.PNG" title="Solar Reach"></div>
+                    <div class="gallery-item"><img src="IMG_3844.PNG" title="Source Matrix"></div>
+                </div>
+            </div>
+            
+            <div class="panel" style="margin-top:20px;">
+                <h3>Live Sector Map</h3>
+                <div style="height:150px; border:1px dashed #555; display:flex; align-items:center; justify-content:center; color:#555;">
+                    [LIVE 5D SECTOR RENDERING ACTIVE ON BACKGROUND CANVAS]
+                </div>
+            </div>
+        </div>
+
+        <div class="col-right">
+            <div class="panel chat-window">
+                <h3>EVE AGENT [LIVE]</h3>
+                <div id="chat-logs">
+                    <div>> [SYS] CONNECTION ESTABLISHED.</div>
+                    <div>> [EVE] Hello, Architect. I am ready.</div>
+                    <div>> [EVE] Visuals loaded. Physics engine active.</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="user-input" placeholder="Enter command...">
+                    <button id="send-btn">SEND</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // *** PASTE YOUR URL BELOW BETWEEN THE QUOTES ***
-        const URL = "PASTE_YOUR_GOOGLE_URL_HERE"; 
+        // --- 1. DYNAMIC STAR MAP (CANVAS) ---
+        const canvas = document.getElementById('star-map');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        async function sync() {
-            try {
-                const req = await fetch(URL, { method: 'POST', body: JSON.stringify({action:"GET_DASHBOARD_DATA"}) });
-                const res = await req.json();
-                document.getElementById('val').innerText = "$" + res.netWorth.toLocaleString();
-                document.getElementById('coins').innerText = res.liquidAssets + " PSI";
-                document.getElementById('loader').innerText = "SYSTEM SYNCHRONIZED";
-                document.getElementById('loader').style.color = "#0f0";
-            } catch(e) {
-                document.getElementById('loader').innerText = "LINK BROKEN - CHECK URL";
-                document.getElementById('loader').style.color = "red";
-            }
+        const stars = [];
+        for(let i=0; i<200; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2,
+                speed: Math.random() * 0.5 + 0.1
+            });
         }
-        sync();
+
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI*2);
+                ctx.fill();
+                star.y += star.speed; // Move down
+                if(star.y > canvas.height) star.y = 0; // Reset
+            });
+            requestAnimationFrame(animateStars);
+        }
+        animateStars();
+
+        // --- 2. LIVE DATA TICKER ---
+        const liqVal = document.getElementById('liq-val');
+        let currentLiq = 1250343;
+        setInterval(() => {
+            currentLiq += Math.floor(Math.random() * 300) - 100;
+            liqVal.innerText = currentLiq.toLocaleString() + "M";
+        }, 1000);
+
+        // --- 3. EVE CHAT SIMULATION ---
+        const chatLogs = document.getElementById('chat-logs');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        function postMessage(sender, msg, color) {
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color:${color}">${sender}:</span> ${msg}`;
+            chatLogs.appendChild(div);
+            chatLogs.scrollTop = chatLogs.scrollHeight;
+        }
+
+        function handleCommand() {
+            const txt = userInput.value;
+            if(!txt) return;
+            postMessage("ARCHITECT", txt, "#fff");
+            userInput.value = "";
+
+            // Simulated Eve Response
+            setTimeout(() => {
+                const responses = [
+                    "Processing data request...",
+                    "Scanning sector... No anomalies found.",
+                    "The expansion formula is stable.",
+                    "Visuals updated. Memory usage optimal.",
+                    "I am monitoring the connection."
+                ];
+                const reply = responses[Math.floor(Math.random() * responses.length)];
+                postMessage("EVE", reply, "#00f3ff");
+            }, 800);
+        }
+
+        sendBtn.addEventListener('click', handleCommand);
+        userInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') handleCommand();
+        });
+
     </script>
 </body>
 </html>
